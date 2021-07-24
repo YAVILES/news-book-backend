@@ -1,7 +1,6 @@
 amqp==5.0.1
 asgiref==3.4.1
 attrs==20.2.0
-auditlog3==1.0.1
 autobahn==20.7.1
 Automat==20.2.0
 Babel==2.8.0

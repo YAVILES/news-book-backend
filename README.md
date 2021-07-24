@@ -2,6 +2,18 @@
 Libro de Novedades backend Django tenancy
 
 # Crear un inquilino
+# create your public tenant
+tenant = Client(schema_name='public', name='Schemas Inc.',paid_until='2020-12-05',on_trial=False)
+tenant.save()
+# Add one or more domains for the tenant
+domain = Domain()
+domain.domain = 'my-domain.com' # don't add your port or www here! on a local server you'll want to use localhost here
+domain.tenant = tenant
+domain.is_primary = True
+domain.save()
+
+# create your first real tenant
+python manage.py tenant_command loaddata --schema=public --name='Fonzy Tenant' --paid_until=2020-12-05 --on_trial=True
 from customers.models import Client, Domain
 tenant = Client(schema_name='tenant1', name='Fonzy Tenant', paid_until='2020-12-05', on_trial=True)
 tenant.save() # migrate_schemas automatically called, your tenant is ready to be used!
@@ -37,7 +49,7 @@ TENANT_PARALLEL_MIGRATION_CHUNKS (predeterminado: 2): número de migraciones que
 python manage.py tenant_command loaddata --schema=customer1
 
 # Crea superusuario
-python manage.py createsuperuser --username=admin --schema=customer1
+python manage.py tenant_command createsuperuser --email=admin@admin.com --schema=customer1
 
 # Señales
 Hay varias señales

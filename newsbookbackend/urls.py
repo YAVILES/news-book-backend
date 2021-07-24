@@ -25,7 +25,7 @@ from drf_yasg2.views import get_schema_view
 from drf_yasg2 import openapi
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
-from security.views import CustomTokenObtainPairView
+from apps.security.views import CustomTokenObtainPairView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -42,23 +42,26 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/customers/', include('apps.customers.urls')),
+    path('api/security/', include('apps.security.urls')),
+    path('api/core/', include('apps.core.urls')),
+    path('api/main/', include('apps.main.urls')),
+    path('api/setting/', include('apps.setting.urls')),
 
-    path('api/security/', include('security.urls')),
-    path('api/core/', include('core.urls')),
+    path('api/accounts/', include('django.contrib.auth.urls')),
 
     # Tokens
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    # Short URL
-    url(r'^s/', include('django_short_url.urls', namespace='django_short_url')),
+    # Short URLss
+    url(r'^s/', include('django_short_url.urls', namespace='django_short_url'))
 ]
 
 if settings.DEBUG:
     urlpatterns += url(r'^__debug__/', include(debug_toolbar.urls)),
-
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
