@@ -224,9 +224,9 @@ REST_FRAMEWORK = {
     ]
 }
 
-STATIC_URL = 'http://prueba.clientes-grupobtp.com/static/'
+STATIC_URL = '/static/'
 
-STATIC_ROOT = '/home/admin/domains/clientes-grupobtp.com/public_html/prueba/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
@@ -246,7 +246,7 @@ MULTITENANT_RELATIVE_STATIC_ROOT = ""  # (default: create sub-directory for each
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
 MEDIA_URL = env('MEDIA_URL')
-MEDIA_ROOT = '/home/admin/domains/clientes-grupobtp.com/public_html/prueba/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 MULTITENANT_RELATIVE_MEDIA_ROOT = ""  # (default: create sub-directory for each tenant)
 
