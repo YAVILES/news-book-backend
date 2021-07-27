@@ -224,7 +224,7 @@ REST_FRAMEWORK = {
     ]
 }
 
-STATIC_URL = '/static/'
+STATIC_URL = 'http://prueba.clientes-grupobtp.com/static/'
 
 STATIC_ROOT = '/home/admin/domains/clientes-grupobtp.com/public_html/prueba/static/'
 
