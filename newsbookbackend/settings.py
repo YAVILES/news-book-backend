@@ -48,7 +48,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['localhost', 'dev.localhost', '127.0.0.1', 'prueba.clientes-grupobtp.com', '66.23.233.252']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'prueba.clientes-grupobtp.com', '66.23.233.252']
 
 # Application definition
 
