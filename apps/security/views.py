@@ -36,10 +36,18 @@ class ValidUser(GenericViewSet):
         serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
         if serializer.is_valid():
             email_user = serializer.data["email"]
+            password_user = serializer.data["password"]
             try:
                 user = User.objects.get(email=email_user)
             except Exception as e:
-                raise serializers.ValidationError(detail={"error": _('email invalid')})
+                raise serializers.ValidationError(detail={"error": _('Email inválida')})
+
+            if not user.check_password(password_user):
+                raise serializers.ValidationError(detail={"error": _('Contraseña inválida')})
+
+            if not self.user_can_authenticate(user):
+                raise serializers.ValidationError(detail={"error": _('Usuario inactivo')})
+
             chars = string.ascii_uppercase + string.digits
             code = ''.join(random.choice(chars) for _ in range(8))
             email = EmailMultiAlternatives(

@@ -24,10 +24,6 @@ class CustomAuthenticationBackend(ModelBackend):
         except UserModel.DoesNotExist:
             raise exceptions.AuthenticationFailed('El usuario no existe')
         else:
-            if not user.check_password(password):
-                raise exceptions.AuthenticationFailed('Contraseña inválida')
-            if not self.user_can_authenticate(user):
-                raise exceptions.AuthenticationFailed('Usuario inactivo')
             if not user.is_superuser:
                 security_code = request.data['security_code']
                 if user_verified_security_code(user, security_code):
