@@ -57,7 +57,7 @@ class ValidUser(GenericViewSet):
             user.is_verified_security_code = False
             user.security_code = code
             user.save(update_fields=['security_code'])
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({'security_code': code}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
