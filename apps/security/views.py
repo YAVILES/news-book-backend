@@ -45,7 +45,7 @@ class ValidUser(GenericViewSet):
             if not user.check_password(password_user):
                 raise serializers.ValidationError(detail={"error": _('Contraseña inválida')})
 
-            if not self.user_can_authenticate(user):
+            if not User.user_can_authenticate(user):
                 raise serializers.ValidationError(detail={"error": _('Usuario inactivo')})
 
             chars = string.ascii_uppercase + string.digits
