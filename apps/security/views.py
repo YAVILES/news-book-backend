@@ -1,6 +1,8 @@
 import tablib
 import string
 import random
+
+from django.contrib.auth.backends import ModelBackend
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
@@ -45,7 +47,7 @@ class ValidUser(GenericViewSet):
             if not user.check_password(password_user):
                 raise serializers.ValidationError(detail={"error": _('Contraseña inválida')})
 
-            if not User.user_can_authenticate(user):
+            if not ModelBackend.user_can_authenticate(user):
                 raise serializers.ValidationError(detail={"error": _('Usuario inactivo')})
 
             chars = string.ascii_uppercase + string.digits
