@@ -225,6 +225,9 @@ REST_FRAMEWORK = {
 }
 
 STATIC_URL = '/static/'
+
+MULTITENANT_RELATIVE_STATIC_ROOT = "tenants/%s"
+
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 STATICFILES_FINDERS = [
@@ -233,8 +236,6 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     "compressor.finders.CompressorFinder",
 ]
-
-STATICFILES_FINDERS.insert(0, "django_tenants.staticfiles.finders.TenantFileSystemFinder")
 
 MULTITENANT_STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "tenants/%s/static"),
