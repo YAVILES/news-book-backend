@@ -13,7 +13,7 @@ from apps.main.models import ModelBase
 class UserManager(BaseUserManager):
     def system(self):
         user, _ = self.get_or_create(
-            email='system@example.com',
+            code='system',
             name='SYSTEM',
             last_name='SYSTEM',
             # Como es plain text deberia ser suficiente para que el usuario no haga login
@@ -24,7 +24,7 @@ class UserManager(BaseUserManager):
 
     def web(self):
         user, _ = self.get_or_create(
-            email='web@example.com',
+            code='web',
             name='WEB',
             last_name='WEB',
             # Como es plain text deberia ser suficiente para que el usuario no haga login
@@ -33,24 +33,23 @@ class UserManager(BaseUserManager):
         )
         return user
 
-    def _create_user(self, email, name, last_name, password, database='default', **extra_fields):
+    def _create_user(self, code, name, last_name, password, database='default', **extra_fields):
         """
         Creates and saves a User with the given username, email and password.
         """
-        if not email:
-            raise ValueError(_('The Email must be set'))
-        email = self.normalize_email(email)
-        obj = User(email=email, name=name, last_name=last_name, **extra_fields)
+        if not code:
+            raise ValueError(_('The Code must be set'))
+        obj = User(code=code, name=name, last_name=last_name, **extra_fields)
         obj.set_password(password)
         obj.save(using=database)
         return obj
 
-    def create_user(self, email, name=None, last_name=None, password=None, **extra_fields):
+    def create_user(self, code, name=None, last_name=None, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        return self._create_user(email, name, last_name, password, **extra_fields)
+        return self._create_user(code, name, last_name, password, **extra_fields)
 
-    def create_superuser(self, email, name, last_name, password, **extra_fields):
+    def create_superuser(self, code, name, last_name, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
@@ -59,13 +58,13 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self._create_user(email, name, last_name, password, **extra_fields)
+        return self._create_user(code, name, last_name, password, **extra_fields)
 
 
 class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     username = None
     code = models.CharField(max_length=255, verbose_name=_('code'), null=False, unique=True, blank=True)
-    email = models.EmailField(verbose_name=_('email'), unique=True)
+    email = models.EmailField(verbose_name=_('email'), null=True, blank=True, unique=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), null=True)
     last_name = models.CharField(max_length=50, verbose_name=_('last name'))
     password = models.CharField(max_length=128, verbose_name=_('password'))

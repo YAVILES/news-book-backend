@@ -58,10 +58,10 @@ class ValidUser(GenericViewSet):
                 [user.email]
             )
             # email.attach_alternative(content, 'text/html')
-            #try:
-            #    email.send()
-            #except ValueError as e:
-            #    serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
+            try:
+                email.send()
+            except ValueError as e:
+                serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
 
             user.is_verified_security_code = False
             user.security_code = code

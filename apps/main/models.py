@@ -1,7 +1,10 @@
 import uuid
 
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 import jsonfield
+from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 
 from apps.core.models import ModelBase
@@ -82,3 +85,26 @@ class News(ModelBase):
     employee = models.CharField(max_length=255, verbose_name="employee",
                                 help_text="Ficha del trabajador que generó la novedad")
 
+
+#    SIGNALS
+def post_save_client(sender, instance: News, **kwargs):
+    from apps.security.models import User
+    if isinstance(instance, News) and not kwargs['created']:
+        try:
+            emails = User.objects.filter(is_active=True, email__isnull=False).values_list('email', flat=True)
+            email = EmailMultiAlternatives(
+                instance.type_news.description,
+                'TEST EMAIL',
+                settings.EMAIL_HOST_USER,
+                emails
+            )
+            # email.attach_alternative(content, 'text/html')
+            try:
+                email.send()
+            except ValueError as e:
+                pass
+        except:
+            pass
+
+
+post_save.connect(post_save_client, sender=News)
