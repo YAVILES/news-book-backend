@@ -75,7 +75,7 @@ class News(ModelBase):
     message = models.TextField(verbose_name=_('message'), help_text="Mensaje de la novedad")
     info = jsonfield.JSONField(default=dict)
     created_by = models.ForeignKey('security.User', verbose_name=_('created_by'), on_delete=models.PROTECT,
-                                   help_text="Creado por")
+                                   help_text="Creado por",  null=True)
     materials = models.ManyToManyField(Material, verbose_name=_('materials'), related_name='news',
                                        through=MaterialNews)
     vehicles = models.ManyToManyField(Vehicle, verbose_name=_('vehicles'), related_name='news',
