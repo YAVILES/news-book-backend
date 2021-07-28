@@ -36,12 +36,12 @@ class ValidUser(GenericViewSet):
     def request_security_code(self, request):
         serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
         if serializer.is_valid():
-            email_user = serializer.data["email"]
+            code_user = serializer.data["code"]
             password_user = serializer.data["password"]
             try:
-                user = User.objects.get(email=email_user)
+                user = User.objects.get(code=code_user)
             except Exception as e:
-                raise serializers.ValidationError(detail={"error": _('Email inválida')})
+                raise serializers.ValidationError(detail={"error": _('Código inválida')})
 
             if not user.check_password(password_user):
                 raise serializers.ValidationError(detail={"error": _('Contraseña inválida')})
@@ -55,13 +55,13 @@ class ValidUser(GenericViewSet):
                 'Un correo de prueba',
                 code,
                 settings.EMAIL_HOST_USER,
-                [email_user]
+                [user.email]
             )
             # email.attach_alternative(content, 'text/html')
-            try:
-                email.send()
-            except ValueError as e:
-                serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
+            #try:
+            #    email.send()
+            #except ValueError as e:
+            #    serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
 
             user.is_verified_security_code = False
             user.security_code = code

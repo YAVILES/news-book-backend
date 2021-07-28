@@ -12,21 +12,21 @@ from apps.security.models import User
 
 
 class ChangeSecurityCodeSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
+    code = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
 
     def validate(self, attrs):
         super().validate(attrs)
         try:
-            user = User.objects.get(email=attrs.get('email'))
+            user = User.objects.get(code=attrs.get('code'))
         except:
-            raise serializers.ValidationError(detail={"email": _('email invalid')})
+            raise serializers.ValidationError(detail={"code": _('code invalid')})
 
         return attrs
 
     class Meta:
         model = User
-        fields = ('email', 'password',)
+        fields = ('code', 'password',)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -111,4 +111,3 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     class Meta:
         fields = ('email', 'password',)
-

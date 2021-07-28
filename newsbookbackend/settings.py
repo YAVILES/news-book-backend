@@ -105,8 +105,8 @@ TENANT_APPS = (
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -230,7 +230,7 @@ STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "compressor.finders.CompressorFinder",
+    # "compressor.finders.CompressorFinder",
 ]
 
 MULTITENANT_STATICFILES_DIRS = [
@@ -283,8 +283,7 @@ CORS_ALLOW_HEADERS = [
     'origin',
     'user-agent',
     'x-csrftoken',
-    'x-requested-with',
-    'client'
+    'x-requested-with'
 ]
 
 EMAIL_HOST = env('EMAIL_HOST')
@@ -322,4 +321,8 @@ INTERNAL_IPS = [
     '66.23.233.252'
 ]
 
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = True
+
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost'
+]

@@ -64,8 +64,7 @@ class UserManager(BaseUserManager):
 
 class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     username = None
-    code = models.CharField(max_length=255, verbose_name=_('code'), null=True, unique=True,
-                            help_text="Código que se usaría para las sincronización con apps externas")
+    code = models.CharField(max_length=255, verbose_name=_('code'), null=False, unique=True, blank=True)
     email = models.EmailField(verbose_name=_('email'), unique=True)
     name = models.CharField(max_length=255, verbose_name=_('name'), null=True)
     last_name = models.CharField(max_length=50, verbose_name=_('last name'))
@@ -85,7 +84,7 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     jwt_id = models.UUIDField(default=uuid.uuid4, blank=True, null=True)
     last_sync_date = models.DateTimeField(null=True, blank=True, verbose_name=_('last sync date'))
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'code'
     REQUIRED_FIELDS = ['name', 'phone', 'last_name']
     objects = UserManager()
 

@@ -35,11 +35,11 @@ class UserResourceAdmin(ImportExportModelAdmin):
 
 class CustomUserAdmin(UserAdmin, ImportExportModelAdmin, TenantAdminMixin):
     form = CustomUserChangeForm
-    list_display = ['email', 'name', 'last_name', 'is_staff', 'is_superuser', 'is_active']
-    list_filter = ['email', 'is_active', 'is_staff', 'is_superuser']
+    list_display = ['code', 'email', 'name', 'last_name', 'is_staff', 'is_superuser', 'is_active']
+    list_filter = ['code', 'email', 'is_active', 'is_staff', 'is_superuser']
     filter_horizontal = ['groups']
     fieldsets = (
-        (None, {'fields': ('email', 'password',)}),
+        (None, {'fields': ('code', 'email', 'password',)}),
         (_('Personal info'), {'fields': ('name', 'last_name')}),
         (_('Permissions'), {
             'fields': ('is_staff', 'is_superuser', 'groups', 'user_permissions'),
@@ -73,8 +73,8 @@ class MyLoginForm(AuthenticationForm):
     password = forms.CharField(
         label=_("password"),
         widget=forms.PasswordInput(attrs={
-             'title': 'Cotraseña',
-             'id': 'id_password',
-             'name': 'password'
+            'title': 'Cotraseña',
+            'id': 'id_password',
+            'name': 'password'
         })
     )
