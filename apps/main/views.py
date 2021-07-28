@@ -217,7 +217,8 @@ class VehicleViewSet(ModelViewSet):
     serializer_class = VehicleDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['license_plate']
-
+    permission_classes = (AllowAny,)
+    
     def paginate_queryset(self, queryset):
         """
         Return a single page of results, or `None` if pagination is disabled.
