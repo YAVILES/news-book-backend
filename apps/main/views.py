@@ -403,6 +403,7 @@ class NewsViewSet(ModelViewSet):
     serializer_class = NewsDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['message', 'employee']
+    permission_classes = (AllowAny,)
 
     def paginate_queryset(self, queryset):
         """
