@@ -59,4 +59,4 @@ class MaterialAdmin(TenantAdminMixin, admin.ModelAdmin):
 
 @admin.register(News)
 class NewsAdmin(TenantAdminMixin, admin.ModelAdmin):
-    list_display = ('message', 'created_by',)
+    list_display = ('message',)
