@@ -218,7 +218,7 @@ class VehicleViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['license_plate']
     permission_classes = (AllowAny,)
-    
+
     def paginate_queryset(self, queryset):
         """
         Return a single page of results, or `None` if pagination is disabled.
