@@ -225,6 +225,7 @@ REST_FRAMEWORK = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
+"""
 STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -235,6 +236,7 @@ STATICFILES_FINDERS = [
 MULTITENANT_STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "/static/"),
 ]
+"""
 
 STATICFILES_STORAGE = "django_tenants.staticfiles.storage.TenantStaticFilesStorage"
 
