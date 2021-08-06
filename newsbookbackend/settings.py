@@ -222,9 +222,8 @@ REST_FRAMEWORK = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = 'http://prueba.clientes-grupobtp.com/static/'
-
-STATIC_ROOT = '/home/admin/domains/clientes-grupobtp.com/public_html/prueba/static/'  # os.path.join(BASE_DIR, "static")
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
@@ -244,7 +243,7 @@ MULTITENANT_RELATIVE_STATIC_ROOT = ""  # (default: create sub-directory for each
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
 MEDIA_URL = env('MEDIA_URL')
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = '/home/admin/domains/clientes-grupobtp.com/public_html/api-test/media/'  # os.path.join(BASE_DIR, "media")
 
 MULTITENANT_RELATIVE_MEDIA_ROOT = ""  # (default: create sub-directory for each tenant)
 
