@@ -321,8 +321,14 @@ INTERNAL_IPS = [
     '66.23.233.252'
 ]
 
+# HTTPS:
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost'
+    'http://localhost',
+    'http://api-prueba.clientes-grupobtp.com'
 ]

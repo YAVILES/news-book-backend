@@ -49,7 +49,7 @@ TENANT_PARALLEL_MIGRATION_CHUNKS (predeterminado: 2): número de migraciones que
 python manage.py tenant_command loaddata --schema=customer1
 
 # Crea superusuario
-python manage.py tenant_command createsuperuser --email=admin@admin.com --schema=customer1
+python manage.py tenant_command createsuperuser --code=admin --schema=public
 
 # Señales
 Hay varias señales

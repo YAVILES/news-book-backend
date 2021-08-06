@@ -1,4 +1,5 @@
 import tablib
+from django.core.mail import EmailMultiAlternatives
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -9,6 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 
 # Create your views here.
+from apps.core.models import TypeNews
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource
 from apps.main.models import Vehicle, TypePerson, Person, Material, News
 from apps.main.serializers import VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
@@ -404,6 +406,25 @@ class NewsViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['message', 'employee']
     permission_classes = (AllowAny,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        print(serializer.data)
+        email = EmailMultiAlternatives(
+            TypeNews.objects.get(id=serializer.data['type_news']).description,
+            '',
+            settings.EMAIL_HOST_USER,
+            [user.email]
+        )
+        # email.attach_alternative(content, 'text/html')
+        try:
+            email.send()
+        except ValueError as e:
+            pass
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def paginate_queryset(self, queryset):
         """
