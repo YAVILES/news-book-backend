@@ -331,5 +331,3 @@ CORS_ORIGIN_WHITELIST = [
     'http://localhost',
     'https://api-test.clientes-grupobtp.com'
 ]
-
-PUBLIC_SCHEMA_URLCONF = "newsbookbackend.urls"
