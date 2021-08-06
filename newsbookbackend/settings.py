@@ -330,5 +330,5 @@ CSRF_COOKIE_SECURE = True
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost',
-    'http://api-prueba.clientes-grupobtp.com'
+    'https://api-test.clientes-grupobtp.com'
 ]
