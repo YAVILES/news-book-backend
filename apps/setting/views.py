@@ -16,21 +16,11 @@ from apps.main.serializers import VehicleDefaultSerializer, TypePersonDefaultSer
 from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
 from apps.setting.serializers import NotificationDefaultSerializer
-from django_filters import rest_framework as filters
-
-
-class NotificationFilter(filters.FilterSet):
-    field = filters.CharFilter()
-
-    class Meta:
-        model = Notification
-        fields = ['field']
 
 
 class NotificationViewSet(ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationDefaultSerializer
-    filterset_class = NotificationFilter
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['description']
     permission_classes = (AllowAny,)

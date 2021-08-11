@@ -84,11 +84,10 @@ class ValidUser(GenericViewSet):
 
 
 class UserFilter(filters.FilterSet):
-    field = filters.CharFilter()
 
     class Meta:
         model = User
-        fields = ['name', 'last_name', 'email', 'field']
+        fields = ['name', 'last_name', 'email']
 
 
 # Create your views here.
