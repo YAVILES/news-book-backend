@@ -4,7 +4,7 @@ from import_export.resources import ModelResource
 from django_tenants.admin import TenantAdminMixin
 
 # Register your models here.
-from apps.main.models import TypePerson, Material, Vehicle, Person, News
+from apps.main.models import TypePerson, Material, Vehicle, Person, News, Schedule
 
 
 class PersonResource(ModelResource):
@@ -34,6 +34,12 @@ class VehicleResource(ModelResource):
 class MaterialResource(ModelResource):
     class Meta:
         model = Material
+        exclude = ('id', 'created', 'updated',)
+
+
+class ScheduleResource(ModelResource):
+    class Meta:
+        model = Schedule
         exclude = ('id', 'created', 'updated',)
 
 

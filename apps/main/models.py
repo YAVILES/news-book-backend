@@ -21,8 +21,8 @@ class Material(ModelBase):
 class Schedule(ModelBase):
     description = models.CharField(max_length=255, verbose_name="description", unique=True,
                                    help_text="Descripción del horario")
-    start_time = models.TimeField(null=False, help_text="Hora Inicial"),
-    final_hour = models.TimeField(null=False, help_text="Hora final"),
+    start_time = models.TimeField(blank=True, null=True, help_text="Hora Inicial")
+    final_hour = models.TimeField(blank=True, null=True, help_text="Hora final")
     is_active = models.BooleanField(default=True)
 
 

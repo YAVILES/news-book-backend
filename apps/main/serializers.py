@@ -1,7 +1,7 @@
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 
-from apps.main.models import TypePerson, Person, Vehicle, Material, News
+from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule
 
 
 class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -31,7 +31,7 @@ class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
 
 
 class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    #created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
     materials = serializers.PrimaryKeyRelatedField(
         queryset=Material.objects.all(),
         many=True,
@@ -56,3 +56,8 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         model = News
         fields = serializers.ALL_FIELDS
 
+
+class ScheduleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Schedule
+        fields = serializers.ALL_FIELDS

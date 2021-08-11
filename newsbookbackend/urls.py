@@ -38,7 +38,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    url='https://api-test.clientes-grupobtp.com/api'
+    # url='https://api-test.clientes-grupobtp.com/api'
 )
 
 urlpatterns = [
