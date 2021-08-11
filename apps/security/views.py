@@ -84,6 +84,8 @@ class ValidUser(GenericViewSet):
 
 
 class UserFilter(filters.FilterSet):
+    field = filters.CharFilter()
+    
     class Meta:
         model = User
         fields = ['name', 'last_name', 'email', 'field']
