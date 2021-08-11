@@ -98,7 +98,7 @@ class UserViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = UserFilter
     serializer_class = UserSimpleSerializer
-    search_fields = ['name', 'last_name' 'email']
+    search_fields = ['name', 'last_name' 'email', 'code']
     permission_classes = (AllowAny,)
 
     def paginate_queryset(self, queryset):
