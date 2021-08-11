@@ -20,7 +20,7 @@ from django_filters import rest_framework as filters
 from .admin import UserResource, RoleResource
 from .models import User
 from .serializers import UserSimpleSerializer, CustomTokenObtainPairSerializer, RoleDefaultSerializer, \
-    ChangeSecurityCodeSerializer, ChangePasswordSerializer
+    ChangeSecurityCodeSerializer, ChangePasswordSerializer, UserCreateSerializer
 
 
 class ValidUser(GenericViewSet):
@@ -130,7 +130,10 @@ class UserViewSet(ModelViewSet):
         # return queryset.none()
 
     def get_serializer_class(self):
-        return UserSimpleSerializer
+        if self.action in ['create', 'update']:
+            return UserCreateSerializer
+        else:
+            return UserSimpleSerializer
 
     @action(methods=['GET', ], detail=False)
     def current(self, request):

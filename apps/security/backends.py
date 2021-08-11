@@ -20,7 +20,7 @@ class CustomAuthenticationBackend(ModelBackend):
         if username is None or password is None:
             return
         try:
-            user = UserModel._default_manager.get_by_natural_key(username)
+            user = UserModel._default_manager.get_by_natural_key(str(username).lower())
         except UserModel.DoesNotExist:
             raise exceptions.AuthenticationFailed('El usuario no existe')
         else:
