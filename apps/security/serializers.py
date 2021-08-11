@@ -39,6 +39,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     is_superuser = serializers.BooleanField(required=False, read_only=True)
     is_staff = serializers.BooleanField(required=True)
     email = serializers.EmailField()
+    info = serializers.JSONField(default=dict)
 
     def validate(self, attrs):
         password = attrs.get('password')
