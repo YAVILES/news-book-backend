@@ -86,7 +86,7 @@ class ValidUser(GenericViewSet):
 class UserFilter(filters.FilterSet):
     class Meta:
         model = User
-        fields = ['name', 'last_name', 'email']
+        fields = ['name', 'last_name', 'email', 'field']
 
 
 # Create your views here.
@@ -98,6 +98,7 @@ class UserViewSet(ModelViewSet):
     filterset_class = UserFilter
     serializer_class = UserSimpleSerializer
     search_fields = ['name', 'last_name' 'email']
+    permission_classes = (AllowAny,)
 
     def paginate_queryset(self, queryset):
         """
