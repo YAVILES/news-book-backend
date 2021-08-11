@@ -119,13 +119,13 @@ class UserViewSet(ModelViewSet):
 
         # Staff can see everything except superusers
         if self.request.user.is_staff:
-            return queryset.filter(is_superuser=False, is_client=False)
+            return queryset.filter(is_superuser=False)
 
         # Rest of users can see themselves
         # if self.action == 'retrieve':
         #    return queryset.filter(pk=self.request.user.pk)
 
-        return queryset.filter(is_superuser=False, is_client=False)
+        return queryset.filter(is_superuser=False)
         # Can't list users
         # return queryset.none()
 
