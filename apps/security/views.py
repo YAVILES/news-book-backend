@@ -220,9 +220,9 @@ class RoleViewSet(ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = RoleDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['first_name', 'last_name']
+    search_fields = ['name']
     permission_classes = (AllowAny,)
-    
+
     def paginate_queryset(self, queryset):
         """
         Return a single page of results, or `None` if pagination is disabled.
