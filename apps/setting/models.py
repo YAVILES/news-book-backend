@@ -6,7 +6,13 @@ from apps.core.models import ModelBase, TypeNews
 from apps.main.models import Schedule
 from django.contrib.postgres.fields import ArrayField
 
-(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY) = range(7)
+MONDAY = 0
+TUESDAY = 1
+WEDNESDAY = 2
+THURSDAY = 3
+FRIDAY = 4
+SATURDAY = 5
+SUNDAY = 6
 
 DAYS = (
     (MONDAY, _('Lunes')),
@@ -51,14 +57,14 @@ class Notification(ModelBase):
     day = models.DateField(blank=True, null=True, verbose_name="day")
     days = ArrayField(
         models.DateField(),
-        default=[],
-        verbose_name=_('days')
-    ),
+        default=list,
+        verbose_name=_('days'),
+    )
     week_days = ArrayField(
         models.SmallIntegerField(),
-        choices=DAYS,
+        #choices=DAYS,
+        default=list,
         verbose_name=_('week days'),
-        null=True,
-        blank=True
-    ),
+        size=7
+    )
     is_active = models.BooleanField(default=True)
