@@ -68,7 +68,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'direction', 'telephone',
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
                   'phone', 'is_superuser', 'is_staff', 'groups', 'info',)
 
 
@@ -126,7 +126,7 @@ class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'direction', 'telephone',
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
                   'phone', 'is_superuser', 'is_staff', 'groups')
 
 
