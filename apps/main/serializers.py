@@ -1,6 +1,5 @@
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
-
 from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule
 
 
@@ -58,6 +57,9 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class ScheduleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    start_time = serializers.TimeField(format="%H:%M")
+    final_hour = serializers.TimeField(format="%H:%M")
+
     class Meta:
         model = Schedule
         fields = serializers.ALL_FIELDS

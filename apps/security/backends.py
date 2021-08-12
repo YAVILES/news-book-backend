@@ -25,14 +25,11 @@ class CustomAuthenticationBackend(ModelBackend):
             raise exceptions.AuthenticationFailed('El usuario no existe')
         else:
             if not user.is_superuser:
-                if request.data and 'security_code' in request.data:
-                    security_code = request.data['security_code']
-                    if user_verified_security_code(user, security_code):
-                        return user
-                    else:
-                        raise exceptions.AuthenticationFailed('Código de seguridad inválido')
-                else:
+                security_code = request.data['security_code']
+                if user_verified_security_code(user, security_code):
                     return user
+                else:
+                    raise exceptions.AuthenticationFailed('Código de seguridad inválido')
             else:
                 return user
 
