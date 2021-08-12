@@ -125,7 +125,7 @@ class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = serializers.ALL_FIELDS
+        exclude = ('user_permissions',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
