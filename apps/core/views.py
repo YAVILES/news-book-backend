@@ -99,20 +99,3 @@ class TypeNewsViewSet(ModelViewSet):
                 }, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(methods=['GET'], detail=False)
-    def field_options(self, request):
-        field = self.request.query_params.get('field', None)
-        if field:
-            try:
-                choices = []
-                for c in TypeNews._meta.get_field(field).choices:
-                    choices.append({
-                        "value": c[0],
-                        "description": c[1]
-                    })
-                return Response(choices, status=status.HTTP_200_OK)
-            except ValueError as e:
-                return Response(e, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)

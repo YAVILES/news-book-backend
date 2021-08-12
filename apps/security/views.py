@@ -201,7 +201,21 @@ class UserViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False)
     def field_options(self, request):
         field = self.request.query_params.get('field', None)
-        if field:
+        fields = self.request.query_params.getlist('fields', None)
+        if fields:
+            try:
+                data = {}
+                for field in fields:
+                    data[field] = []
+                    for c in User._meta.get_field(field).choices:
+                        data[field].append({
+                            "value": c[0],
+                            "description": c[1]
+                        })
+                return Response(data, status=status.HTTP_200_OK)
+            except ValueError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        elif field:
             try:
                 choices = []
                 for c in User._meta.get_field(field).choices:
@@ -294,7 +308,21 @@ class RoleViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False)
     def field_options(self, request):
         field = self.request.query_params.get('field', None)
-        if field:
+        fields = self.request.query_params.getlist('fields', None)
+        if fields:
+            try:
+                data = {}
+                for field in fields:
+                    data[field] = []
+                    for c in Group._meta.get_field(field).choices:
+                        data[field].append({
+                            "value": c[0],
+                            "description": c[1]
+                        })
+                return Response(data, status=status.HTTP_200_OK)
+            except ValueError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        elif field:
             try:
                 choices = []
                 for c in Group._meta.get_field(field).choices:

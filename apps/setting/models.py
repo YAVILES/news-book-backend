@@ -4,6 +4,19 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.core.models import ModelBase, TypeNews
 from apps.main.models import Schedule
+from django.contrib.postgres.fields import ArrayField
+
+(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY) = range(7)
+
+DAYS = (
+    (MONDAY, _('Lunes')),
+    (TUESDAY, _('Martes')),
+    (WEDNESDAY, _('Miercoles')),
+    (THURSDAY, _('Jueves')),
+    (FRIDAY, _('Viernes')),
+    (SATURDAY, _('Sábado')),
+    (SUNDAY, _('Domingo')),
+)
 
 
 class GroupNotification(ModelBase):
@@ -14,6 +27,16 @@ class GroupNotification(ModelBase):
 class Notification(ModelBase):
     RECURRENT = 0
     OBLIGATORY = 1
+    EVERY_DAY = 1
+    JUST_ONE_DAY = 2
+    MORE_THAN_ONE_DAY = 3
+    BY_DAY_DAYS = 4
+    FREQUENCIES = (
+        (EVERY_DAY, _('Todos los días')),
+        (JUST_ONE_DAY, _('Solo un día')),
+        (MORE_THAN_ONE_DAY, _('Mas de un día')),
+        (BY_DAY_DAYS, _('días por semana')),
+    )
     description = models.CharField(max_length=255, verbose_name="description", unique=True,
                                    help_text="Descripción de la Notificación")
     type = models.SmallIntegerField(default=RECURRENT, verbose_name="type", choices=(
@@ -24,6 +47,18 @@ class Notification(ModelBase):
                                     through=GroupNotification)
     schedule = models.ForeignKey(Schedule, verbose_name=_('schedule'), on_delete=models.PROTECT, null=True)
     type_news = models.ForeignKey(TypeNews, verbose_name=_('type_news'), on_delete=models.PROTECT)
-    every_day = models.BooleanField(default=True)
-    day = models.DateField(blank=True, null=True)
+    frequency = models.SmallIntegerField(default=EVERY_DAY, verbose_name="frequency", choices=FREQUENCIES)
+    day = models.DateField(blank=True, null=True, verbose_name="day")
+    days = ArrayField(
+        models.DateField(),
+        default=[],
+        verbose_name=_('days')
+    ),
+    week_days = ArrayField(
+        models.SmallIntegerField(),
+        choices=DAYS,
+        verbose_name=_('week days'),
+        null=True,
+        blank=True
+    ),
     is_active = models.BooleanField(default=True)

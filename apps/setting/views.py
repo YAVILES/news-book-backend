@@ -7,12 +7,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
-
-# Create your views here.
-from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource
-from apps.main.models import Vehicle, TypePerson, Person, Material, News
-from apps.main.serializers import VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
-    MaterialDefaultSerializer, NewsDefaultSerializer
 from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
 from apps.setting.serializers import NotificationDefaultSerializer
@@ -107,7 +101,21 @@ class NotificationViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False)
     def field_options(self, request):
         field = self.request.query_params.get('field', None)
-        if field:
+        fields = self.request.query_params.getlist('fields', None)
+        if fields:
+            try:
+                data = {}
+                for field in fields:
+                    data[field] = []
+                    for c in Notification._meta.get_field(field).choices:
+                        data[field].append({
+                            "value": c[0],
+                            "description": c[1]
+                        })
+                return Response(data, status=status.HTTP_200_OK)
+            except ValueError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        elif field:
             try:
                 choices = []
                 for c in Notification._meta.get_field(field).choices:

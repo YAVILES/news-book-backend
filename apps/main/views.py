@@ -102,23 +102,6 @@ class TypePersonViewSet(ModelViewSet):
         except ValueError as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['GET'], detail=False)
-    def field_options(self, request):
-        field = self.request.query_params.get('field', None)
-        if field:
-            try:
-                choices = []
-                for c in TypePerson._meta.get_field(field).choices:
-                    choices.append({
-                        "value": c[0],
-                        "description": c[1]
-                    })
-                return Response(choices, status=status.HTTP_200_OK)
-            except ValueError as e:
-                return Response(e, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class PersonViewSet(ModelViewSet):
     queryset = Person.objects.all()
@@ -194,23 +177,6 @@ class PersonViewSet(ModelViewSet):
                 }, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(methods=['GET'], detail=False)
-    def field_options(self, request):
-        field = self.request.query_params.get('field', None)
-        if field:
-            try:
-                choices = []
-                for c in Person._meta.get_field(field).choices:
-                    choices.append({
-                        "value": c[0],
-                        "description": c[1]
-                    })
-                return Response(choices, status=status.HTTP_200_OK)
-            except ValueError as e:
-                return Response(e, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VehicleViewSet(ModelViewSet):
@@ -288,23 +254,6 @@ class VehicleViewSet(ModelViewSet):
         except ValueError as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['GET'], detail=False)
-    def field_options(self, request):
-        field = self.request.query_params.get('field', None)
-        if field:
-            try:
-                choices = []
-                for c in Vehicle._meta.get_field(field).choices:
-                    choices.append({
-                        "value": c[0],
-                        "description": c[1]
-                    })
-                return Response(choices, status=status.HTTP_200_OK)
-            except ValueError as e:
-                return Response(e, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class MaterialViewSet(ModelViewSet):
     queryset = Material.objects.all()
@@ -380,23 +329,6 @@ class MaterialViewSet(ModelViewSet):
                 }, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(methods=['GET'], detail=False)
-    def field_options(self, request):
-        field = self.request.query_params.get('field', None)
-        if field:
-            try:
-                choices = []
-                for c in Material._meta.get_field(field).choices:
-                    choices.append({
-                        "value": c[0],
-                        "description": c[1]
-                    })
-                return Response(choices, status=status.HTTP_200_OK)
-            except ValueError as e:
-                return Response(e, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class NewsViewSet(ModelViewSet):
@@ -498,7 +430,21 @@ class NewsViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False)
     def field_options(self, request):
         field = self.request.query_params.get('field', None)
-        if field:
+        fields = self.request.query_params.getlist('fields', None)
+        if fields:
+            try:
+                data = {}
+                for field in fields:
+                    data[field] = []
+                    for c in News._meta.get_field(field).choices:
+                        data[field].append({
+                            "value": c[0],
+                            "description": c[1]
+                        })
+                return Response(data, status=status.HTTP_200_OK)
+            except ValueError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        elif field:
             try:
                 choices = []
                 for c in News._meta.get_field(field).choices:
@@ -598,20 +544,3 @@ class ScheduleViewSet(ModelViewSet):
                 }, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(methods=['GET'], detail=False)
-    def field_options(self, request):
-        field = self.request.query_params.get('field', None)
-        if field:
-            try:
-                choices = []
-                for c in Schedule._meta.get_field(field).choices:
-                    choices.append({
-                        "value": c[0],
-                        "description": c[1]
-                    })
-                return Response(choices, status=status.HTTP_200_OK)
-            except ValueError as e:
-                return Response(e, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
