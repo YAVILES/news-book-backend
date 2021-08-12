@@ -68,7 +68,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = serializers.ALL_FIELDS
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'direction', 'telephone',
+                  'phone', 'is_superuser', 'is_staff', 'groups', 'info',)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -125,7 +126,8 @@ class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ('user_permissions',)
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'direction', 'telephone',
+                  'phone', 'is_superuser', 'is_staff', 'groups')
 
 
 class ChangePasswordSerializer(serializers.Serializer):
