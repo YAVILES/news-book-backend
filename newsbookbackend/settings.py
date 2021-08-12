@@ -247,9 +247,8 @@ MEDIA_ROOT = '/home/admin/domains/clientes-grupobtp.com/public_html/api-test/med
 
 MULTITENANT_RELATIVE_MEDIA_ROOT = ""  # (default: create sub-directory for each tenant)
 
-"""
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=365),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=365),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -262,7 +261,6 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
-"""
 
 AUTH_USER_MODEL = 'security.User'
 AUTHENTICATION_BACKENDS = ['apps.security.backends.CustomAuthenticationBackend', ]
