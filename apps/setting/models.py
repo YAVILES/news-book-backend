@@ -62,7 +62,6 @@ class Notification(ModelBase):
     )
     week_days = ArrayField(
         models.SmallIntegerField(),
-        #choices=DAYS,
         default=list,
         verbose_name=_('week days'),
         size=7

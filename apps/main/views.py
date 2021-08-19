@@ -9,11 +9,14 @@ from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 
 # Create your views here.
+from apps.core.models import TypeNews
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
     ScheduleResource
 from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule
 from apps.main.serializers import VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
     MaterialDefaultSerializer, NewsDefaultSerializer, ScheduleDefaultSerializer
+from apps.main.tasks import send_email
+from apps.setting.models import Notification
 
 
 class TypePersonViewSet(ModelViewSet):
@@ -339,24 +342,13 @@ class NewsViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
+        user = self.request.user
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        print(serializer.data)
-        """
-        email = EmailMultiAlternatives(
-            TypeNews.objects.get(id=serializer.data['type_news']).description,
-            '',
-            settings.EMAIL_HOST_USER,
-            [user.email]
-        )
-        # email.attach_alternative(content, 'text/html')
-        try:
-            email.send()
-        except ValueError as e:
-            pass
-        """
+        send_email.delay(TypeNews.objects.get(id=serializer.data['type_news']).description, '', [user.email])
+
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def paginate_queryset(self, queryset):
