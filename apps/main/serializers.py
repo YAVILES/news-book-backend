@@ -30,7 +30,8 @@ class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
 
 
 class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    #created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    created_by = serializers.HiddenField(
+        default=serializers.CurrentUserDefault())
     materials = serializers.PrimaryKeyRelatedField(
         queryset=Material.objects.all(),
         many=True,
@@ -49,7 +50,8 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         required=False,
         help_text="Vehiculos de la novedad"
     )
-    employee = serializers.CharField(help_text="Ficha del trabajador que generó la novedad")
+    employee = serializers.CharField(
+        help_text="Ficha del trabajador que generó la novedad")
 
     class Meta:
         model = News

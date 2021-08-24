@@ -21,7 +21,8 @@ class ChangeSecurityCodeSerializer(serializers.ModelSerializer):
         try:
             user = User.objects.get(code=attrs.get('code'))
         except:
-            raise serializers.ValidationError(detail={"code": _('code invalid')})
+            raise serializers.ValidationError(
+                detail={"code": _('code invalid')})
 
         return attrs
 
@@ -34,8 +35,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
     groups = serializers.PrimaryKeyRelatedField(
         queryset=Group.objects.all(), many=True, required=False, write_only=True
     )
+    security_user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=True, write_only=True
+    )
     code = serializers.CharField(max_length=255, required=False)
-    password = serializers.CharField(max_length=255, write_only=True, required=False)
+    password = serializers.CharField(
+        max_length=255, write_only=True, required=False)
     is_superuser = serializers.BooleanField(required=False, read_only=True)
     is_staff = serializers.BooleanField(required=True)
     email = serializers.EmailField()
@@ -47,7 +52,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
             try:
                 password_validation.validate_password(password)
             except ValidationError as error:
-                raise serializers.ValidationError(detail={"error": error.messages})
+                raise serializers.ValidationError(
+                    detail={"error": error.messages})
         return attrs
 
     def create(self, validated_data):
@@ -69,7 +75,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
-                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active',)
+                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user',)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -113,7 +119,8 @@ class RoleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class RoleFullSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    permissions = PermissionDefaultSerializer(many=True, read_only=True, required=False)
+    permissions = PermissionDefaultSerializer(
+        many=True, read_only=True, required=False)
     name = serializers.CharField(max_length=255, required=False)
 
     class Meta:
@@ -121,13 +128,22 @@ class RoleFullSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = serializers.ALL_FIELDS
 
 
+class UserSecuritySerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('id', 'code', 'email', 'password',
+                  'name', 'last_name', 'full_name')
+
+
 class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     is_superuser = serializers.BooleanField(required=False, read_only=True)
+    security_user = UserSecuritySerializer(read_only=True)
 
     class Meta:
         model = User
         fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
-                  'phone', 'is_superuser', 'is_staff', 'groups', 'is_active',)
+                  'phone', 'is_superuser', 'is_staff', 'groups', 'is_active', 'security_user',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -147,7 +163,8 @@ class ChangePasswordSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except Exception as e:
-            raise serializers.ValidationError(detail={"error": _('email invalid')})
+            raise serializers.ValidationError(
+                detail={"error": _('email invalid')})
 
         user.set_password(password)
         user.save(update_fields=['password'])

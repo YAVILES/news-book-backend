@@ -61,7 +61,8 @@ class TypePersonViewSet(ModelViewSet):
                 file = request.FILES['file']
                 data_set = Dataset()
                 data_set.load(file.read())
-                result = resource.import_data(data_set, dry_run=True)  # Test the data import
+                result = resource.import_data(
+                    data_set, dry_run=True)  # Test the data import
             else:
                 headers = request.data['headers']
                 data_set = tablib.Dataset(headers=headers)
@@ -97,7 +98,8 @@ class TypePersonViewSet(ModelViewSet):
                     "total_rows": result.total_rows,
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
-                result = resource.import_data(data_set, dry_run=False)  # Actually import now
+                result = resource.import_data(
+                    data_set, dry_run=False)  # Actually import now
                 return Response({
                     "totals": result.totals,
                     "total_rows": result.total_rows,
@@ -137,7 +139,8 @@ class PersonViewSet(ModelViewSet):
                 file = request.FILES['file']
                 data_set = Dataset()
                 data_set.load(file.read())
-                result = resource.import_data(data_set, dry_run=True)  # Test the data import
+                result = resource.import_data(
+                    data_set, dry_run=True)  # Test the data import
             else:
                 headers = request.data['headers']
                 data_set = tablib.Dataset(headers=headers)
@@ -173,7 +176,8 @@ class PersonViewSet(ModelViewSet):
                     "total_rows": result.total_rows,
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
-                result = resource.import_data(data_set, dry_run=False)  # Actually import now
+                result = resource.import_data(
+                    data_set, dry_run=False)  # Actually import now
                 return Response({
                     "totals": result.totals,
                     "total_rows": result.total_rows,
@@ -213,7 +217,8 @@ class VehicleViewSet(ModelViewSet):
                 file = request.FILES['file']
                 data_set = Dataset()
                 data_set.load(file.read())
-                result = resource.import_data(data_set, dry_run=True)  # Test the data import
+                result = resource.import_data(
+                    data_set, dry_run=True)  # Test the data import
             else:
                 headers = request.data['headers']
                 data_set = tablib.Dataset(headers=headers)
@@ -249,7 +254,8 @@ class VehicleViewSet(ModelViewSet):
                     "total_rows": result.total_rows,
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
-                result = resource.import_data(data_set, dry_run=False)  # Actually import now
+                result = resource.import_data(
+                    data_set, dry_run=False)  # Actually import now
                 return Response({
                     "totals": result.totals,
                     "total_rows": result.total_rows,
@@ -289,7 +295,8 @@ class MaterialViewSet(ModelViewSet):
                 file = request.FILES['file']
                 data_set = Dataset()
                 data_set.load(file.read())
-                result = resource.import_data(data_set, dry_run=True)  # Test the data import
+                result = resource.import_data(
+                    data_set, dry_run=True)  # Test the data import
             else:
                 headers = request.data['headers']
                 data_set = tablib.Dataset(headers=headers)
@@ -325,7 +332,8 @@ class MaterialViewSet(ModelViewSet):
                     "total_rows": result.total_rows,
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
-                result = resource.import_data(data_set, dry_run=False)  # Actually import now
+                result = resource.import_data(
+                    data_set, dry_run=False)  # Actually import now
                 return Response({
                     "totals": result.totals,
                     "total_rows": result.total_rows,
@@ -346,8 +354,6 @@ class NewsViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        #send_email.delay(TypeNews.objects.get(id=serializer.data['type_news']).description, '', [user.email])
-
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def paginate_queryset(self, queryset):
@@ -374,7 +380,8 @@ class NewsViewSet(ModelViewSet):
                 file = request.FILES['file']
                 data_set = Dataset()
                 data_set.load(file.read())
-                result = resource.import_data(data_set, dry_run=True)  # Test the data import
+                result = resource.import_data(
+                    data_set, dry_run=True)  # Test the data import
             else:
                 headers = request.data['headers']
                 data_set = tablib.Dataset(headers=headers)
@@ -410,7 +417,8 @@ class NewsViewSet(ModelViewSet):
                     "total_rows": result.total_rows,
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
-                result = resource.import_data(data_set, dry_run=False)  # Actually import now
+                result = resource.import_data(
+                    data_set, dry_run=False)  # Actually import now
                 return Response({
                     "totals": result.totals,
                     "total_rows": result.total_rows,
@@ -492,7 +500,8 @@ class ScheduleViewSet(ModelViewSet):
                 file = request.FILES['file']
                 data_set = Dataset()
                 data_set.load(file.read())
-                result = resource.import_data(data_set, dry_run=True)  # Test the data import
+                result = resource.import_data(
+                    data_set, dry_run=True)  # Test the data import
             else:
                 headers = request.data['headers']
                 data_set = tablib.Dataset(headers=headers)
@@ -528,7 +537,8 @@ class ScheduleViewSet(ModelViewSet):
                     "total_rows": result.total_rows,
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
-                result = resource.import_data(data_set, dry_run=False)  # Actually import now
+                result = resource.import_data(
+                    data_set, dry_run=False)  # Actually import now
                 return Response({
                     "totals": result.totals,
                     "total_rows": result.total_rows,
