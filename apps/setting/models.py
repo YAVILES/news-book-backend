@@ -6,6 +6,11 @@ from apps.core.models import ModelBase, TypeNews
 from apps.main.models import Schedule
 
 
+class ScheduleNotification(ModelBase):
+    schedule = models.ForeignKey(Schedule, verbose_name=_('schedule'), on_delete=models.PROTECT)
+    notification = models.ForeignKey('setting.Notification', verbose_name=_('notification'), on_delete=models.PROTECT)
+
+
 class GroupNotification(ModelBase):
     group = models.ForeignKey(Group, verbose_name=_('group'), on_delete=models.PROTECT)
     notification = models.ForeignKey('setting.Notification', verbose_name=_('notification'), on_delete=models.PROTECT)
@@ -22,7 +27,8 @@ class Notification(ModelBase):
     ))
     groups = models.ManyToManyField(Group, verbose_name=_('groups'), related_name='notifications',
                                     through=GroupNotification)
-    schedule = models.ForeignKey(Schedule, verbose_name=_('schedule'), on_delete=models.PROTECT, null=True)
+    schedule = models.ManyToManyField(Schedule, verbose_name=_('schedule'), related_name='notifications',
+                                      through=ScheduleNotification)
     type_news = models.ForeignKey(TypeNews, verbose_name=_('type_news'), on_delete=models.PROTECT)
     every_day = models.BooleanField(default=True)
     day = models.DateField(blank=True, null=True)

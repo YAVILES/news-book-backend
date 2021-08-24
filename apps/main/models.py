@@ -54,7 +54,7 @@ class Person(ModelBase):
     name = models.CharField(max_length=255, verbose_name="name", help_text="Nombre de la persona")
     last_name = models.CharField(max_length=255, verbose_name="lastname", help_text="Apellido de la persona")
     doc_ident = models.CharField(max_length=255, verbose_name="doc_ident", unique=True,
-                                 help_text="Dpcumento de Identidad de la persona")
+                                 help_text="Documento de Identidad de la persona")
     address = models.CharField(max_length=255, verbose_name="address", help_text="Dirección de la persona")
     phone = models.CharField(max_length=255, verbose_name="phone", help_text="Teléfono de la persona")
     mobile = models.CharField(max_length=255, verbose_name="mobile", help_text="Número de celular de la persona")
@@ -75,7 +75,7 @@ class News(ModelBase):
     message = models.TextField(verbose_name=_('message'), help_text="Mensaje de la novedad")
     info = jsonfield.JSONField(default=dict)
     created_by = models.ForeignKey('security.User', verbose_name=_('created_by'), on_delete=models.PROTECT,
-                                   help_text="Creado por")
+                                   help_text="Usuario por el que fue crada la novedad",  null=True)
     materials = models.ManyToManyField(Material, verbose_name=_('materials'), related_name='news',
                                        through=MaterialNews)
     vehicles = models.ManyToManyField(Vehicle, verbose_name=_('vehicles'), related_name='news',
@@ -84,6 +84,20 @@ class News(ModelBase):
                                     through=PersonNews)
     employee = models.CharField(max_length=255, verbose_name="employee",
                                 help_text="Ficha del trabajador que generó la novedad")
+
+
+class Location(ModelBase):
+    INACTIVE = 0
+    ACTIVE = 1
+    STATUS = (
+        (ACTIVE, _('activo')),
+        (INACTIVE, _('inactivo')),
+    )
+    code = models.CharField(max_length=255, verbose_name=_('code'), unique=True, null=False, blank=False)
+    name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
+    phone1 = models.CharField(max_length=255, verbose_name=_('phone1'), blank=True, null=True)
+    phone2 = models.CharField(max_length=255, verbose_name=_('phone2'), blank=True, null=True)
+    status = models.SmallIntegerField(choices=STATUS, default=ACTIVE, verbose_name=_('status'))
 
 
 #    SIGNALS

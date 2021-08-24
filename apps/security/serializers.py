@@ -3,6 +3,7 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.models import Permission, Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -27,6 +28,51 @@ class ChangeSecurityCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('code', 'password',)
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    groups = serializers.PrimaryKeyRelatedField(
+        queryset=Group.objects.all(), many=True, required=False, write_only=True
+    )
+    security_user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=True, write_only=True
+    )
+    code = serializers.CharField(max_length=255, required=False)
+    password = serializers.CharField(max_length=255, write_only=True, required=False)
+    is_superuser = serializers.BooleanField(required=False, read_only=True)
+    is_staff = serializers.BooleanField(required=True)
+    email = serializers.EmailField()
+    info = serializers.JSONField(default=dict)
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        if password:
+            try:
+                password_validation.validate_password(password)
+            except ValidationError as error:
+                raise serializers.ValidationError(detail={"error": error.messages})
+        return attrs
+
+    def create(self, validated_data):
+        password = validated_data.get('password')
+        email = validated_data.get('email')
+        code = validated_data.get('code')
+        validated_data['email'] = str(email).lower()
+        validated_data['code'] = str(code).lower()
+        try:
+            with transaction.atomic():
+                user = super(UserCreateSerializer, self).create(validated_data)
+                if password:
+                    user.set_password(password)
+                    user.save(update_fields=['password'])
+        except ValidationError as error:
+            raise serializers.ValidationError(detail={"error": error.messages})
+        return validated_data
+
+    class Meta:
+        model = User
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
+                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user',)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -78,12 +124,21 @@ class RoleFullSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = serializers.ALL_FIELDS
 
 
-class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    is_superuser = serializers.BooleanField(required=False, read_only=True)
+class UserSecuritySerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = serializers.ALL_FIELDS
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name')
+
+
+class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    is_superuser = serializers.BooleanField(required=False, read_only=True)
+    security_user = UserSecuritySerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
+                  'phone', 'is_superuser', 'is_staff', 'groups', 'is_active', 'security_user',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
