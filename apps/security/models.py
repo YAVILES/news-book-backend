@@ -80,6 +80,7 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(verbose_name=_('is superuser'), default=False)
     is_active = models.BooleanField(verbose_name=_('is active'), default=True)
     info = jsonfield.JSONField(default=dict)
+    is_oesvica = models.BooleanField(default=False)
     last_login = models.DateTimeField(blank=True, null=True, verbose_name=_('last login'))
     last_password_change = models.DateTimeField(blank=True, null=True, auto_now_add=True,
                                                 verbose_name=_('last password change'))

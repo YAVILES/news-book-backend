@@ -8,8 +8,8 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.mail import EmailMultiAlternatives
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, serializers
-from rest_framework.decorators import action
+from rest_framework import status, serializers, permissions
+from rest_framework.decorators import action, authentication_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -25,6 +25,7 @@ from .serializers import UserSimpleSerializer, CustomTokenObtainPairSerializer, 
 
 class ValidUser(GenericViewSet):
     permission_classes = (AllowAny,)
+    authentication_classes = []
 
     def get_serializer_class(self):
         if self.action == 'request_security_code':
@@ -42,7 +43,10 @@ class ValidUser(GenericViewSet):
                 user = User.objects.get(code=code_user)
             except Exception as e:
                 raise serializers.ValidationError(detail={"error": _('Código inválida')})
-
+            if user.is_authenticated:
+                serializers.ValidationError(detail={"error": "Este usuario ya tiene una session activa"})
+            else:
+                pass
             if not user.check_password(password_user):
                 raise serializers.ValidationError(detail={"error": _('Contraseña inválida')})
 
@@ -58,11 +62,10 @@ class ValidUser(GenericViewSet):
                 [user.email]
             )
             # email.attach_alternative(content, 'text/html')
-            try:
-                email.send()
-            except ValueError as e:
-                serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
-
+            #try:
+            #    email.send()
+            #except ValueError as e:
+            #    serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
             user.is_verified_security_code = False
             user.security_code = code
             user.save(update_fields=['security_code'])
