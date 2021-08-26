@@ -61,12 +61,19 @@ class UserManager(BaseUserManager):
         return self._create_user(code, name, last_name, password, **extra_fields)
 
 
+class LocationUser(ModelBase):
+    location = models.ForeignKey("main.Location", verbose_name=_('location'), on_delete=models.PROTECT)
+    user = models.ForeignKey('User', verbose_name=_('user'), on_delete=models.PROTECT)
+
+
 class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     username = None
     code = models.CharField(max_length=255, verbose_name=_('code'), null=False, unique=True, blank=True)
     email = models.EmailField(verbose_name=_('email'), null=True, blank=True, unique=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), null=True)
     last_name = models.CharField(max_length=50, verbose_name=_('last name'))
+    ficha = models.CharField(null=True, max_length=20, verbose_name=_('ficha'),
+                             help_text="Ficha para comparar con plataformas externas, Ej: IBARTI")
     identification_number = models.CharField(max_length=50, blank=True, verbose_name=_('identification number'))
     password = models.CharField(max_length=128, verbose_name=_('password'))
     address = models.CharField(null=True, max_length=255, verbose_name=_('address'))
@@ -79,6 +86,8 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(verbose_name=_('is staff'), default=False)
     is_superuser = models.BooleanField(verbose_name=_('is superuser'), default=False)
     is_active = models.BooleanField(verbose_name=_('is active'), default=True)
+    locations = models.ManyToManyField("main.Location", verbose_name=_('locations'), related_name='users',
+                                       through=LocationUser, blank=True)
     info = jsonfield.JSONField(default=dict)
     is_oesvica = models.BooleanField(default=False)
     last_login = models.DateTimeField(blank=True, null=True, verbose_name=_('last login'))

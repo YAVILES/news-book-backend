@@ -9,6 +9,8 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils.translation import ugettext_lazy as _
 
+from apps.main.models import Location
+from apps.main.serializers import LocationDefaultSerializer
 from apps.security.models import User
 
 
@@ -45,6 +47,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
     is_staff = serializers.BooleanField(required=True)
     email = serializers.EmailField()
     info = serializers.JSONField(default=dict)
+    locations = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), required=False, write_only=True, many=True
+    )
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -75,7 +80,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
-                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user',)
+                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha',
+                  'is_oesvica', 'identification_number', 'locations',)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -139,11 +145,13 @@ class UserSecuritySerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     is_superuser = serializers.BooleanField(required=False, read_only=True)
     security_user = UserSecuritySerializer(read_only=True)
+    locations = LocationDefaultSerializer(read_only=True, many=True)
 
     class Meta:
         model = User
-        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
-                  'phone', 'is_superuser', 'is_staff', 'groups', 'is_active', 'security_user',)
+        fields = ('id', 'code', 'email', 'name', 'last_name', 'full_name', 'address', 'telephone',
+                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha',
+                  'is_oesvica', 'identification_number', 'locations',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

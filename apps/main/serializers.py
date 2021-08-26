@@ -1,6 +1,6 @@
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
-from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule
+from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location
 
 
 class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -26,6 +26,12 @@ class VehicleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Material
+        fields = serializers.ALL_FIELDS
+
+
+class LocationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Location
         fields = serializers.ALL_FIELDS
 
 

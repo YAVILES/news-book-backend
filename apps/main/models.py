@@ -80,7 +80,7 @@ class News(ModelBase):
     employee = models.CharField(max_length=255, verbose_name="employee",
                                 help_text="Ficha del trabajador que generó la novedad")
     location = models.ForeignKey('Location', verbose_name=_('location'), on_delete=models.PROTECT,
-                                 help_text="Ubicacion o Libro donde se generó la novedad",  null=True)
+                                 help_text="Ubicacion o Libro donde se generó la novedad", null=True)
 
 
 class Location(ModelBase):
