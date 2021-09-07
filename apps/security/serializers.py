@@ -1,4 +1,7 @@
 # coding=utf-8
+import json
+
+from cryptography.fernet import Fernet
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import Permission, Group
 from django.contrib.contenttypes.models import ContentType
@@ -90,6 +93,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         super().validate(attrs)
         refresh = self.get_token(self.user)
+        key = Fernet.generate_key()
+        f = Fernet(key)
+        json_security = {
+            "is_superuser": self.user.is_superuser,
+            "is_oesvica": self.user.is_oesvica
+        }
+        security_data = f.encrypt(bytes(str(json_security), encoding='utf8'))
         return {
             'token': str(refresh.access_token),
             'refresh': str(refresh),
@@ -99,6 +109,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'warn': [],
             'name': self.user.full_name,
             "is_superuser": self.user.is_superuser,
+            "security_data": security_data,
+            "id": self.user.id
         }
 
 
@@ -138,8 +150,7 @@ class UserSecuritySerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'code', 'email', 'password',
-                  'name', 'last_name', 'full_name')
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name')
 
 
 class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
