@@ -55,7 +55,6 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'dev.localhost', 'api-test.clientes-g
 SHARED_APPS = (
     'django_tenants',  # mandatory
     'apps.customers',  # you must list the app where your tenant model resides in
-    'apps.security',
     'apps.core',
     'django.contrib.contenttypes',
 
@@ -64,7 +63,6 @@ SHARED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
-    'django.contrib.admin',
     'django.contrib.staticfiles',
     'rest_framework',
 )

@@ -82,9 +82,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'telephone',
-                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha',
-                  'is_oesvica', 'identification_number', 'locations',)
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'phone',
+                  'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha', 'is_oesvica',
+                  'identification_number', 'locations',)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -160,9 +160,9 @@ class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'code', 'email', 'name', 'last_name', 'full_name', 'address', 'telephone',
-                  'phone', 'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha',
-                  'is_oesvica', 'identification_number', 'locations',)
+        fields = ('id', 'code', 'email', 'name', 'last_name', 'full_name', 'address', 'phone', 'is_superuser',
+                  'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha', 'is_oesvica',
+                  'identification_number', 'locations',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

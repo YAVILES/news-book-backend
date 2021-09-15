@@ -67,6 +67,17 @@ class LocationUser(ModelBase):
 
 
 class User(ModelBase, AbstractBaseUser, PermissionsMixin):
+    SUPERVISOR = 'SUPERVISOR'
+    AUDITOR = 'AUDITOR'
+    USER = 'USER'
+    ADMINISTRATOR = 'ADMINISTRADOR'
+
+    TYPES_USER = (
+        (SUPERVISOR, 'SUPERVISOR'),
+        (AUDITOR, 'AUDITOR'),
+        (USER, 'USER'),
+        (ADMINISTRATOR, 'ADMINISTRADOR'),
+    )
     username = None
     code = models.CharField(max_length=255, verbose_name=_('code'), null=False, unique=True, blank=True)
     email = models.EmailField(verbose_name=_('email'), null=True, blank=True, unique=False)
@@ -78,11 +89,13 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     password = models.CharField(max_length=128, verbose_name=_('password'))
     address = models.CharField(null=True, max_length=255, verbose_name=_('address'))
     phone = models.CharField(null=True, max_length=20, verbose_name=_('phone'))
-    telephone = models.CharField(null=True, max_length=20, verbose_name=_('telephone'))
     security_code = models.CharField(null=True, max_length=20, verbose_name=_('security_code'))
     photo = models.ImageField(upload_to='photos/', null=True)
     security_user = models.ForeignKey('User', verbose_name=_('security_user'), on_delete=models.PROTECT,
                                       help_text="Usuario de seguridad", blank=True, null=True)
+    type_user = models.CharField(max_length=50, choices=TYPES_USER, default=ADMINISTRATOR,
+                                 verbose_name=_('type user'),
+                                 help_text="Tipo de usuario. Representa el rol del usuario en el sistema")
     is_staff = models.BooleanField(verbose_name=_('is staff'), default=False)
     is_superuser = models.BooleanField(verbose_name=_('is superuser'), default=False)
     is_active = models.BooleanField(verbose_name=_('is active'), default=True)

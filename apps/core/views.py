@@ -11,7 +11,7 @@ from tablib import Dataset
 from .admin import TypeNewsResource
 from .serializers import TypeNewsDefaultSerializer
 
-from apps.core.models import TypeNews
+from apps.core.models import TypeNews, CODES_TEMPLATES
 
 
 class TypeNewsViewSet(ModelViewSet):
@@ -40,6 +40,10 @@ class TypeNewsViewSet(ModelViewSet):
         if self.paginator is None or not_paginator:
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    @action(methods=['GET'], detail=False)
+    def codes_template(self, request):
+        return Response(CODES_TEMPLATES, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)
     def export(self, request):

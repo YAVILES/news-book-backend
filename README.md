@@ -38,7 +38,7 @@ Si omite el schemaargumento, el shell interactivo le pedirá que seleccione uno.
 
 # migrate_schemas
 Migrate inicial: python manage.py migrate_schemas --shared
-
+python manage.py migrate_schemas --schema=dev
 python manage.py migrate_schemas --executor=parallel
 El parallelejecutor acepta las siguientes configuraciones:
 

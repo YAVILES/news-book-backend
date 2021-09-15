@@ -1,10 +1,12 @@
 import tablib
+import requests
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 from apps.setting.admin import NotificationResource
@@ -128,3 +130,20 @@ class NotificationViewSet(ModelViewSet):
                 return Response(e, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IbartiViewSet(viewsets.ViewSet):
+    permission_classes = (AllowAny,)
+
+    @action(methods=['GET'], detail=False)
+    def planned_staff(self, request):
+        code_location = self.request.query_params.get('code_location', 134)
+        response = requests.get(
+            url="http://localhost/api-ibarti2/manpower-planning/planned-staff",
+            params={"location": code_location}
+        )
+        if response.status_code == 200:
+            return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+

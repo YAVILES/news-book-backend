@@ -7,6 +7,13 @@ from django.utils.translation import ugettext_lazy as _
 
 # Create your models here.
 
+PLANNED_STAFF = "PLANNED_STAFF"
+PLANNED_PERSONNEL_WITH_SAFETY_PROTOCOL = "PLANNED_PERSONNEL_WITH_SAFETY_PROTOCOL"
+CODES_TEMPLATES = (
+    (PLANNED_STAFF, "PERSONAL PLANIFICADO IBARTI"),
+    (PLANNED_PERSONNEL_WITH_SAFETY_PROTOCOL, "PERSONAL PLANIFICADO IBARTI CON PROTOCOLO DE SEGURIDAD")
+)
+
 
 class ModelBase(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -30,8 +37,7 @@ class TypeNews(ModelBase):
     image = models.ImageField(verbose_name=_('image'), upload_to=type_new_path, null=True,
                               help_text="Imagen del tipo de novedad")
     info = jsonfield.JSONField(default=dict)
+    template = jsonfield.JSONField(default=dict)
     is_active = models.BooleanField(default=True)
-
-
 
 
