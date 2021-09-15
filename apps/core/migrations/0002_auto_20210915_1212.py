@@ -12,19 +12,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='TemplateData',
-            fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True, verbose_name='created')),
-                ('updated', models.DateTimeField(auto_now=True, verbose_name='updated')),
-                ('code', models.CharField(choices=[('PLANNED_STAFF', 'Personal Planificado')], max_length=255, verbose_name='code')),
-                ('is_active', models.BooleanField(default=True)),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
         migrations.AlterField(
             model_name='typenews',
             name='template',
