@@ -6,12 +6,15 @@ from django_tenants.models import TenantMixin
 from django.utils.translation import ugettext_lazy as _
 
 # Create your models here.
-
+TITLE = "TITLE"
 PLANNED_STAFF = "PLANNED_STAFF"
 PLANNED_PERSONNEL_WITH_SAFETY_PROTOCOL = "PLANNED_PERSONNEL_WITH_SAFETY_PROTOCOL"
+FREE_TEXT = 'FREE_TEXT'
 CODES_TEMPLATES = (
-    (PLANNED_STAFF, "PERSONAL PLANIFICADO IBARTI"),
-    (PLANNED_PERSONNEL_WITH_SAFETY_PROTOCOL, "PERSONAL PLANIFICADO IBARTI CON PROTOCOLO DE SEGURIDAD")
+    (TITLE, "TITULO"),
+    (FREE_TEXT, "TEXTO LIBRE"),
+    (PLANNED_STAFF, "PERSONAL PLANIFICADO"),
+    (PLANNED_PERSONNEL_WITH_SAFETY_PROTOCOL, "PERSONAL PLANIFICADO CON PROTOCOLO DE SEGURIDAD"),
 )
 
 
@@ -33,7 +36,6 @@ class TypeNews(ModelBase):
                             help_text="Código del tipo de novedad")
     description = models.CharField(max_length=255, verbose_name="description", unique=True,
                                    help_text="Descripción del tipo de novedad")
-    template = models.CharField(max_length=255, verbose_name="template", help_text="Plantilla del tipo de novedad")
     image = models.ImageField(verbose_name=_('image'), upload_to=type_new_path, null=True,
                               help_text="Imagen del tipo de novedad")
     info = jsonfield.JSONField(default=dict)

@@ -6,12 +6,13 @@ from rest_framework import viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from .models import Client, Domain
 from .serializers import ClientSerializer, DomainSerializer
 
 
-class ClientViewSet(viewsets.ViewSet):
+class ClientViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
@@ -40,7 +41,7 @@ class ClientViewSet(viewsets.ViewSet):
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
 
-class DomainViewSet(viewsets.ViewSet):
+class DomainViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
     serializer_class = DomainSerializer
     queryset = Domain.objects.all()

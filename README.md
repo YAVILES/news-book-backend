@@ -1,6 +1,12 @@
 # news-book-backend
 Libro de Novedades backend Django tenancy
 
+# migrate_schemas
+Migrate inicial: python manage.py migrate_schemas --shared
+python manage.py migrate_schemas --schema=dev
+python manage.py migrate_schemas --executor=parallel
+El parallelejecutor acepta las siguientes configuraciones:
+
 # Crear un inquilino
 # create your public tenant
 tenant = Client(schema_name='public', name='Schemas Inc.',paid_until='2020-12-05',on_trial=False)
@@ -36,11 +42,6 @@ class Command(BaseCommand):
 ./manage.py tenant_command do_foo --schema=customer1
 Si omite el schemaargumento, el shell interactivo le pedirá que seleccione uno.
 
-# migrate_schemas
-Migrate inicial: python manage.py migrate_schemas --shared
-python manage.py migrate_schemas --schema=dev
-python manage.py migrate_schemas --executor=parallel
-El parallelejecutor acepta las siguientes configuraciones:
 
 TENANT_PARALLEL_MIGRATION_MAX_PROCESSES (predeterminado: 2): número máximo de procesos para el grupo de migración (esto es para evitar agotar el grupo de conexiones de la base de datos)
 TENANT_PARALLEL_MIGRATION_CHUNKS (predeterminado: 2): número de migraciones que se enviarán a la vez a cada trabajador

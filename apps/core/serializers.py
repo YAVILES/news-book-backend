@@ -8,6 +8,7 @@ from apps.core.models import TypeNews
 class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     info = serializers.JSONField(required=False, default=dict)
     image = serializers.SerializerMethodField(read_only=True)
+    template = serializers.JSONField(required=False, default=dict)
 
     def get_image(self, obj: 'Category'):
         request = self.context.get('request')
