@@ -9,7 +9,9 @@ El parallelejecutor acepta las siguientes configuraciones:
 
 # Crear un inquilino
 # create your public tenant
-tenant = Client(schema_name='public', name='Schemas Inc.',paid_until='2020-12-05',on_trial=False)
+
+tenant = Client(schema_name='public', name='Schemas Inc.', paid_until='2025-12-05',on_trial=False)
+
 tenant.save()
 # Add one or more domains for the tenant
 domain = Domain()
@@ -21,7 +23,7 @@ domain.save()
 # create your first real tenant
 python manage.py tenant_command loaddata --schema=public --name='Fonzy Tenant' --paid_until=2020-12-05 --on_trial=True
 from apps.customers.models import Client, Domain
-tenant = Client(schema_name='tenant1', name='Fonzy Tenant', paid_until='2020-12-05', on_trial=True)
+tenant = Client(schema_name='tenant1', name='Fonzy Tenant', paid_until='2025-12-05', on_trial=True)
 tenant.save() # migrate_schemas automatically called, your tenant is ready to be used!
 
 # Add one or more domains for the tenant

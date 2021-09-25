@@ -48,7 +48,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'dev.localhost', 'api-test.clientes-grupobtp.com', '66.23.233.252']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '194.163.161.64']
 
 # Application definition
 
@@ -241,7 +241,7 @@ MULTITENANT_RELATIVE_STATIC_ROOT = ""  # (default: create sub-directory for each
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
 MEDIA_URL = env('MEDIA_URL')
-MEDIA_ROOT = '/home/admin/domains/clientes-grupobtp.com/public_html/api-test/media/'  # os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 MULTITENANT_RELATIVE_MEDIA_ROOT = ""  # (default: create sub-directory for each tenant)
 
@@ -326,5 +326,5 @@ CSRF_COOKIE_SECURE = True
 CORS_ORIGIN_WHITELIST = [
     'http://localhost',
     'http://127.0.0.1',
-    'https://api-test.clientes-grupobtp.com'
+    'https://194.163.161.64'
 ]
