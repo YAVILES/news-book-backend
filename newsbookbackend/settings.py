@@ -230,11 +230,11 @@ STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
 ]
 
-"""
+
 MULTITENANT_STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "tenants/%s/static"),
 ]
-"""
+
 
 STATICFILES_STORAGE = "django_tenants.staticfiles.storage.TenantStaticFilesStorage"
 
