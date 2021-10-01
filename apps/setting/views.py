@@ -139,7 +139,7 @@ class IbartiViewSet(viewsets.ViewSet):
     def planned_staff(self, request):
         code_location = self.request.query_params.get('code_location', 134)
         response = requests.get(
-            url="http://localhost/api-ibarti2/manpower-planning/planned-staff",
+            url="http://69.10.42.61/api-ibarti2/manpower-planning/planned-staff",
             params={"location": code_location}
         )
         if response.status_code == 200:
