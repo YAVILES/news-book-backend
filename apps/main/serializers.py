@@ -10,7 +10,12 @@ class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerialize
 
 
 class PersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    type_person = TypePersonDefaultSerializer(read_only=True)
+    type_person_display = TypePersonDefaultSerializer(read_only=True, source="type_person")
+    type_person = serializers.PrimaryKeyRelatedField(
+        queryset=TypePerson.objects.all(),
+        required=True,
+        help_text="Id del tipo de persona"
+    )
 
     class Meta:
         model = Person

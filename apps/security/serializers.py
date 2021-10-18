@@ -44,8 +44,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(), required=True, write_only=True
     )
     code = serializers.CharField(max_length=255, required=False)
-    password = serializers.CharField(
-        max_length=255, write_only=True, required=False)
+    password = serializers.CharField(max_length=255, write_only=True, required=False)
     is_superuser = serializers.BooleanField(required=False, read_only=True)
     is_staff = serializers.BooleanField(required=True)
     email = serializers.EmailField()
@@ -65,9 +64,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        password = validated_data.get('password')
+        password = validated_data.pop('password')
         email = validated_data.get('email')
         code = validated_data.get('code')
+        books = validated_data.getlist('books', None)
+        if books:
+            validated_data['locations'] = books
         validated_data['email'] = str(email).lower()
         validated_data['code'] = str(code).lower()
         try:
@@ -84,7 +86,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'phone',
                   'is_superuser', 'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha', 'is_oesvica',
-                  'identification_number', 'locations',)
+                  'identification_number', 'locations', 'type_user',)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -150,7 +152,7 @@ class UserSecuritySerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name')
+        fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'type_user',)
 
 
 class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -162,7 +164,7 @@ class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         model = User
         fields = ('id', 'code', 'email', 'name', 'last_name', 'full_name', 'address', 'phone', 'is_superuser',
                   'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha', 'is_oesvica',
-                  'identification_number', 'locations',)
+                  'identification_number', 'locations', 'type_user',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

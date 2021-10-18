@@ -38,7 +38,7 @@ class TypeNews(ModelBase):
                                    help_text="Descripción del tipo de novedad")
     image = models.ImageField(verbose_name=_('image'), upload_to=type_new_path, null=True,
                               help_text="Imagen del tipo de novedad")
-    info = jsonfield.JSONField(default=dict)
+    info = models.CharField(max_length=255)
     template = jsonfield.JSONField(default=dict)
     is_active = models.BooleanField(default=True)
 

@@ -56,7 +56,7 @@ class Person(ModelBase):
     address = models.CharField( max_length=255, verbose_name="address", help_text="Dirección de la persona")
     phone = models.CharField(max_length=255, verbose_name="phone", help_text="Teléfono de la persona")
     mobile = models.CharField(max_length=255, verbose_name="mobile", help_text="Número de celular de la persona")
-    type_person = models.ForeignKey('TypePerson', verbose_name=_('type_person'), on_delete=models.PROTECT,
+    type_person = models.ForeignKey('main.TypePerson', verbose_name=_('type_person'), on_delete=models.PROTECT,
                                     help_text="tipo de persona")
     is_active = models.BooleanField(default=True)
 
@@ -84,17 +84,11 @@ class News(ModelBase):
 
 
 class Location(ModelBase):
-    INACTIVE = 0
-    ACTIVE = 1
-    STATUS = (
-        (ACTIVE, _('activo')),
-        (INACTIVE, _('inactivo')),
-    )
     code = models.CharField(max_length=255, verbose_name=_('code'), unique=True, null=False, blank=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
     phone1 = models.CharField(max_length=255, verbose_name=_('phone1'), blank=True, null=True)
     phone2 = models.CharField(max_length=255, verbose_name=_('phone2'), blank=True, null=True)
-    status = models.SmallIntegerField(choices=STATUS, default=ACTIVE, verbose_name=_('status'))
+    is_active = models.BooleanField(default=True)
 
 
 #    SIGNALS
