@@ -319,7 +319,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 INTERNAL_IPS = [
     '127.0.0.1',
-    '66.23.233.252'
+    '194.163.161.64'
 ]
 
 # HTTPS:
