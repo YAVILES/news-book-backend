@@ -63,8 +63,12 @@ SHARED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
+    'django.contrib.admin',
     'django.contrib.staticfiles',
     'rest_framework',
+
+    'apps.security',
+    'apps.main',
 )
 
 TENANT_APPS = (
@@ -227,7 +231,7 @@ STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    #"compressor.finders.CompressorFinder",
+    "compressor.finders.CompressorFinder",
 ]
 
 
