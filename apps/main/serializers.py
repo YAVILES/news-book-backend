@@ -1,5 +1,7 @@
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
+
+from apps.core.serializers import TypeNewsDefaultSerializer
 from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location
 
 
@@ -63,6 +65,9 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     )
     employee = serializers.CharField(
         help_text="Ficha del trabajador que generó la novedad")
+    template = serializers.JSONField(required=False, default=list)
+    info = serializers.JSONField(required=False, default=dict)
+    type_news_display = TypeNewsDefaultSerializer(read_only=True, source="type_news")
 
     class Meta:
         model = News

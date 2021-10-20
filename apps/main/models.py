@@ -6,6 +6,7 @@ from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 
 from apps.core.models import ModelBase
+from sequences import get_next_value
 
 
 class Material(ModelBase):
@@ -66,9 +67,17 @@ class PersonNews(ModelBase):
     news = models.ForeignKey('main.News', verbose_name=_('news'), on_delete=models.PROTECT)
 
 
+def get_new_number():
+    return get_next_value('order')
+
+
 class News(ModelBase):
+    number = models.PositiveIntegerField(
+        verbose_name='Number', primary_key=False, db_index=True, default=get_new_number
+    )
     type_news = models.ForeignKey('core.TypeNews', verbose_name=_('type_news'), on_delete=models.PROTECT,
                                   help_text="Tipo de la novedad", blank=True)
+    template = jsonfield.JSONField(default=list)
     info = jsonfield.JSONField(default=dict)
     created_by = models.ForeignKey('security.User', verbose_name=_('created_by'), on_delete=models.PROTECT,
                                    help_text="Usuario por el que fue crada la novedad",  null=True)
