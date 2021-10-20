@@ -235,7 +235,7 @@ STATICFILES_FINDERS = [
 ]
 
 MULTITENANT_STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static/%s"),
+    os.path.join(BASE_DIR, "static"),
 ]
 
 STATICFILES_STORAGE = "django_tenants.staticfiles.storage.TenantStaticFilesStorage"
