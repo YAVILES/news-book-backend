@@ -69,6 +69,7 @@ SHARED_APPS = (
 
     'apps.security',
     'apps.main',
+    'apps.setting',
 )
 
 TENANT_APPS = (
