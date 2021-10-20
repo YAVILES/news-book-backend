@@ -70,7 +70,7 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     SUPERVISOR = 'SUPERVISOR'
     AUDITOR = 'AUDITOR'
     USER = 'USER'
-    ADMINISTRATOR = 'ADMINISTRADOR'
+    ADMINISTRATOR = 'ADMIN'
 
     TYPES_USER = (
         (SUPERVISOR, 'SUPERVISOR'),

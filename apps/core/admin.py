@@ -8,10 +8,10 @@ from apps.core.models import TypeNews
 class TypeNewsResource(ModelResource):
     class Meta:
         model = TypeNews
-        exclude = ('id', 'created', 'updated',)
+        exclude = ('id', 'created', 'updated', 'template',)
 
 
 @admin.register(TypeNews)
 class TypeNewsAdmin(TenantAdminMixin, admin.ModelAdmin):
     list_display = ('description',)
-    exclude = ('info',)
+    exclude = ('template',)
