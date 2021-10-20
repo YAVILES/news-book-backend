@@ -236,7 +236,7 @@ STATICFILES_FINDERS = [
 
 
 MULTITENANT_STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "tenants/%s/static"),
+    os.path.join(BASE_DIR, "static/%s"),
 ]
 
 
