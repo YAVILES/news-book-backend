@@ -69,8 +69,6 @@ class PersonNews(ModelBase):
 class News(ModelBase):
     type_news = models.ForeignKey('core.TypeNews', verbose_name=_('type_news'), on_delete=models.PROTECT,
                                   help_text="Tipo de la novedad", blank=True)
-
-    message = models.TextField(verbose_name=_('message'), help_text="Mensaje de la novedad")
     info = jsonfield.JSONField(default=dict)
     created_by = models.ForeignKey('security.User', verbose_name=_('created_by'), on_delete=models.PROTECT,
                                    help_text="Usuario por el que fue crada la novedad",  null=True)
