@@ -56,6 +56,10 @@ SHARED_APPS = (
     'django_tenants',  # mandatory
     'apps.customers',  # you must list the app where your tenant model resides in
     'apps.core',
+    'apps.security',
+    'apps.main',
+    'apps.setting',
+
     'django.contrib.contenttypes',
 
     # everything below here is optional
@@ -66,10 +70,6 @@ SHARED_APPS = (
     'django.contrib.admin',
     'django.contrib.staticfiles',
     'rest_framework',
-
-    'apps.security',
-    'apps.main',
-    'apps.setting',
 )
 
 TENANT_APPS = (

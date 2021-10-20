@@ -19,7 +19,7 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
             return request.build_absolute_uri(image_url)
         else:
             return None
-    
+
     class Meta:
         model = TypeNews
         fields = serializers.ALL_FIELDS
