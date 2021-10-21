@@ -113,7 +113,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "is_superuser": self.user.is_superuser,
             "security_data": security_data,
             "id": self.user.id,
-            "type_user": self.user.type_user
+            "type_user": self.user.type_user,
+            "locations": self.user.locations.all().values_list("id", flat=True)
         }
 
 

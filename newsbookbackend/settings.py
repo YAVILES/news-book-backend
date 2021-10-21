@@ -70,6 +70,7 @@ SHARED_APPS = (
     'django.contrib.admin',
     'django.contrib.staticfiles',
     'rest_framework',
+    'sequences',
 )
 
 TENANT_APPS = (
