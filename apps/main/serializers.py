@@ -2,7 +2,7 @@ from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 
 from apps.core.serializers import TypeNewsDefaultSerializer
-from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location
+from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point
 
 
 class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -68,6 +68,13 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     template = serializers.JSONField(required=False, default=list)
     info = serializers.JSONField(required=False, default=dict)
     type_news_display = TypeNewsDefaultSerializer(read_only=True, source="type_news")
+    location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(),
+        required=False,
+        write_only=True,
+        help_text="Libro donde se genera la novedad"
+    )
+    location = LocationDefaultSerializer(read_only=True)
 
     class Meta:
         model = News
@@ -80,4 +87,11 @@ class ScheduleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
 
     class Meta:
         model = Schedule
+        fields = serializers.ALL_FIELDS
+
+
+class PointDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+
+    class Meta:
+        model = Point
         fields = serializers.ALL_FIELDS

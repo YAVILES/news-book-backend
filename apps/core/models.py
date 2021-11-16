@@ -9,11 +9,23 @@ from django.utils.translation import ugettext_lazy as _
 TITLE = "TITLE"
 FREE_TEXT = 'FREE_TEXT'
 PLANNED_STAFF = "PLANNED_STAFF"
+OESVICA_STAFF = "OESVICA_STAFF"
+DATE = "DATE"
+HOUR = "HOUR"
+SUB_LINE = "SUB_LINE"  # Alcance asociada al cliente y Ubicación de Ibarti
+AMOUNT = "AMOUNT"
+POINT = "POINT"
 
 CODES_TEMPLATES = (
     (TITLE, "TITULO"),
     (FREE_TEXT, "TEXTO LIBRE"),
     (PLANNED_STAFF, "PERSONAL PLANIFICADO"),
+    (OESVICA_STAFF, "PERSONAL OESVICA"),
+    (DATE, "FECHA"),
+    (HOUR, "HORA"),
+    (SUB_LINE, "SUB LINEA"),
+    (AMOUNT, "CANTIDAD"),
+    (POINT, "PUNTO"),
 )
 
 

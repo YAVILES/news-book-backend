@@ -87,7 +87,11 @@ class News(ModelBase):
     employee = models.CharField(max_length=255, verbose_name="employee",
                                 help_text="Ficha del trabajador que generó la novedad")
     location = models.ForeignKey('Location', verbose_name=_('location'), on_delete=models.PROTECT,
-                                 help_text="Ubicacion o Libro donde se generó la novedad", null=True)
+                                 help_text="Ubicación o Libro donde se generó la novedad", null=True)
+
+    class Meta:
+        verbose_name = _('new')
+        verbose_name_plural = _('news')
 
 
 class Location(ModelBase):
@@ -95,6 +99,12 @@ class Location(ModelBase):
     name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
     phone1 = models.CharField(max_length=255, verbose_name=_('phone1'), blank=True, null=True)
     phone2 = models.CharField(max_length=255, verbose_name=_('phone2'), blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+
+class Point(ModelBase):
+    code = models.CharField(max_length=255, verbose_name=_('code'), unique=True, null=False, blank=False)
+    name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
     is_active = models.BooleanField(default=True)
 
 

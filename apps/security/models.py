@@ -83,7 +83,7 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(verbose_name=_('email'), null=True, blank=True, unique=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), null=True)
     last_name = models.CharField(max_length=50, verbose_name=_('last name'))
-    ficha = models.CharField(null=True, max_length=20, verbose_name=_('ficha'),
+    ficha = models.CharField(max_length=20, verbose_name=_('ficha'), null=True, blank=True,
                              help_text="Ficha para comparar con plataformas externas, Ej: IBARTI")
     identification_number = models.CharField(max_length=50, blank=True, verbose_name=_('identification number'))
     password = models.CharField(max_length=128, verbose_name=_('password'))
