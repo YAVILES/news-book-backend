@@ -14,6 +14,8 @@ from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
 from apps.setting.serializers import NotificationDefaultSerializer
 
+url_api_ibart = 'http://69.10.42.61/api-ibarti2'
+
 
 class NotificationViewSet(ModelViewSet):
     queryset = Notification.objects.all()
@@ -140,7 +142,7 @@ class IbartiViewSet(viewsets.ViewSet):
     def planned_staff(self, request):
         code_location = self.request.query_params.get('code_location', 134)
         response = requests.get(
-            url="http://69.10.42.61/api-ibarti2/manpower-planning/planned-staff",
+            url=url_api_ibart + "/manpower-planning/planned-staff",
             params={"location": code_location}
         )
         if response.status_code == 200:
@@ -152,7 +154,7 @@ class IbartiViewSet(viewsets.ViewSet):
     def oesvica_staff(self, request):
         code_location = self.request.query_params.get('code_location', 134)
         response = requests.get(
-            url="http://69.10.42.61/api-ibarti2/manpower-planning/planned-staff",
+            url=url_api_ibart + "/manpower-planning/planned-staff",
             params={"location": code_location}
         )
         if response.status_code == 200:
@@ -164,7 +166,7 @@ class IbartiViewSet(viewsets.ViewSet):
     def sub_line_scope(self, request):
         code_location = self.request.query_params.get('code_location', 134)
         response = requests.get(
-            url="http://69.10.42.61/api-ibarti2/inventory/scope",
+            url=url_api_ibart + "/inventory/scope",
             params={"location": code_location}
         )
         if response.status_code == 200:
