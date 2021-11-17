@@ -45,6 +45,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     )
     code = serializers.CharField(max_length=255, required=False)
     password = serializers.CharField(max_length=255, write_only=True, required=False)
+    ficha = serializers.CharField(max_length=20, required=False, default=None, allow_null=True)
     is_superuser = serializers.BooleanField(required=False, read_only=True)
     is_staff = serializers.BooleanField(required=True)
     email = serializers.EmailField()
@@ -67,7 +68,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         email = validated_data.get('email')
         code = validated_data.get('code')
-        books = validated_data.getlist('books', None)
+        books = validated_data.get('locations', None)
         if books:
             validated_data['locations'] = books
         validated_data['email'] = str(email).lower()

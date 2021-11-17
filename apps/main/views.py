@@ -10,10 +10,11 @@ from tablib import Dataset
 
 # Create your views here.
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
-    ScheduleResource, LocationResource
-from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule, Location
+    ScheduleResource, LocationResource, PointResource
+from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule, Location, Point
 from apps.main.serializers import VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
-    MaterialDefaultSerializer, NewsDefaultSerializer, ScheduleDefaultSerializer, LocationDefaultSerializer
+    MaterialDefaultSerializer, NewsDefaultSerializer, ScheduleDefaultSerializer, LocationDefaultSerializer, \
+    PointDefaultSerializer
 
 
 class TypePersonViewSet(ModelViewSet):
@@ -340,18 +341,32 @@ class MaterialViewSet(ModelViewSet):
 
 
 class NewsViewSet(ModelViewSet):
-    queryset = News.objects.all()
+    queryset = News.objects.all().order_by('-number')
     serializer_class = NewsDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['message', 'employee']
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        data = request.data
+        if 'location' in request.headers:
+            data['location'] = request.headers['location']
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if 'location' in request.headers and request.headers['location']:
+            queryset = queryset.filter(location_id=request.headers['location'])
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context=self.get_serializer_context())
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True, context=self.get_serializer_context())
+        return Response(serializer.data)
 
     def paginate_queryset(self, queryset):
         """
@@ -580,6 +595,95 @@ class LocationViewSet(ModelViewSet):
     def _import(self, request):
         try:
             resource = LocationResource()
+            errors = []
+            invalids = []
+            if request.FILES:
+                file = request.FILES['file']
+                data_set = Dataset()
+                data_set.load(file.read())
+                result = resource.import_data(
+                    data_set, dry_run=True)  # Test the data import
+            else:
+                headers = request.data['headers']
+                data_set = tablib.Dataset(headers=headers)
+                for d in request.data['data']:
+                    data_set.append(d)
+                result = resource.import_data(data_set, dry_run=True)
+
+            if result.has_errors() or len(result.invalid_rows) > 0:
+                for row in result.invalid_rows:
+                    invalids.append(
+                        {
+                            "row": row.number + 1,
+                            "error": row.error,
+                            "error_dict": row.error_dict,
+                            "values": row.values
+                        }
+                    )
+
+                for row in result.row_errors():
+                    err = row[1]
+                    errors.append(
+                        {
+                            "errors": [e.error.__str__() for e in err],
+                            "values": err[0].row,
+                            "row": row[0]
+                        }
+                    )
+
+                return Response({
+                    "rows_error": errors,
+                    "invalid_rows": invalids,
+                    "totals": result.totals,
+                    "total_rows": result.total_rows,
+                }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                result = resource.import_data(
+                    data_set, dry_run=False)  # Actually import now
+                return Response({
+                    "totals": result.totals,
+                    "total_rows": result.total_rows,
+                }, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PointViewSet(ModelViewSet):
+    queryset = Point.objects.all()
+    serializer_class = PointDefaultSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['code', 'name']
+    permission_classes = (AllowAny,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def paginate_queryset(self, queryset):
+        """
+        Return a single page of results, or `None` if pagination is disabled.
+        """
+        not_paginator = self.request.query_params.get('not_paginator', None)
+        if self.paginator is None or not_paginator:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    @action(methods=['GET'], detail=False)
+    def export(self, request):
+        dataset = PointResource().export()
+        return Response(dataset.csv, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False)
+    def _import(self, request):
+        try:
+            resource = PointResource()
             errors = []
             invalids = []
             if request.FILES:

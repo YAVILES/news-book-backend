@@ -1,12 +1,13 @@
 import tablib
 import requests
+from constance.backends.database.models import Constance
+from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 from apps.setting.admin import NotificationResource
@@ -140,6 +141,30 @@ class IbartiViewSet(viewsets.ViewSet):
         code_location = self.request.query_params.get('code_location', 134)
         response = requests.get(
             url="http://69.10.42.61/api-ibarti2/manpower-planning/planned-staff",
+            params={"location": code_location}
+        )
+        if response.status_code == 200:
+            return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['GET'], detail=False)
+    def oesvica_staff(self, request):
+        code_location = self.request.query_params.get('code_location', 134)
+        response = requests.get(
+            url="http://69.10.42.61/api-ibarti2/manpower-planning/planned-staff",
+            params={"location": code_location}
+        )
+        if response.status_code == 200:
+            return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['GET'], detail=False)
+    def sub_line_scope(self, request):
+        code_location = self.request.query_params.get('code_location', 134)
+        response = requests.get(
+            url="http://69.10.42.61/api-ibarti2/inventory/scope",
             params={"location": code_location}
         )
         if response.status_code == 200:

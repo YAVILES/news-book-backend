@@ -4,7 +4,7 @@ from import_export.resources import ModelResource
 from django_tenants.admin import TenantAdminMixin
 
 # Register your models here.
-from apps.main.models import TypePerson, Material, Vehicle, Person, News, Schedule, Location
+from apps.main.models import TypePerson, Material, Vehicle, Person, News, Schedule, Location, Point
 
 
 class PersonResource(ModelResource):
@@ -49,6 +49,12 @@ class LocationResource(ModelResource):
         exclude = ('id', 'created', 'updated',)
 
 
+class PointResource(ModelResource):
+    class Meta:
+        model = Location
+        exclude = ('id', 'created', 'updated',)
+
+
 @admin.register(TypePerson)
 class TypePersonAdmin(TenantAdminMixin, admin.ModelAdmin):
     list_display = ('description', 'priority', 'is_active')
@@ -75,5 +81,10 @@ class NewsAdmin(TenantAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Location)
-class Locationdmin(TenantAdminMixin, admin.ModelAdmin):
+class LocationAdmin(TenantAdminMixin, admin.ModelAdmin):
+    list_display = ('code', 'name',)
+
+
+@admin.register(Point)
+class PointAdmin(TenantAdminMixin, admin.ModelAdmin):
     list_display = ('code', 'name',)

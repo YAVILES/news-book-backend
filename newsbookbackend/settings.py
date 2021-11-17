@@ -30,7 +30,8 @@ env = environ.Env(
     EMAIL_PASSWORD=(str, 'passEmail'),
     EMAIL_HOST_USER=(str, "example@gmail.com"),
     EMAIL_HOST=(str, 'smtp.googlemail.com'),
-    EMAIL_PORT=(int, 587)
+    EMAIL_PORT=(int, 587),
+    API_IBARTI=(str, 'http://69.10.42.61/api-ibarti2'),
 )
 
 # reading .env file
@@ -48,7 +49,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '194.163.161.64']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '194.163.161.64', 'dev.localhost']
 
 # Application definition
 
@@ -71,6 +72,8 @@ SHARED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'sequences',
+    'constance',
+    'constance.backends.database',
 )
 
 TENANT_APPS = (
@@ -83,6 +86,8 @@ TENANT_APPS = (
     'django.contrib.messages',
     'django.contrib.admin',
     'django.contrib.staticfiles',
+    'constance',
+    'constance.backends.database',
 
     # APPS
     'apps.main',
@@ -284,7 +289,8 @@ CORS_ALLOW_HEADERS = [
     'origin',
     'user-agent',
     'x-csrftoken',
-    'x-requested-with'
+    'x-requested-with',
+    'location'
 ]
 
 EMAIL_HOST = env('EMAIL_HOST')

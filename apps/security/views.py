@@ -21,6 +21,7 @@ from .admin import UserResource, RoleResource
 from .models import User
 from .serializers import UserSimpleSerializer, CustomTokenObtainPairSerializer, RoleDefaultSerializer, \
     ChangeSecurityCodeSerializer, ChangePasswordSerializer, UserCreateSerializer
+from ..main.serializers import LocationDefaultSerializer
 
 
 class ValidUser(GenericViewSet):
@@ -40,7 +41,7 @@ class ValidUser(GenericViewSet):
             code_user = serializer.data["code"]
             password_user = serializer.data["password"]
             try:
-                user = User.objects.get(code=code_user)
+                user: User = User.objects.get(code=code_user)
             except Exception as e:
                 raise serializers.ValidationError(detail={"error": _('Código inválida')})
             if user.is_authenticated:
@@ -53,6 +54,9 @@ class ValidUser(GenericViewSet):
             if not user.is_active:
                 raise serializers.ValidationError(detail={"error": _('Usuario inactivo')})
 
+            if (not user.is_superuser and user.type_user != User.ADMINISTRATOR) and not user.locations:
+                raise serializers.ValidationError(detail={"error": _('Debes tener al menos un libro asignado')})
+
             chars = string.ascii_uppercase + string.digits
             code = ''.join(random.choice(chars) for _ in range(8))
             email = EmailMultiAlternatives(
@@ -61,6 +65,9 @@ class ValidUser(GenericViewSet):
                 settings.EMAIL_HOST_USER,
                 [user.email]
             )
+            if user.security_user and user.security_user.phone:
+                url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.security_user.phone+'/' + code + ''
+            #request.post(url_msg)
             # email.attach_alternative(content, 'text/html')
             #try:
             #    email.send()
@@ -69,7 +76,10 @@ class ValidUser(GenericViewSet):
             user.is_verified_security_code = False
             user.security_code = code
             user.save(update_fields=['security_code'])
-            return Response({'security_code': code}, status=status.HTTP_200_OK)
+            return Response({
+                'security_code': code,
+                'locations': LocationDefaultSerializer(user.locations.all(), many=True).data
+            }, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
