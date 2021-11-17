@@ -1,3 +1,4 @@
+import requests
 import tablib
 import string
 import random
@@ -70,7 +71,7 @@ class ValidUser(GenericViewSet):
             else:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
             try:
-                request.post(url_msg)
+                requests.post(url_msg)
             except ValueError as e:
                 serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
             # email.attach_alternative(content, 'text/html')
