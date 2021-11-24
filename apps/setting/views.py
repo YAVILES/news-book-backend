@@ -140,7 +140,7 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def planned_staff(self, request):
-        code_location = self.request.query_params.get('code_location', 134)
+        code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
             url=url_api_ibart + "/manpower-planning/planned-staff",
             params={"location": code_location}
@@ -152,7 +152,7 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def oesvica_staff(self, request):
-        code_location = self.request.query_params.get('code_location', 134)
+        code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
             url=url_api_ibart + "/manpower-planning/planned-staff",
             params={"location": code_location}
@@ -164,9 +164,21 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def sub_line_scope(self, request):
-        code_location = self.request.query_params.get('code_location', 134)
+        code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
             url=url_api_ibart + "/inventory/scope",
+            params={"location": code_location}
+        )
+        if response.status_code == 200:
+            return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['GET'], detail=False)
+    def location_current(self, request):
+        code_location = self.request.query_params.get('code_location', 157)
+        response = requests.get(
+            url=url_api_ibart + "/client/location",
             params={"location": code_location}
         )
         if response.status_code == 200:

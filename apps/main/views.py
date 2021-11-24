@@ -359,8 +359,10 @@ class NewsViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        '''
         if 'location' in request.headers and request.headers['location']:
             queryset = queryset.filter(location_id=request.headers['location'])
+        '''
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, context=self.get_serializer_context())
