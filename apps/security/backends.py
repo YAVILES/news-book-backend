@@ -24,8 +24,8 @@ class CustomAuthenticationBackend(ModelBackend):
         except UserModel.DoesNotExist:
             raise exceptions.AuthenticationFailed('El usuario no existe')
         else:
-            security_code = request.data['security_code']
-            if user_verified_security_code(user, security_code):
+            security_code = request.data.get('security_code', None)
+            if user_verified_security_code(user, security_code) or not security_code:
                 return user
             else:
                 raise exceptions.AuthenticationFailed('Código de seguridad inválido')
