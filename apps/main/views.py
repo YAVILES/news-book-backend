@@ -349,7 +349,7 @@ class NewsViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        if 'location' in request.headers:
+        if 'location' in request.headers and request.headers['location']:
             data['location'] = request.headers['location']
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
