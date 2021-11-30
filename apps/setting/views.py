@@ -165,10 +165,13 @@ class IbartiViewSet(viewsets.ViewSet):
     @action(methods=['GET'], detail=False)
     def sub_line_scope(self, request):
         code_location = self.request.query_params.get('code_location', 157)
-        response = requests.get(
-            url=url_api_ibart + "/inventory/scope",
-            params={"location": code_location}
-        )
+        try:
+            response = requests.get(
+                url=url_api_ibart + "/inventory/scope",
+                params={"location": code_location}
+            )
+        except:
+            pass
         if response.status_code == 200:
             return Response(response.json(), status=status.HTTP_200_OK)
         else:
@@ -177,10 +180,13 @@ class IbartiViewSet(viewsets.ViewSet):
     @action(methods=['GET'], detail=False)
     def location_current(self, request):
         code_location = self.request.query_params.get('code_location', 157)
-        response = requests.get(
-            url=url_api_ibart + "/client/location",
-            params={"location": code_location}
-        )
+        try:
+            response = requests.get(
+                url=url_api_ibart + "/client/location",
+                params={"location": code_location}
+            )
+        except BaseException as e:
+            pass
         if response.status_code == 200:
             return Response(response.json(), status=status.HTTP_200_OK)
         else:
