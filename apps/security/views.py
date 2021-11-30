@@ -70,10 +70,12 @@ class ValidUser(GenericViewSet):
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.security_user.phone+'/' + code + ''
             else:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
+
             try:
                 requests.post(url_msg)
             except ValueError as e:
                 serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
+            
             # email.attach_alternative(content, 'text/html')
             #try:
             #    email.send()
