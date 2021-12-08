@@ -1,7 +1,5 @@
 import tablib
 import requests
-from constance.backends.database.models import Constance
-from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -10,11 +8,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
+
+from apps.main.models import News
+from apps.main.serializers import NewsDefaultSerializer
 from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
 from apps.setting.serializers import NotificationDefaultSerializer
 
-url_api_ibart = 'http://69.10.42.61/api-ibarti2'
+url_api_ibart = 'http://127.0.0.1/api-ibarti2' #'http://69.10.42.61/api-ibarti2'
 
 
 class NotificationViewSet(ModelViewSet):
@@ -163,6 +164,17 @@ class IbartiViewSet(viewsets.ViewSet):
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['GET'], detail=False)
+    def former_guard(self, request):
+        code_location = self.request.query_params.get('code_location', None)
+        data = NewsDefaultSerializer(
+            News.objects.filter(
+                location__code=code_location,
+                type_news__is_changing_of_the_guard=True
+            ).last()
+        ).data
+        return Response(data['info'], status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=False)
     def sub_line_scope(self, request):
         code_location = self.request.query_params.get('code_location', 157)
         try:
@@ -170,8 +182,9 @@ class IbartiViewSet(viewsets.ViewSet):
                 url=url_api_ibart + "/inventory/scope",
                 params={"location": code_location}
             )
-        except:
-            pass
+        except Exception as e:
+            return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+
         if response.status_code == 200:
             return Response(response.json(), status=status.HTTP_200_OK)
         else:
@@ -185,8 +198,9 @@ class IbartiViewSet(viewsets.ViewSet):
                 url=url_api_ibart + "/client/location",
                 params={"location": code_location}
             )
-        except BaseException as e:
-            pass
+        except Exception as e:
+            return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+
         if response.status_code == 200:
             return Response(response.json(), status=status.HTTP_200_OK)
         else:

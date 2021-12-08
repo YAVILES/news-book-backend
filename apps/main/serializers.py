@@ -67,7 +67,7 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         help_text="Ficha del trabajador que generó la novedad")
     template = serializers.JSONField(required=False, default=list)
     info = serializers.JSONField(required=False, default=dict)
-    type_news_display = TypeNewsDefaultSerializer(read_only=True, source="type_news")
+    type_news_display = TypeNewsDefaultSerializer(read_only=True, source="type_news", exclude=('image_display',))
     location = serializers.PrimaryKeyRelatedField(
         queryset=Location.objects.all(),
         required=False,

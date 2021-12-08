@@ -10,22 +10,29 @@ TITLE = "TITLE"
 FREE_TEXT = 'FREE_TEXT'
 PLANNED_STAFF = "PLANNED_STAFF"
 OESVICA_STAFF = "OESVICA_STAFF"
+FORMER_GUARD = "FORMER_GUARD"
 DATE = "DATE"
 HOUR = "HOUR"
 SUB_LINE = "SUB_LINE"  # Alcance asociada al cliente y Ubicación de Ibarti
 AMOUNT = "AMOUNT"
 POINT = "POINT"
+ROUNDS = "ROUNDS"
+TEXTBOX = "TEXTBOX"
+SELECTION = "SELECTION"
 
 CODES_TEMPLATES = (
     (TITLE, "TITULO"),
     (FREE_TEXT, "TEXTO LIBRE"),
     (PLANNED_STAFF, "PERSONAL PLANIFICADO"),
     (OESVICA_STAFF, "PERSONAL OESVICA"),
+    (FORMER_GUARD, "PERSONAL DE GUARDIA ANTERIOR"),
     (DATE, "FECHA"),
     (HOUR, "HORA"),
     (SUB_LINE, "SUB LINEA"),
     (AMOUNT, "CANTIDAD"),
     (POINT, "PUNTO"),
+    (TEXTBOX, "CAJA DE TEXTO"),
+    (SELECTION, "SELECCIÓN"),
 )
 
 
@@ -50,6 +57,7 @@ class TypeNews(ModelBase):
     image = models.ImageField(verbose_name=_('image'), upload_to=type_new_path, null=True,
                               help_text="Imagen del tipo de novedad")
     info = models.CharField(max_length=255)
+    is_changing_of_the_guard = models.BooleanField(default=False)
     template = jsonfield.JSONField(default=list, null=True)
     is_active = models.BooleanField(default=True)
 

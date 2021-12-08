@@ -249,12 +249,12 @@ STATICFILES_STORAGE = "django_tenants.staticfiles.storage.TenantStaticFilesStora
 
 MULTITENANT_RELATIVE_STATIC_ROOT = ""  # (default: create sub-directory for each tenant)
 
+MEDIA_URL = env('MEDIA_URL')
+MEDIA_ROOT = "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
+
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
-MEDIA_URL = env('MEDIA_URL')
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-MULTITENANT_RELATIVE_MEDIA_ROOT = ""  # (default: create sub-directory for each tenant)
+MULTITENANT_RELATIVE_MEDIA_ROOT = "media"  # (default: create sub-directory for each tenant)
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=365),
