@@ -4,6 +4,7 @@ from django.db import models
 import jsonfield
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
 
 from apps.core.models import ModelBase
 from sequences import get_next_value
@@ -33,6 +34,8 @@ class MaterialNews(ModelBase):
 class Vehicle(ModelBase):
     license_plate = models.CharField(max_length=255, verbose_name="license_plate", unique=True,
                                      help_text="Placa del vehiculo")
+    owner_full_name = models.CharField(max_length=255, verbose_name="owner full name", unique=True,
+                                       help_text="Nombre y Apellido del propieatario del vehiculo", null=True)
     is_active = models.BooleanField(default=True)
 
 

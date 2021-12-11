@@ -25,6 +25,8 @@ class PersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class VehicleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    owner_full_name = serializers.CharField(help_text="Nombre y apellido del propietario", read_only=True)
+
     class Meta:
         model = Vehicle
         fields = serializers.ALL_FIELDS
