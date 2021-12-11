@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -13,12 +13,29 @@ from .serializers import ClientSerializer, DomainSerializer
 
 
 class ClientViewSet(ModelViewSet):
-    permission_classes = (AllowAny,)
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['name', 'domain_url']
     permission_classes = (AllowAny,)
+
+    def create(self, request, *args, **kwargs):
+        #self.perform_create(serializer)
+        data = request.data
+        tenant = Client(
+            schema_name=data['schema_name'],
+            name=data['name'],
+            paid_until=data['paid_until'],
+            on_trial=False
+        )
+        tenant.save()
+        domain = Domain()
+        domain.domain = data['domain']
+        domain.tenant = tenant
+        domain.is_primary = True
+        domain.save()
+        # headers = self.get_success_headers(serializer.data)
+        return Response(ClientSerializer(tenant).data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -42,7 +59,6 @@ class ClientViewSet(ModelViewSet):
 
 
 class DomainViewSet(ModelViewSet):
-    permission_classes = (AllowAny,)
     serializer_class = DomainSerializer
     queryset = Domain.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]

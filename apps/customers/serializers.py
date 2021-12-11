@@ -1,7 +1,7 @@
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 
-from apps.customers.models import Client
+from apps.customers.models import Client, Domain
 
 
 class ClientSerializer(DynamicFieldsMixin, serializers.Serializer):
@@ -12,5 +12,5 @@ class ClientSerializer(DynamicFieldsMixin, serializers.Serializer):
 
 class DomainSerializer(DynamicFieldsMixin, serializers.Serializer):
     class Meta:
-        model = Client
+        model = Domain
         fields = serializers.ALL_FIELDS
