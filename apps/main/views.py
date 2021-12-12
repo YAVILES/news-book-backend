@@ -344,7 +344,7 @@ class NewsViewSet(ModelViewSet):
     queryset = News.objects.all().order_by('-number')
     serializer_class = NewsDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['message', 'employee']
+    search_fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name']
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
