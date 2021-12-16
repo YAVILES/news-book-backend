@@ -13,7 +13,7 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
     groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True)
     groups_display = serializers.SerializerMethodField(read_only=True)
     schedule = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), many=True)
-    days = serializers.ListField(child=serializers.DateField(), required=False)
+    days = serializers.ListField(child=serializers.DateField(), required=False, null=True)
     week_days = serializers.ListField(child=serializers.IntegerField(), required=False)
 
     def get_groups_display(self, attr: Notification):
