@@ -4,7 +4,6 @@ from django.db import models
 import jsonfield
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
-from django.utils.functional import cached_property
 
 from apps.core.models import ModelBase
 from sequences import get_next_value
@@ -15,6 +14,17 @@ class Material(ModelBase):
     serial = models.CharField(max_length=255, verbose_name="serial", unique=True, help_text="Serial del material")
     description = models.CharField(max_length=255, verbose_name="description", unique=True,
                                    help_text="Descripción del material")
+    is_active = models.BooleanField(default=True)
+
+
+class EquipmentTools(ModelBase):
+    serial = models.CharField(max_length=255, verbose_name="serial", unique=True, help_text="Serial")
+    description = models.CharField(max_length=255, verbose_name="description", null=True, help_text="Descripción")
+    mark = models.CharField(max_length=255, verbose_name="mark", null=True, help_text="Marca")
+    model = models.CharField(max_length=255, verbose_name="model", null=True,  help_text="Modelo")
+    color = models.CharField(max_length=255, verbose_name="color", null=True, help_text="Color")
+    year = models.CharField(max_length=255, verbose_name="year", null=True, help_text="Año")
+    license_plate = models.CharField(max_length=255, verbose_name="license_plate", null=True, help_text="Placa")
     is_active = models.BooleanField(default=True)
 
 

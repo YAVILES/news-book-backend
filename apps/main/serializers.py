@@ -1,8 +1,10 @@
+from django.db import transaction
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from apps.core.serializers import TypeNewsDefaultSerializer
-from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point
+from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools
 
 
 class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -78,6 +80,32 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     )
     location = LocationDefaultSerializer(read_only=True)
 
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                info = validated_data.get('info')
+                for key in list(info.keys()):
+                    obj = info[key]
+                    if 'materials' in obj:
+                        if 'value' in obj['materials']:
+                            for material in obj['materials']['value']:
+                                equipment_tool, created = EquipmentTools.objects.update_or_create(
+                                    serial=material['serial'],
+                                    defaults={
+                                        'description': material['description'],
+                                        'mark': material['mark'],
+                                        'model': material['model'],
+                                        'color': material['color'],
+                                        'year': material['year'],
+                                        'license_plate': material['license_plate'],
+                                    },
+                                )
+
+                new = super(NewsDefaultSerializer, self).create(validated_data)
+                return new
+        except ValidationError as error:
+            raise serializers.ValidationError(detail={"error": error.detail})
+
     class Meta:
         model = News
         fields = serializers.ALL_FIELDS
@@ -93,7 +121,12 @@ class ScheduleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
 
 
 class PointDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-
     class Meta:
         model = Point
+        fields = serializers.ALL_FIELDS
+
+
+class EquipmentToolsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    class Meta:
+        model = EquipmentTools
         fields = serializers.ALL_FIELDS

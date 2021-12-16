@@ -11,10 +11,10 @@ from tablib import Dataset
 # Create your views here.
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
     ScheduleResource, LocationResource, PointResource
-from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule, Location, Point
+from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule, Location, Point, EquipmentTools
 from apps.main.serializers import VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
     MaterialDefaultSerializer, NewsDefaultSerializer, ScheduleDefaultSerializer, LocationDefaultSerializer, \
-    PointDefaultSerializer
+    PointDefaultSerializer, EquipmentToolsDefaultSerializer
 
 
 class TypePersonViewSet(ModelViewSet):
@@ -737,3 +737,31 @@ class PointViewSet(ModelViewSet):
                 }, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EquipmentToolsViewSet(ModelViewSet):
+    queryset = EquipmentTools.objects.all()
+    serializer_class = EquipmentToolsDefaultSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['serial', 'description', 'mark', 'model', 'year', 'license_plate']
+    permission_classes = (AllowAny,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def paginate_queryset(self, queryset):
+        """
+        Return a single page of results, or `None` if pagination is disabled.
+        """
+        not_paginator = self.request.query_params.get('not_paginator', None)
+        if self.paginator is None or not_paginator:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
