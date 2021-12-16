@@ -15,7 +15,7 @@ from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
 from apps.setting.serializers import NotificationDefaultSerializer
 
-url_api_ibart = 'http://127.0.0.1/api-ibarti2' #'http://69.10.42.61/api-ibarti2'
+url_api_ibart = 'http://69.10.42.61/api-ibarti2'
 
 
 class NotificationViewSet(ModelViewSet):
