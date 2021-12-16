@@ -25,6 +25,8 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
     def validate(self, attrs):
         days = attrs.get('days', None)
         day = attrs.get('day', None)
+        if day == "":
+            attrs.set('day', None)
         week_days = attrs.get('week_days', None)
         frequency = attrs.get('frequency', None)
         _type = attrs.get('type', None)
