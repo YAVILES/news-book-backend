@@ -13,7 +13,7 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
     groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True)
     groups_display = serializers.SerializerMethodField(read_only=True)
     schedule = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), many=True)
-    days = serializers.ListField(child=serializers.DateField(), required=False, null=True)
+    days = serializers.ListField(child=serializers.DateField(), required=False)
     week_days = serializers.ListField(child=serializers.IntegerField(), required=False)
 
     def get_groups_display(self, attr: Notification):
@@ -25,8 +25,6 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
     def validate(self, attrs):
         days = attrs.get('days', None)
         day = attrs.get('day', None)
-        if day == "":
-            attrs.set('day', None)
         week_days = attrs.get('week_days', None)
         frequency = attrs.get('frequency', None)
         _type = attrs.get('type', None)
