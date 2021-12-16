@@ -4,23 +4,21 @@ from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 
 from apps.main.models import Schedule
+from apps.main.serializers import ScheduleDefaultSerializer
+from apps.security.serializers import RoleDefaultSerializer
 from apps.setting.models import Notification
 
 
 class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     day = serializers.DateField(required=False, default=None, allow_null=True)
     type_display = serializers.CharField(source='get_type_display', read_only=True)
-    groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True)
-    groups_display = serializers.SerializerMethodField(read_only=True)
-    schedule = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), many=True)
+    groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True, write_only=True)
+    groups_display = RoleDefaultSerializer(source="groups", many=True, read_only=True)
+    schedule = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), many=True, required=False,
+                                                  write_only=True)
+    schedule_display = ScheduleDefaultSerializer(source="schedule", many=True, read_only=True)
     days = serializers.ListField(child=serializers.DateField(), required=False)
     week_days = serializers.ListField(child=serializers.IntegerField(), required=False)
-
-    def get_groups_display(self, attr: Notification):
-        groups_display = []
-        for group_name in attr.groups.all().values_list('name', flat=True):
-            groups_display.append(group_name)
-        return groups_display
 
     def validate(self, attrs):
         days = attrs.get('days', None)
