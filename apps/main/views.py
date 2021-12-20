@@ -344,6 +344,8 @@ class MaterialViewSet(ModelViewSet):
 class NewsFilter(filters.FilterSet):
     number = filters.NumberFilter(lookup_expr='icontains')
     employee = filters.CharFilter(lookup_expr='icontains')
+    template = filters.CharFilter(lookup_expr='icontains')
+    info = filters.CharFilter(lookup_expr='icontains')
     min_number = filters.NumberFilter(field_name="number", lookup_expr='gte')
     max_number = filters.NumberFilter(field_name="number", lookup_expr='lte')
     min_created = filters.DateFilter(field_name="created", lookup_expr='gte')
