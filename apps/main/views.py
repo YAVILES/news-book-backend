@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
+from django_filters import rest_framework as filters
 
 # Create your views here.
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
@@ -340,10 +341,26 @@ class MaterialViewSet(ModelViewSet):
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
 
+class NewsFilter(filters.FilterSet):
+    number = filters.NumberFilter(lookup_expr='icontains')
+    employee = filters.CharFilter(lookup_expr='icontains')
+    min_number = filters.NumberFilter(field_name="number", lookup_expr='gte')
+    max_number = filters.NumberFilter(field_name="number", lookup_expr='lte')
+    min_created = filters.DateFilter(field_name="created", lookup_expr='gte')
+    max_created = filters.DateFilter(field_name="created", lookup_expr='lte')
+    type_news = filters.NumberFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = News
+        fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name', 'min_number',
+                  'max_number', 'min_created', 'max_created']
+
+
 class NewsViewSet(ModelViewSet):
     queryset = News.objects.all().order_by('-number')
     serializer_class = NewsDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = NewsFilter
     search_fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name']
     permission_classes = (AllowAny,)
 
