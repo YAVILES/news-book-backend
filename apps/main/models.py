@@ -60,6 +60,21 @@ class TypePerson(ModelBase):
     priority = models.CharField( max_length=255, verbose_name="code", help_text="Prioridad del tipo de persona")
     is_active = models.BooleanField(default=True)
 
+    # Deletes an type person
+    def delete(self, using=None, keep_parents=False):
+        models.signals.pre_delete.send(
+            sender=self.__class__,
+            instance=self,
+            using=using
+        )
+        self.is_active = False
+        self.save(update_fields=['is_active', ])
+        models.signals.post_delete.send(
+            sender=self.__class__,
+            instance=self,
+            using=using
+        )
+
 
 class Person(ModelBase):
     code = models.CharField(max_length=255, verbose_name="code", unique=True, help_text="Código de la persona")
