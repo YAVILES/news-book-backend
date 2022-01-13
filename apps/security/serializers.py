@@ -41,7 +41,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         queryset=Group.objects.all(), many=True, required=False, write_only=True
     )
     security_user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), required=False, write_only=True
+        queryset=User.objects.all(), required=False, write_only=True, allow_null=True
     )
     code = serializers.CharField(max_length=255, required=False)
     password = serializers.CharField(max_length=255, write_only=True, required=False)
