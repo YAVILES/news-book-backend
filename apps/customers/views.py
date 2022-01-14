@@ -19,24 +19,6 @@ class ClientViewSet(ModelViewSet):
     search_fields = ['name', 'domain_url']
     permission_classes = (AllowAny,)
 
-    def create(self, request, *args, **kwargs):
-        #self.perform_create(serializer)
-        data = request.data
-        tenant = Client(
-            schema_name=data['schema_name'],
-            name=data['name'],
-            paid_until=data['paid_until'],
-            on_trial=False
-        )
-        tenant.save()
-        domain = Domain()
-        domain.domain = data['domain']
-        domain.tenant = tenant
-        domain.is_primary = True
-        domain.save()
-        # headers = self.get_success_headers(serializer.data)
-        return Response(ClientSerializer(tenant).data, status=status.HTTP_201_CREATED)
-
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
