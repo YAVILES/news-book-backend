@@ -26,6 +26,7 @@ from drf_yasg2 import openapi
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 from apps.security.views import CustomTokenObtainPairView
+from apps.setting.views import TestEmailView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -50,6 +51,8 @@ urlpatterns = [
     path('api/setting/', include('apps.setting.urls')),
 
     path('api/accounts/', include('django.contrib.auth.urls')),
+
+    path('api/test-email/', TestEmailView.as_view()),
 
     # Tokens
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
