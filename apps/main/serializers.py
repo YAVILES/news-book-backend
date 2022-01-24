@@ -103,7 +103,7 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                                 )
 
                 new = super(NewsDefaultSerializer, self).create(validated_data)
-                generate_notification_async.delay(new.id)
+                #generate_notification_async.delay(new.id)
                 return new
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.detail})
