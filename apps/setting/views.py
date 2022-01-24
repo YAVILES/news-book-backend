@@ -1,13 +1,20 @@
+from datetime import datetime
+
+from django.conf import settings
+
 import tablib
 import requests
+from django.core.mail.message import EmailMultiAlternatives
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
+from django_filters import rest_framework as filters
 
 from apps.main.models import News
 from apps.main.serializers import NewsDefaultSerializer
@@ -206,3 +213,51 @@ class IbartiViewSet(viewsets.ViewSet):
         else:
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
+
+class TestEmailFilter(filters.FilterSet):
+    email = filters.CharFilter()
+
+    class Meta:
+        fields = ['email']
+
+
+class TestEmailView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = []
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TestEmailFilter
+
+    def get(self, request):
+        email_user = self.request.query_params.get('email', None)
+        if email_user:
+            try:
+                """
+                send_email.delay(
+                    'EMAIL TEST',
+                    "TEST" + str(datetime.hour) + ":" +
+                    str(datetime.minute) + str(datetime.today()),
+                    [email_user]
+                )
+                """
+                email = EmailMultiAlternatives(
+                    'EMAIL TEST',
+                    "TEST" + str(datetime.hour) + ":" + str(datetime.minute) + str(datetime.today()),
+                    settings.EMAIL_HOST_USER,
+                    [email_user]
+                )
+                email.send()
+
+            except ValueError as e:
+                return Response(
+                    {"error": e, "msg": "No se pudo enviar"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response(
+                {"msg": "El parametro email es obligatorio"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({
+            "email": email_user
+        }, status=status.HTTP_200_OK)
