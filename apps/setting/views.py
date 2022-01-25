@@ -5,6 +5,7 @@ from django.conf import settings
 import tablib
 import requests
 from django.core.mail.message import EmailMultiAlternatives
+from django_celery_results.models import TaskResult
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -20,7 +21,9 @@ from apps.main.models import News
 from apps.main.serializers import NewsDefaultSerializer
 from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
-from apps.setting.serializers import NotificationDefaultSerializer
+from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDefaultSerializer
+
+from apps.setting.tasks import generate_notification_async
 
 url_api_ibart = 'http://127.0.0.1/api-ibarti2'  # 'http://69.10.42.61/api-ibarti2'
 
@@ -231,14 +234,9 @@ class TestEmailView(APIView):
         email_user = self.request.query_params.get('email', None)
         if email_user:
             try:
-                """
-                send_email.delay(
-                    'EMAIL TEST',
-                    "TEST" + str(datetime.hour) + ":" +
-                    str(datetime.minute) + str(datetime.today()),
-                    [email_user]
-                )
-                """
+                new = News.objects.last()
+                generate_notification_async.delay(new.id)
+                '''
                 email = EmailMultiAlternatives(
                     'EMAIL TEST',
                     "TEST" + str(datetime.hour) + ":" + str(datetime.minute) + str(datetime.today()),
@@ -246,7 +244,7 @@ class TestEmailView(APIView):
                     [email_user]
                 )
                 email.send()
-
+                '''
             except ValueError as e:
                 return Response(
                     {"error": e, "msg": "No se pudo enviar"},
@@ -261,3 +259,66 @@ class TestEmailView(APIView):
         return Response({
             "email": email_user
         }, status=status.HTTP_200_OK)
+
+
+class TaskResultFilter(filters.FilterSet):
+    module = filters.CharFilter(method="get_module")
+
+    class Meta:
+        model = TaskResult
+        fields = ['id', 'task_name', 'status', 'result']
+
+    def get_module(self, queryset, name, value):
+        if value:
+            return queryset.filter(accounts__mobile_payment_applies=True)
+        return queryset
+
+
+class TaskResultViewSet(ModelViewSet):
+    queryset = TaskResult.objects.all()
+    serializer_class = TaskResultDefaultSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = TaskResultFilter
+    search_fields = ['id', 'task_name', 'status']
+
+    def paginate_queryset(self, queryset):
+        """
+        Return a single page of results, or `None` if pagination is disabled.
+        """
+        not_paginator = self.request.query_params.get('not_paginator', None)
+
+        if not_paginator:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    @action(methods=['GET'], detail=False)
+    def field_options(self, request):
+        field = self.request.query_params.get('field', None)
+        fields = self.request.query_params.getlist('fields', None)
+        if fields:
+            try:
+                data = {}
+                for field in fields:
+                    data[field] = []
+                    for c in TaskResult._meta.get_field(field).choices:
+                        data[field].append({
+                            "value": c[0],
+                            "description": c[1]
+                        })
+                return Response(data, status=status.HTTP_200_OK)
+            except ValueError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        elif field:
+            try:
+                choices = []
+                for c in TaskResult._meta.get_field(field).choices:
+                    choices.append({
+                        "value": c[0],
+                        "description": c[1]
+                    })
+                return Response(choices, status=status.HTTP_200_OK)
+            except ValueError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
+
