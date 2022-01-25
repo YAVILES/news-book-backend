@@ -1,5 +1,8 @@
 from django.contrib.auth.models import Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
+from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 
@@ -42,4 +45,18 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
 
     class Meta:
         model = Notification
+        fields = serializers.ALL_FIELDS
+
+
+class TaskResultDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    module = serializers.SerializerMethodField(read_only=True)
+
+    def get_module(self, task: TaskResult):
+        try:
+            return PeriodicTask.objects.get(task=task.task_name).name
+        except ObjectDoesNotExist:
+            return None
+
+    class Meta:
+        model = TaskResult
         fields = serializers.ALL_FIELDS
