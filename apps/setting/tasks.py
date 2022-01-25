@@ -25,9 +25,13 @@ def generate_notification_async(news_id):
     from apps.main.models import News
     instance: News = News.objects.get(id=news_id)
     try:
-        notification_recurrent: Notification = Notification.objects.get(type=Notification.RECURRENT, type_news=instance.type_news)
-        groups = notification_recurrent.groups.all().values_list('id', flat=True)
-        emails = User.objects.filter(groups__in=groups).values_list('email', flat=True)
-        send_email.delay(instance.type_news.description, notification_recurrent.description, list(emails))
+        notifications_recurrent: Notification = Notification.objects.filter(
+            type=Notification.RECURRENT,
+            type_news=instance.type_news
+        )
+        for notification_recurrent in notifications_recurrent:
+            groups = notification_recurrent.groups.all().values_list('id', flat=True)
+            emails = User.objects.filter(groups__in=groups).values_list('email', flat=True)
+            send_email.delay(instance.type_news.description, notification_recurrent.description, list(emails))
     except ObjectDoesNotExist:
         pass
