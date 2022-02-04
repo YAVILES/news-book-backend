@@ -7,7 +7,7 @@ from apps.core.models import TypeNews
 
 class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     info = serializers.CharField(required=False)
-    template = serializers.JSONField(required=False, default=list)
+    template = serializers.ListField(required=False, default=list)
 
     image_display = serializers.SerializerMethodField(read_only=True)
 
