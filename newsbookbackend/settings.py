@@ -341,6 +341,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:4200',
-    'http://127.0.0.1',
-    'http://194.163.161.64'
+    'http://127.0.0.1:8000',
+    'http://194.163.161.64',
+    'https://news.ibartisoftware.com.ve'
 ]
