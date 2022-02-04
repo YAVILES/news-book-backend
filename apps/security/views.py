@@ -60,17 +60,12 @@ class ValidUser(GenericViewSet):
 
             chars = string.ascii_uppercase + string.digits
             code = ''.join(random.choice(chars) for _ in range(8))
-            email = EmailMultiAlternatives(
-                'Un correo de prueba',
-                code,
-                settings.EMAIL_HOST_USER,
-                [user.email]
-            )
+            '''
             if user.security_user and user.security_user.phone:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.security_user.phone+'/' + code + ''
             else:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
-
+    
             try:
                 requests.post(url_msg)
             except Exception as e:
@@ -80,12 +75,23 @@ class ValidUser(GenericViewSet):
                         "error": e.__str__()
                     }
                 )
+            '''
+            try:
+                if user.security_user and user.security_user.email:
+                    destine_email = user.security_user.email
+                else:
+                    destine_email = user.email
+                email = EmailMultiAlternatives(
+                    'Un correo de prueba',
+                    code,
+                    settings.EMAIL_HOST_USER,
+                    [destine_email]
+                )
+                #email.attach_alternative(content, 'text/html')
+                email.send()
+            except ValueError as e:
+                serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
 
-            # email.attach_alternative(content, 'text/html')
-            #try:
-            #    email.send()
-            #except ValueError as e:
-            #    serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
             user.is_verified_security_code = False
             user.security_code = code
             user.save(update_fields=['security_code'])
