@@ -343,4 +343,5 @@ CORS_ORIGIN_WHITELIST = [
     'http://localhost:4200',
     'http://127.0.0.1:8000',
     'http://194.163.161.64',
+    'https://news.ibartisoftware.com.ve'
 ]
