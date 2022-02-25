@@ -23,7 +23,7 @@ env = environ.Env(
     SECRET_KEY=(str, '4)!6(7cj4wfibai#r%qk=o51ba-(^c-cevex_5e-3hr@4a8kr1'),
     DATABASE=(str, 'newsbook'),
     DATABASE_USER=(str, 'postgres'),
-    DATABASE_PASSWORD=(str, 'postgres'),
+    DATABASE_PASSWORD=(str, '$$ibartinews'),
     DATABASE_HOST=(str, 'localhost'),
     DATABASE_PORT=(int, 5432),
     TIME_ZONE=(str, 'America/Caracas'),
