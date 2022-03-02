@@ -65,5 +65,6 @@ urlpatterns = [
     url(r'^s/', include('django_short_url.urls', namespace='django_short_url'))
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 if settings.DEBUG:
     urlpatterns += url(r'^__debug__/', include(debug_toolbar.urls)),
