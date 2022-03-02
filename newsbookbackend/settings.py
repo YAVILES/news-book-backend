@@ -235,8 +235,8 @@ REST_FRAMEWORK = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/var/www/static/'
-STATIC_ROOT = '/var/www/static'  # os.path.join(BASE_DIR, "static")
+STATIC_URL = 'https://194.163.161.64/static/'
+STATIC_ROOT = '/var/www/html/static'  # os.path.join(BASE_DIR, "static")
 
 STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
