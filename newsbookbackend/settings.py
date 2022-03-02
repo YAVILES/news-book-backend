@@ -49,7 +49,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['194.163.161.64']
+ALLOWED_HOSTS = ['194.163.161.64', 'api-news.ibartisoftware.com.ve']
 
 # Application definition
 
