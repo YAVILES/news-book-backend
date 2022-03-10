@@ -79,7 +79,7 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         write_only=True,
         help_text="Libro donde se genera la novedad"
     )
-    location = LocationDefaultSerializer(read_only=True)
+    location_display = LocationDefaultSerializer(read_only=True)
 
     def create(self, validated_data):
         try:
