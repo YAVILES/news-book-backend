@@ -17,7 +17,7 @@ from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 from django_filters import rest_framework as filters
 
-from apps.main.models import News
+from apps.main.models import News, Location
 from apps.main.serializers import NewsDefaultSerializer
 from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
@@ -151,7 +151,10 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def planned_staff(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
             url=url_api_ibart + "/manpower-planning/planned-staff",
             params={"location": code_location}
@@ -163,7 +166,10 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def oesvica_staff(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
             url=url_api_ibart + "/manpower-planning/planned-staff",
             params={"location": code_location}
@@ -175,7 +181,10 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def former_guard(self, request):
-        code_location = self.request.query_params.get('code_location', None)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', None)
         data = NewsDefaultSerializer(
             News.objects.filter(
                 location__code=code_location,
@@ -186,7 +195,10 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def sub_line_scope(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
         try:
             response = requests.get(
                 url=url_api_ibart + "/inventory/scope",
@@ -202,7 +214,10 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def location_current(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
         try:
             response = requests.get(
                 url=url_api_ibart + "/client/location",
