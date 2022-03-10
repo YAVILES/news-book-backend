@@ -381,8 +381,7 @@ class NewsViewSet(ModelViewSet):
 
         if 'location' in request.headers and request.headers['location'] and request.headers['location'] != '' and \
                 request.headers['location'] is not None:
-            pass
-            # queryset = queryset.filter(location_id=request.headers['location'])
+            queryset = queryset.filter(location_id=request.headers['location'])
 
         page = self.paginate_queryset(queryset)
         if page is not None:
