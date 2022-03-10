@@ -377,9 +377,11 @@ class NewsViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def list(self, request, *args, **kwargs):
+        user = request.user
         queryset = self.filter_queryset(self.get_queryset())
 
-        if 'location' in request.headers and request.headers['location']:
+        if 'location' in request.headers and request.headers['location'] and request.headers['location'] != '' and \
+                request.headers['location'] is not None:
             queryset = queryset.filter(location_id=request.headers['location'])
 
         page = self.paginate_queryset(queryset)
