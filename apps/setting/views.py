@@ -173,7 +173,7 @@ class IbartiViewSet(viewsets.ViewSet):
         else:
             code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
-            url=url_api_ibart + "/manpower-planning/planned-staff",
+            url=url_api_ibart + "/manpower-planning/oesvica-staff",
             params={"location": code_location}
         )
         if response.status_code == 200:
