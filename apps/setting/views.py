@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import time
 from django.conf import settings
 
 import tablib
@@ -155,9 +155,11 @@ class IbartiViewSet(viewsets.ViewSet):
             code_location = Location.objects.get(pk=request.headers['location']).code
         else:
             code_location = self.request.query_params.get('code_location', 157)
+
+        hour = time.strftime('%H:%M', time.localtime())
         response = requests.get(
             url=url_api_ibart + "/manpower-planning/planned-staff",
-            params={"location": code_location}
+            params={"location": code_location, "hour": hour}
         )
         if response.status_code == 200:
             return Response(response.json(), status=status.HTTP_200_OK)
