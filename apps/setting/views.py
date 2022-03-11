@@ -162,7 +162,7 @@ class IbartiViewSet(viewsets.ViewSet):
             params={"location": code_location, "hour": hour}
         )
         if response.status_code == 200:
-            return Response(response.text, status=status.HTTP_200_OK)
+            return Response(response.json(), status=status.HTTP_200_OK)
         else:
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
