@@ -83,6 +83,18 @@ class UserCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(detail={"error": error.messages})
         return validated_data
 
+    def update(self, instance, validated_data):
+        try:
+            with transaction.atomic():
+                password = validated_data.pop('password', None)
+                user = super(UserCreateSerializer, self).update(instance, validated_data)
+                if password:
+                    user.set_password(password)
+                    user.save(update_fields=['password'])
+        except ValueError as e:
+            raise serializers.ValidationError(detail={"error": e})
+        return user
+
     class Meta:
         model = User
         fields = ('id', 'code', 'email', 'password', 'name', 'last_name', 'full_name', 'address', 'phone',
