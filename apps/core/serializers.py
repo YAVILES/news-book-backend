@@ -19,6 +19,17 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
         else:
             return None
 
+    def update(self, instance, validated_data):
+        try:
+            with transaction.atomic():
+                template = validated_data.get('template', None)
+                if template is None:
+                    validated_data.pop('template')
+                type_news = super(TypeNewsDefaultSerializer, self).update(instance, validated_data)
+        except ValueError as e:
+            raise serializers.ValidationError(detail={"error": e})
+        return type_news
+
     class Meta:
         model = TypeNews
         fields = serializers.ALL_FIELDS
