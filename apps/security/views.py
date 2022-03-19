@@ -66,10 +66,10 @@ class ValidUser(GenericViewSet):
             else:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
 
-            try:
-                requests.post(url_msg)
-            except Exception as e:
-                pass
+            #try:
+                # requests.post(url_msg)
+            #except Exception as e:
+            #    pass
                 '''
                 serializers.ValidationError(
                     detail={
