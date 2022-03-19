@@ -22,10 +22,21 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
     def update(self, instance, validated_data):
         try:
             with transaction.atomic():
-                template = validated_data.get('template', None)
-                if template is None:
-                    validated_data.pop('template')
-                type_news = super(TypeNewsDefaultSerializer, self).update(instance, validated_data)
+                template = validated_data.pop('template', None)
+                if template:
+                    validated_data['template'] = template
+                    type_news = super(TypeNewsDefaultSerializer, self).update(instance, validated_data)
+                else:
+                    instance.code = validated_data.get('code')
+                    instance.description = validated_data.get('description')
+                    instance.image = validated_data.get('image')
+                    instance.info = validated_data.get('info')
+                    instance.is_changing_of_the_guard = validated_data.get('is_changing_of_the_guard')
+                    instance.is_active = validated_data.get('is_active')
+                    instance.save(
+                        update_fields=['code', 'description', 'image', 'info', 'is_changing_of_the_guard', 'is_active']
+                    )
+                    type_news = instance
         except ValueError as e:
             raise serializers.ValidationError(detail={"error": e})
         return type_news

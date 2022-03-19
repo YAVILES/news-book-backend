@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 from django.conf import settings
-
+import json
 import tablib
 import requests
 from django.core.mail.message import EmailMultiAlternatives
@@ -193,7 +193,17 @@ class IbartiViewSet(viewsets.ViewSet):
                 type_news__is_changing_of_the_guard=True
             ).last()
         ).data
-        return Response(data['info'], status=status.HTTP_200_OK)
+        info = json.loads(data['info'])
+        result = []
+        for key in info:
+            print(key)
+            if str(key).startswith('OESVICA_STAFF') or str(key).startswith('PLANNED_STAFF'):
+                for trab in info[key]:
+                    result.append({
+                        "cod_ficha": trab.get("cod_ficha"),
+                        "name_and_surname": trab.get("name_and_surname")
+                    })
+        return Response(result, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)
     def sub_line_scope(self, request):
