@@ -59,6 +59,7 @@ class TypePerson(ModelBase):
                                    help_text="Descripción del Tipo de Persona")
     priority = models.CharField( max_length=255, verbose_name="code", help_text="Prioridad del tipo de persona")
     is_active = models.BooleanField(default=True)
+    is_institution = models.BooleanField(default=False)
 
     # Deletes an type person
     def delete(self, using=None, keep_parents=False):
