@@ -254,12 +254,12 @@ class IbartiViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
 
-        if response.status_code == 200 :
+        if response.status_code == 200:
             data = response.json()
-            if not data['error']:
+            if not hasattr(data, 'error'):
                 return Response(data, status=status.HTTP_200_OK)
             else:
-                Response(data, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
@@ -368,4 +368,3 @@ class TaskResultViewSet(ModelViewSet):
                 return Response(e, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
-
