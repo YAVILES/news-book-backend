@@ -243,6 +243,26 @@ class IbartiViewSet(viewsets.ViewSet):
         else:
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['GET'], detail=False)
+    def valid_ficha(self, request):
+        ficha = self.request.query_params.get('ficha', None)
+        try:
+            response = requests.get(
+                url=url_api_ibart + "/ficha/get",
+                params={"ficha": ficha}
+            )
+        except Exception as e:
+            return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+
+        if response.status_code == 200 :
+            data = response.json()
+            if not data['error']:
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                Response(data, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+
 
 class TestEmailFilter(filters.FilterSet):
     email = filters.CharFilter()
