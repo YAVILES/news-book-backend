@@ -54,7 +54,7 @@ class XHeaderTenantMiddleware(MiddlewareMixin):
 
         tenant.domain_url = hostname
         request.tenant = tenant
-        connection.set_tenant(request.tenant, False)
+        connection.set_tenant(request.tenant, True)
         self.setup_url_routing(request)
 
     def no_tenant_found(self, request, hostname):

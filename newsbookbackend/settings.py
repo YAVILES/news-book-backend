@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
 from datetime import timedelta
-
 import environ
 
 env = environ.Env(

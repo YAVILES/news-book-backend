@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group
 from django.db import models
+from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
+from django_celery_beat.models import IntervalSchedule
 
 from apps.core.models import ModelBase, TypeNews
 from apps.main.models import Schedule
@@ -78,3 +80,52 @@ class Notification(ModelBase):
 
     def __str__(self):
         return "{description}".format(description=self.description)
+
+
+def post_save_new(sender, instance: Notification, **kwargs):
+    if isinstance(instance, Notification) and instance.type == Notification.OBLIGATORY:
+        try:
+            if instance.frequency == Notification.EVERY_DAY:
+                for schedule in instance.schedule.all():
+                    print(schedule.description)
+                    print(schedule.start_time)
+                    print(schedule.final_hour)
+                    """
+                    schedule, created = IntervalSchedule.objects.get_or_create(
+                        every=sync_erp.value['modules']['exchange_rate']['every'],
+                        period=sync_erp.value['modules']['exchange_rate']['period'],
+                    )
+                    schedule, _ = CrontabSchedule.objects.get_or_create(
+                        minute = '30',
+                        hour = '*',
+                        day_of_week = '*',
+                        day_of_month = '*',
+                        month_of_year = '*',
+                        timezone = pytz.timezone('America/Caracas')
+                    )
+                    createdTask = False
+                    try:
+                        periodicTask = PeriodicTask.objects.get(
+                            task='apps.system.tasks.sync_exchange_rate_with_erp'
+                        )
+                    except ObjectDoesNotExist:
+                        periodicTask = PeriodicTask.objects.create(
+                            interval=schedule,
+                            name=sync_erp.value['modules']['exchange_rate']['help_text'],
+                            task='apps.system.tasks.sync_exchange_rate_with_erp'
+                        )
+                        createdTask = True
+                    """
+            elif instance.frequency == Notification.JUST_ONE_DAY:
+                pass
+            elif instance.frequency == Notification.MORE_THAN_ONE_DAY:
+                pass
+            elif instance.frequency == Notification.BY_DAY_DAYS:
+                pass
+
+        except Exception as e:
+            print(e.__str__())
+            pass
+
+
+post_save.connect(post_save_new, sender=Notification)

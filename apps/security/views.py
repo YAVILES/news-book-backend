@@ -64,10 +64,12 @@ class ValidUser(GenericViewSet):
             if user.security_user and user.security_user.phone:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.security_user.phone+'/' + code + ''
             else:
-                url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
+                if user.phone:
+                    url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
 
             #try:
-                # requests.post(url_msg)
+            #    if user.phone:
+                    # requests.post(url_msg)
             #except Exception as e:
             #    pass
                 '''
