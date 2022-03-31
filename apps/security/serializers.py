@@ -65,6 +65,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        request = self.context.get('request')
         password = validated_data.pop('password')
         email = validated_data.get('email')
         code = validated_data.get('code')
@@ -72,7 +73,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if books:
             validated_data['locations'] = books
         validated_data['email'] = str(email).lower()
-        validated_data['code'] = str(code).lower()
+
+        schema_name = request.headers.get('X-Dts-Schema', 'public')
+        validated_data['code'] = str(code).lower() + "@" + schema_name
+        validated_data['schema_name'] = schema_name
         try:
             with transaction.atomic():
                 user = super(UserCreateSerializer, self).create(validated_data)
