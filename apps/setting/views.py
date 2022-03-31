@@ -191,7 +191,7 @@ class IbartiViewSet(viewsets.ViewSet):
             News.objects.filter(
                 location__code=code_location,
                 type_news__is_changing_of_the_guard=True
-            ).last()
+            ).order_by('created').last()
         ).data
         info = json.loads(data['info'])
         result = []

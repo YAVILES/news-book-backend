@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.core.models import ModelBase
 from sequences import get_next_value
+from .tasks import send_email
 
 
 class Material(ModelBase):
@@ -21,7 +22,7 @@ class EquipmentTools(ModelBase):
     serial = models.CharField(max_length=255, verbose_name="serial", unique=True, help_text="Serial")
     description = models.CharField(max_length=255, verbose_name="description", null=True, help_text="Descripción")
     mark = models.CharField(max_length=255, verbose_name="mark", null=True, help_text="Marca")
-    model = models.CharField(max_length=255, verbose_name="model", null=True,  help_text="Modelo")
+    model = models.CharField(max_length=255, verbose_name="model", null=True, help_text="Modelo")
     color = models.CharField(max_length=255, verbose_name="color", null=True, help_text="Color")
     year = models.CharField(max_length=255, verbose_name="year", null=True, help_text="Año")
     license_plate = models.CharField(max_length=255, verbose_name="license_plate", null=True, help_text="Placa")
@@ -57,7 +58,7 @@ class VehicleNews(ModelBase):
 class TypePerson(ModelBase):
     description = models.CharField(max_length=255, verbose_name="code", unique=True,
                                    help_text="Descripción del Tipo de Persona")
-    priority = models.CharField( max_length=255, verbose_name="code", help_text="Prioridad del tipo de persona")
+    priority = models.CharField(max_length=255, verbose_name="code", help_text="Prioridad del tipo de persona")
     is_active = models.BooleanField(default=True)
     is_institution = models.BooleanField(default=False)
 
@@ -83,7 +84,7 @@ class Person(ModelBase):
     last_name = models.CharField(max_length=255, verbose_name="lastname", help_text="Apellido de la persona")
     doc_ident = models.CharField(max_length=255, verbose_name="doc_ident", unique=True,
                                  help_text="Documento de Identidad de la persona")
-    address = models.CharField( max_length=255, verbose_name="address", help_text="Dirección de la persona")
+    address = models.CharField(max_length=255, verbose_name="address", help_text="Dirección de la persona")
     phone = models.CharField(max_length=255, verbose_name="phone", help_text="Teléfono de la persona")
     mobile = models.CharField(max_length=255, verbose_name="mobile", help_text="Número de celular de la persona")
     type_person = models.ForeignKey('main.TypePerson', verbose_name=_('type_person'), on_delete=models.PROTECT,
@@ -109,7 +110,7 @@ class News(ModelBase):
     template = jsonfield.JSONField(default=list)
     info = jsonfield.JSONField(default=dict)
     created_by = models.ForeignKey('security.User', verbose_name=_('created_by'), on_delete=models.PROTECT,
-                                   help_text="Usuario por el que fue crada la novedad",  null=True)
+                                   help_text="Usuario por el que fue crada la novedad", null=True)
     materials = models.ManyToManyField(Material, verbose_name=_('materials'), related_name='news', through=MaterialNews)
     vehicles = models.ManyToManyField(Vehicle, verbose_name=_('vehicles'), related_name='news', through=VehicleNews)
     people = models.ManyToManyField(Person, verbose_name=_('people'), related_name='news', through=PersonNews)
@@ -138,25 +139,39 @@ class Point(ModelBase):
 
 
 #    SIGNALS
-def post_save_client(sender, instance: News, **kwargs):
+def post_save_new(sender, instance: News, **kwargs):
     from apps.security.models import User
-    if isinstance(instance, News) and not kwargs['created']:
+    from apps.setting.models import Notification
+    if isinstance(instance, News) and kwargs['created']:
         try:
-            emails = User.objects.filter(
-                is_active=True, email__isnull=False).values_list('email', flat=True)
-            email = EmailMultiAlternatives(
-                instance.type_news.description,
-                'TEST EMAIL',
-                settings.EMAIL_HOST_USER,
-                emails
+            notifications = Notification.objects.filter(
+                type_news_id=instance.type_news_id, type=Notification.RECURRENT
             )
-            # email.attach_alternative(content, 'text/html')
-            try:
-                email.send()
-            except ValueError as e:
-                pass
-        except:
+            for notif in notifications:
+                groups = notif.groups.all().values_list('id', flat=True)
+                emails = [
+                    str(email)
+                    for email in User.objects.filter(
+                        groups__id__in=groups, is_active=True, email__isnull=False
+                    ).values_list('email', flat=True)
+                ]
+
+                if instance.location:
+                    send_email.delay(
+                        instance.type_news.description,
+                        notif.description + " " + instance.location.name,
+                        emails,
+                        settings.EMAIL_HOST_USER
+                    )
+                else:
+                    send_email.delay(
+                        instance.type_news.description,
+                        notif.description,
+                        emails
+                    )
+        except Exception as e:
+            print(e.__str__())
             pass
 
 
-post_save.connect(post_save_client, sender=News)
+post_save.connect(post_save_new, sender=News)

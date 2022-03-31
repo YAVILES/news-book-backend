@@ -49,7 +49,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['localhost', '194.163.161.64', 'api-news.ibartisoftware.com.ve', 'api-dev-news.ibartisoftware.com.ve']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -118,7 +118,8 @@ TENANT_APPS = (
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    # 'django_tenants.middleware.main.TenantMainMiddleware',
+    'newsbookbackend.middlewares.XHeaderTenantMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -135,17 +136,13 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
-            "loaders": [
-                "django_tenants.template.loaders.filesystem.Loader",  # Must be first
-                "django.template.loaders.filesystem.Loader",
-                "django.template.loaders.app_directories.Loader",
             ],
         },
     },
@@ -235,8 +232,9 @@ REST_FRAMEWORK = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = 'http://194.163.161.64/static/'
-STATIC_ROOT = '/var/www/html/static'  # os.path.join(BASE_DIR, "static")
+STATIC_URL = 'static/'
+# STATIC_ROOT = '/var/www/html/static'  # os.path.join(BASE_DIR, "static")
+STATIC_ROOT = '/static/'
 
 STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
@@ -258,7 +256,8 @@ MEDIA_ROOT = "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
 
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
-MULTITENANT_RELATIVE_MEDIA_ROOT = "media"  # (default: create sub-directory for each tenant)
+MULTITENANT_RELATIVE_MEDIA_ROOT = "media/%s"  # (default: create sub-directory for each tena
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=365),
@@ -294,7 +293,8 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
-    'location'
+    'location',
+    'X-Dts-Schema'
 ]
 
 EMAIL_HOST = env('EMAIL_HOST')
@@ -321,7 +321,7 @@ IMPORT_EXPORT_USE_TRANSACTIONS = True
 IMPORT_EXPORT_IMPORT_PERMISSION_CODE = 'change'
 
 # CELERY STUFF
-BROKER_URL = 'redis://localhost:6379'
+BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'

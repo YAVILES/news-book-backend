@@ -6,6 +6,7 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
+from django_tenants.postgresql_backend.base import _check_schema_name
 
 from apps.main.models import ModelBase
 
@@ -33,23 +34,23 @@ class UserManager(BaseUserManager):
         )
         return user
 
-    def _create_user(self, code, name, last_name, password, database='default', **extra_fields):
+    def _create_user(self, code, name, last_name, password, schema_name, database='default', **extra_fields):
         """
         Creates and saves a User with the given username, email and password.
         """
         if not code:
             raise ValueError(_('The Code must be set'))
-        obj = User(code=code, name=name, last_name=last_name, **extra_fields)
+        obj = User(code=code, name=name, last_name=last_name, schema_name=schema_name, **extra_fields)
         obj.set_password(password)
         obj.save(using=database)
         return obj
 
-    def create_user(self, code, name=None, last_name=None, password=None, **extra_fields):
+    def create_user(self, code, name=None, last_name=None, password=None, schema_name="public", **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        return self._create_user(code, name, last_name, password, **extra_fields)
+        return self._create_user(code, name, last_name, password, schema_name, **extra_fields)
 
-    def create_superuser(self, code, name, last_name, password, **extra_fields):
+    def create_superuser(self, code, name, last_name, password, schema_name, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
@@ -58,7 +59,7 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self._create_user(code, name, last_name, password, **extra_fields)
+        return self._create_user(code+"@"+schema_name, name, last_name, password, schema_name, **extra_fields)
 
 
 class LocationUser(ModelBase):
@@ -101,6 +102,7 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(verbose_name=_('is active'), default=True)
     locations = models.ManyToManyField("main.Location", verbose_name=_('locations'), related_name='users',
                                        through=LocationUser, blank=True)
+    schema_name = models.CharField(max_length=63, default="public", db_index=True, validators=[_check_schema_name])
     info = jsonfield.JSONField(default=dict)
     is_oesvica = models.BooleanField(default=False)
     last_login = models.DateTimeField(blank=True, null=True, verbose_name=_('last login'))
@@ -110,7 +112,7 @@ class User(ModelBase, AbstractBaseUser, PermissionsMixin):
     last_sync_date = models.DateTimeField(null=True, blank=True, verbose_name=_('last sync date'))
 
     USERNAME_FIELD = 'code'
-    REQUIRED_FIELDS = ['name', 'phone', 'last_name']
+    REQUIRED_FIELDS = ['name', 'last_name', 'phone', 'schema_name']
     objects = UserManager()
 
     @property

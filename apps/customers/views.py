@@ -18,6 +18,7 @@ class ClientViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['name', 'domain_url']
     permission_classes = (AllowAny,)
+    authentication_classes = []
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -46,6 +47,7 @@ class DomainViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['domain']
     permission_classes = (AllowAny,)
+    authentication_classes = []
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

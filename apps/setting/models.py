@@ -64,12 +64,17 @@ class Notification(ModelBase):
     days = ArrayField(
         models.DateField(),
         default=list,
+        null=True,
         verbose_name=_('days'),
     )
     week_days = ArrayField(
         models.SmallIntegerField(),
         default=list,
+        null=True,
         verbose_name=_('week days'),
         size=7
     )
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return "{description}".format(description=self.description)

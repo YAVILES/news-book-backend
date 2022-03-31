@@ -3,6 +3,7 @@ from django.conf import settings
 
 from newsbookbackend.celery import app
 
+
 @app.task
 def send_email(subject='', body='', emails=None, content_html=None):
     from django.core.mail.message import EmailMultiAlternatives

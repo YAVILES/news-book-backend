@@ -71,4 +71,6 @@ class TypeNews(ModelBase):
     template = jsonfield.JSONField(default=list, null=True)
     is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        return "{description}".format(description=self.description)
 
