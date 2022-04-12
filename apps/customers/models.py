@@ -33,7 +33,9 @@ def handle_schema_migrated(sender, **kwargs):
     connection = connections[get_tenant_database_alias()]
     connection.set_tenant(Client.objects.get(schema_name=schema_name), True)
     code = 'admin@' + schema_name
-    user = User(code=code, name="Super", last_name="User", schema_name=schema_name, is_superuser=True, is_staff=True)
+    user, created = User.objects.get_or_create(
+        code=code, name="Super", last_name="User", schema_name=schema_name, is_superuser=True, is_staff=True
+    )
     user.set_password("admin")
     user.save()
 
