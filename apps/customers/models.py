@@ -13,6 +13,7 @@ class Client(TenantMixin):
     paid_until = models.DateField()
     on_trial = models.BooleanField()
     created_on = models.DateField(auto_now_add=True)
+    email = models.EmailField(null=True)
 
     # default true, schema will be automatically created and synced when it is saved
     auto_create_schema = True
@@ -31,11 +32,12 @@ class Domain(DomainMixin):
 def handle_schema_migrated(sender, **kwargs):
     schema_name = kwargs['schema_name']
     connection = connections[get_tenant_database_alias()]
-    connection.set_tenant(Client.objects.get(schema_name=schema_name), True)
+    client = Client.objects.get(schema_name=schema_name)
+    connection.set_tenant(client, True)
     code = 'admin@' + schema_name
     try:
         user, created = User.objects.get_or_create(
-            code=code, name="Super", last_name="User", is_superuser=True, is_staff=True
+            code=code, name="Super", last_name="User", is_superuser=True, is_staff=True, email=client.email
         )
         if created:
             user.set_password("admin")
