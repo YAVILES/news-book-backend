@@ -36,6 +36,7 @@ def handle_schema_migrated(sender, **kwargs):
     user, created = User.objects.get_or_create(
         code=code, name="Super", last_name="User", schema_name=schema_name, is_superuser=True, is_staff=True
     )
-    user.set_password("admin")
-    user.save()
+    if created:
+        user.set_password("admin")
+        user.save()
 
