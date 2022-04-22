@@ -1,8 +1,13 @@
+import datetime
+import json
+
+import pytz
 from django.contrib.auth.models import Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
-from django_celery_beat.models import IntervalSchedule
+from django_celery_beat.models import IntervalSchedule, PeriodicTask, CrontabSchedule
 
 from apps.core.models import ModelBase, TypeNews
 from apps.main.models import Schedule
@@ -77,6 +82,7 @@ class Notification(ModelBase):
         size=7
     )
     is_active = models.BooleanField(default=True)
+    periodic_tasks = models.ManyToManyField(PeriodicTask, verbose_name=_('periodic tasks'), related_name='tasks')
 
     def __str__(self):
         return "{description}".format(description=self.description)
@@ -85,44 +91,43 @@ class Notification(ModelBase):
 def post_save_new(sender, instance: Notification, **kwargs):
     if isinstance(instance, Notification) and instance.type == Notification.OBLIGATORY:
         try:
+            instance.periodic_tasks.all().delete()
+            periodic_tasks = []
             if instance.frequency == Notification.EVERY_DAY:
                 for schedule in instance.schedule.all():
-                    print(schedule.description)
-                    print(schedule.start_time)
-                    print(schedule.final_hour)
-                    """
-                    schedule, created = IntervalSchedule.objects.get_or_create(
-                        every=sync_erp.value['modules']['exchange_rate']['every'],
-                        period=sync_erp.value['modules']['exchange_rate']['period'],
-                    )
-                    schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute = '30',
-                        hour = '*',
-                        day_of_week = '*',
-                        day_of_month = '*',
-                        month_of_year = '*',
-                        timezone = pytz.timezone('America/Caracas')
-                    )
-                    createdTask = False
-                    try:
-                        periodicTask = PeriodicTask.objects.get(
-                            task='apps.system.tasks.sync_exchange_rate_with_erp'
+                    if instance.frequency == Notification.EVERY_DAY:
+                        crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                            minute=schedule.final_hour.minute,
+                            hour=schedule.final_hour.hour,
+                            day_of_week='*',
+                            day_of_month='*',
+                            month_of_year='*',
+                            timezone=pytz.timezone('America/Caracas')
                         )
-                    except ObjectDoesNotExist:
-                        periodicTask = PeriodicTask.objects.create(
-                            interval=schedule,
-                            name=sync_erp.value['modules']['exchange_rate']['help_text'],
-                            task='apps.system.tasks.sync_exchange_rate_with_erp'
-                        )
-                        createdTask = True
-                    """
-            elif instance.frequency == Notification.JUST_ONE_DAY:
-                pass
-            elif instance.frequency == Notification.MORE_THAN_ONE_DAY:
-                pass
-            elif instance.frequency == Notification.BY_DAY_DAYS:
-                pass
-
+                        try:
+                            periodicTask = PeriodicTask.objects.get(
+                                name="{0} {1} {2}".format(instance.description, instance.type_news.description,
+                                                          schedule.description),
+                                task='apps.setting.tasks.generate_notification_not_fulfilled'
+                            )
+                            periodicTask.crontab = crontab_schedule
+                            periodicTask.save(update_fields=['crontab'])
+                        except ObjectDoesNotExist:
+                            periodicTask = PeriodicTask.objects.create(
+                                crontab=crontab_schedule,
+                                args=json.dumps([str(instance.id)]),
+                                name="{0} {1} {2}".format(instance.description, instance.type_news.description,
+                                                          schedule.description),
+                                task='apps.setting.tasks.generate_notification_not_fulfilled'
+                            )
+                        periodic_tasks.append(periodicTask)
+                    elif instance.frequency == Notification.JUST_ONE_DAY:
+                        pass
+                    elif instance.frequency == Notification.MORE_THAN_ONE_DAY:
+                        pass
+                    elif instance.frequency == Notification.BY_DAY_DAYS:
+                        pass
+            instance.periodic_tasks.set(periodic_tasks)
         except Exception as e:
             print(e.__str__())
             pass

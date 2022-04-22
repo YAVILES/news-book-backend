@@ -2,13 +2,14 @@ from django.db import models
 from django.dispatch.dispatcher import receiver
 from django_tenants.migration_executors.base import run_migrations
 from django_tenants.models import TenantMixin, DomainMixin
-from django_tenants.signals import post_schema_sync, schema_migrated
+from django_tenants.signals import schema_migrated
 from django.db import connections
 from django_tenants.utils import get_tenant_database_alias
 from apps.security.models import User
+from django_tenants_celery_beat.models import TenantTimezoneMixin
 
 
-class Client(TenantMixin):
+class Client(TenantTimezoneMixin, TenantMixin):
     name = models.CharField(max_length=100)
     paid_until = models.DateField()
     on_trial = models.BooleanField()

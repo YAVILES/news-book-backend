@@ -36,3 +36,15 @@ def generate_notification_async(news_id):
             send_email.delay(instance.type_news.description, notification_recurrent.description, list(emails))
     except ObjectDoesNotExist:
         pass
+
+
+def generate_notification_not_fulfilled(notification_id):
+    from apps.setting.models import Notification
+    from apps.security.models import User
+    try:
+        notification: Notification = Notification.objects.get(pk=notification_id)
+        groups = notification.groups.all().values_list('id', flat=True)
+        emails = User.objects.filter(groups__in=groups).values_list('email', flat=True)
+        send_email.delay(notification.type_news.description, notification.description + 'NO CUMPLIDA', list(emails))
+    except ObjectDoesNotExist:
+        pass

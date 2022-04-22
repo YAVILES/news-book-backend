@@ -20,7 +20,7 @@ Django==3.2.12
 django-ace==1.0.8
 django-admin==2.0.1
 django-autoslug==1.9.8
-django-celery-beat==2.1.0
+django-celery-beat==2.2.1
 django-celery-results==2.0.1
 django-compressor==2.4.1
 django-constance==2.7.0
@@ -38,12 +38,11 @@ django-multiselectfield==0.1.12
 django-picklefield==3.0.1
 django-redis==4.12.1
 django-restql==0.11.0
-tenant-schemas-celery==1.0.1
 django-sequences==2.5
 django-short-url==1.1.4
 django-six==1.0.4
 django-tenants==3.3.2
-django-timezone-field==4.0
+django-tenants-celery-beat==0.1.1
 djangorestframework==3.12.1
 djangorestframework-simplejwt==5.0.0
 drf-yasg2==1.19.4
