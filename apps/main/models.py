@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.core.models import ModelBase
 from sequences import get_next_value
-from .tasks import send_email
+from apps.setting.tasks import send_email
 
 
 class Material(ModelBase):
