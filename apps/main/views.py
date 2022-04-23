@@ -363,7 +363,8 @@ class NewsViewSet(ModelViewSet):
     serializer_class = NewsDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = NewsFilter
-    search_fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name']
+    search_fields = ['employee', 'number', 'template', 'info', 'type_news__description', 'location__code',
+                     'location__name']
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):

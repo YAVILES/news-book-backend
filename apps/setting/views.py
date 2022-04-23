@@ -2,6 +2,7 @@ import time
 import json
 import tablib
 import requests
+from celery.result import AsyncResult
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from django_filters.rest_framework import DjangoFilterBackend
@@ -22,7 +23,7 @@ from apps.setting.models import Notification
 from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDefaultSerializer, \
     PeriodicTaskDefaultSerializer
 
-from apps.setting.tasks import generate_notification_async
+from apps.setting.tasks import generate_notification_async, generate_notification_not_fulfilled
 
 url_api_ibart = 'http://127.0.0.1/api-ibarti2'
 
@@ -53,6 +54,12 @@ class NotificationViewSet(ModelViewSet):
         if self.paginator is None or not_paginator:
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    @action(methods=['POST'], detail=False)
+    def my_task(self, request):
+        _id = str(Notification.objects.last().id)
+        generate_notification_not_fulfilled.delay(_id)
+        return Response({}, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)
     def export(self, request):

@@ -1,12 +1,18 @@
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
+import logging
 
+from celery import shared_task
+from celery.utils.log import get_task_logger
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from newsbookbackend.celery import app
 
+log = logging.getLogger('yourapp')
 
-@app.task
+
+@shared_task
 def send_email(subject='', body='', emails=None, content_html=None):
     from django.core.mail.message import EmailMultiAlternatives
+    from django.conf import settings
     if emails:
         email = EmailMultiAlternatives(
             subject,
@@ -19,11 +25,12 @@ def send_email(subject='', body='', emails=None, content_html=None):
         email.send()
 
 
-@app.task
+@shared_task
 def generate_notification_async(news_id):
     from apps.security.models import User
     from apps.setting.models import Notification
     from apps.main.models import News
+
     instance: News = News.objects.get(id=news_id)
     try:
         notifications_recurrent: Notification = Notification.objects.filter(
@@ -32,19 +39,27 @@ def generate_notification_async(news_id):
         )
         for notification_recurrent in notifications_recurrent:
             groups = notification_recurrent.groups.all().values_list('id', flat=True)
-            emails = User.objects.filter(groups__in=groups).values_list('email', flat=True)
-            send_email.delay(instance.type_news.description, notification_recurrent.description, list(emails))
+            emails = User.objects.filter(groups__id__in=groups).values_list('email', flat=True)
+            send_email(instance.type_news.description, notification_recurrent.description, list(emails))
     except ObjectDoesNotExist:
         pass
 
 
-def generate_notification_not_fulfilled(notification_id):
+@app.task
+def generate_notification_not_fulfilled(notification_id: str):
+    log.info('about to call a task')
     from apps.setting.models import Notification
     from apps.security.models import User
+
     try:
         notification: Notification = Notification.objects.get(pk=notification_id)
         groups = notification.groups.all().values_list('id', flat=True)
-        emails = User.objects.filter(groups__in=groups).values_list('email', flat=True)
-        send_email.delay(notification.type_news.description, notification.description + 'NO CUMPLIDA', list(emails))
+        emails = User.objects.filter(groups__id__in=groups).values_list('email', flat=True)
+        print('emails', len(emails), emails[0])
+        send_email(
+            notification.type_news.description,
+            notification.description + ' - NO CUMPLIDA',
+            list(emails)
+        )
     except ObjectDoesNotExist:
         pass

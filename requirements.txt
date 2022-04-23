@@ -86,6 +86,7 @@ shortuuid==1.0.1
 six==1.15.0
 sqlparse==0.4.1
 stream-chat==4.1.0
+tenant-schemas-celery==2.0.0
 TimeConvert==1.5.1
 #Twisted==20.3.0
 txaio==20.4.1

@@ -91,8 +91,6 @@ TENANT_APPS = (
     'constance',
     'constance.backends.database',
     'django_celery_results',
-    'django_celery_beat',
-    'django_tenants_celery_beat',
 
     # APPS
     'apps.main',
