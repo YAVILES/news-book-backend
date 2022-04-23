@@ -25,7 +25,7 @@ from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDe
 
 from apps.setting.tasks import generate_notification_async, generate_notification_not_fulfilled
 
-url_api_ibart = 'http://60.10.42.61/api-ibarti2'
+url_api_ibart = 'http://69.10.42.61/api-ibarti2'
 
 
 class NotificationViewSet(ModelViewSet):
