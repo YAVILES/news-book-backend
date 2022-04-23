@@ -6,7 +6,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_celery_beat', '0017_auto_20220422_1155'),
         ('setting', '0002_auto_20220328_1604'),
     ]
 
