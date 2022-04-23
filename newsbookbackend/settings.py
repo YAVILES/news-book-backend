@@ -109,7 +109,7 @@ TENANT_APPS = (
     'constance.backends.database',
     'sequences',
     'django_ace',
-    'fcm_django',
+    # 'fcm_django',
     'import_export',
     'multiselectfield',
 )
@@ -302,18 +302,18 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_PASSWORD')
 EMAIL_USE_TLS = True
 
-FCM_DJANGO_SETTINGS = {
-    "APP_VERBOSE_NAME": "dev",
-    # Your firebase API KEY
-    "FCM_SERVER_KEY": "AAAAeWGzOo0:APA91bHPN3qpqTj-nlK3YncKz6U3aeLUnX40cvspvAeA_VnGloINmoA-MH7WTu91Fn2WJs6VWT4xNCPwA8TLpSHQNvCICUxTkOfanGtuXsG-esshTUO1wRt4FM2-GBNFkwW1bzhrtfU0",
-    # true if you want to have only one active device per registered user at a time
-    # default: False
-    "ONE_DEVICE_PER_USER": False,
-    # devices to which notifications cannot be sent,
-    # are deleted upon receiving error response from FCM
-    # default: False
-    "DELETE_INACTIVE_DEVICES": True,
-}
+# FCM_DJANGO_SETTINGS = {
+#     "APP_VERBOSE_NAME": "dev",
+#     # Your firebase API KEY
+#     "FCM_SERVER_KEY": "AAAAeWGzOo0:APA91bHPN3qpqTj-nlK3YncKz6U3aeLUnX40cvspvAeA_VnGloINmoA-MH7WTu91Fn2WJs6VWT4xNCPwA8TLpSHQNvCICUxTkOfanGtuXsG-esshTUO1wRt4FM2-GBNFkwW1bzhrtfU0",
+#     # true if you want to have only one active device per registered user at a time
+#     # default: False
+#     "ONE_DEVICE_PER_USER": False,
+#     # devices to which notifications cannot be sent,
+#     # are deleted upon receiving error response from FCM
+#     # default: False
+#     "DELETE_INACTIVE_DEVICES": True,
+# }
 
 # Config Import Export
 IMPORT_EXPORT_USE_TRANSACTIONS = True

@@ -1,12 +1,6 @@
-import logging
-
 from celery import shared_task
-from celery.utils.log import get_task_logger
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from newsbookbackend.celery import app
-
-log = logging.getLogger('yourapp')
 
 
 @shared_task
@@ -47,7 +41,6 @@ def generate_notification_async(news_id):
 
 @app.task
 def generate_notification_not_fulfilled(notification_id: str):
-    log.info('about to call a task')
     from apps.setting.models import Notification
     from apps.security.models import User
 
@@ -55,7 +48,6 @@ def generate_notification_not_fulfilled(notification_id: str):
         notification: Notification = Notification.objects.get(pk=notification_id)
         groups = notification.groups.all().values_list('id', flat=True)
         emails = User.objects.filter(groups__id__in=groups).values_list('email', flat=True)
-        print('emails', len(emails), emails[0])
         send_email(
             notification.type_news.description,
             notification.description + ' - NO CUMPLIDA',
