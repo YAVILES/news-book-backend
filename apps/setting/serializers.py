@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
-from django_celery_beat.models import PeriodicTask
+from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django_celery_results.models import TaskResult
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
@@ -45,7 +45,7 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
 
     class Meta:
         model = Notification
-        fields = serializers.ALL_FIELDS
+        exclude = ('periodic_tasks',)
 
 
 class TaskResultDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -59,4 +59,18 @@ class TaskResultDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerialize
 
     class Meta:
         model = TaskResult
+        fields = serializers.ALL_FIELDS
+
+
+class CrontabDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    class Meta:
+        model = CrontabSchedule
+        exclude = ('timezone',)
+
+
+class PeriodicTaskDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    crontab_display = CrontabDefaultSerializer(read_only=True, source="crontab")
+
+    class Meta:
+        model = PeriodicTask
         fields = serializers.ALL_FIELDS

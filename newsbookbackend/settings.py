@@ -73,8 +73,9 @@ SHARED_APPS = (
     'sequences',
     'constance',
     'constance.backends.database',
-    'django_celery_beat',
     'django_celery_results',
+    'django_celery_beat',
+    'django_tenants_celery_beat',
 )
 
 TENANT_APPS = (
@@ -89,7 +90,6 @@ TENANT_APPS = (
     'django.contrib.staticfiles',
     'constance',
     'constance.backends.database',
-    'django_celery_beat',
     'django_celery_results',
 
     # APPS
