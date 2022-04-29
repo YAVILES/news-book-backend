@@ -15,7 +15,7 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
         # request = self.context.get('request')
         if obj.image and hasattr(obj.image, 'url'):
             image_url = obj.image.url
-            return image_url
+            return str(image_url)[1:] if str(image_url).startswith("/") else image_url
         else:
             return None
 
