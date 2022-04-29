@@ -12,10 +12,10 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
     image_display = serializers.SerializerMethodField(read_only=True)
 
     def get_image_display(self, obj: 'TypeNews'):
-        request = self.context.get('request')
+        # request = self.context.get('request')
         if obj.image and hasattr(obj.image, 'url'):
             image_url = obj.image.url
-            return request.build_absolute_uri(image_url)
+            return image_url
         else:
             return None
 
