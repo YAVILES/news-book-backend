@@ -251,7 +251,7 @@ STATICFILES_STORAGE = "django_tenants.staticfiles.storage.TenantStaticFilesStora
 MULTITENANT_RELATIVE_STATIC_ROOT = ""  # (default: create sub-directory for each tenant)
 
 MEDIA_URL = env('MEDIA_URL')
-MEDIA_ROOT = "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = "/var/www/html/"  # "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
 
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
