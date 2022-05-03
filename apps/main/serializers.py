@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from apps.core.serializers import TypeNewsDefaultSerializer
 from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools, \
-    get_auto_code_material
+    get_auto_code_material, get_auto_code_person
 from apps.setting.tasks import generate_notification_async
 
 
@@ -22,6 +22,19 @@ class PersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         required=True,
         help_text="Id del tipo de persona"
     )
+
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                code = validated_data.get('code', None)
+                if code is None or code == "":
+                    auto_code = get_auto_code_person()
+                    validated_data['code'] = auto_code
+
+                person = super(PersonDefaultSerializer, self).create(validated_data)
+                return person
+        except ValidationError as error:
+            raise serializers.ValidationError(detail={"error": error.detail})
 
     class Meta:
         model = Person
