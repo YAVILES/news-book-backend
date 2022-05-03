@@ -10,6 +10,10 @@ from sequences import get_next_value
 from apps.setting.tasks import send_email
 
 
+def get_auto_code_material():
+    return get_next_value('code_material', initial_value=1000000)
+
+
 class Material(ModelBase):
     code = models.CharField(max_length=255, verbose_name="code", unique=True, help_text="Código del material")
     serial = models.CharField(max_length=255, verbose_name="serial", unique=True, help_text="Serial del material")
