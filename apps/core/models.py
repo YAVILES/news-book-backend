@@ -56,7 +56,7 @@ class ModelBase(models.Model):
 
 
 def type_new_path(type_news: 'TypeNews', file_name):
-    return 'img/code/{0}/{1}'.format(type_news.description, file_name)
+    return 'img/{0}/{1}'.format(type_news.code, file_name)
 
 
 class TypeNews(ModelBase):
