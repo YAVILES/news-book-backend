@@ -37,6 +37,8 @@ class VehicleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    code = serializers.CharField(required=False, allow_null=True)
+    serial = serializers.CharField(required=False, allow_null=True)
 
     def create(self, validated_data):
         try:
