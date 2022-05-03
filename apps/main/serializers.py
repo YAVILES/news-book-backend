@@ -37,19 +37,19 @@ class VehicleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    code = serializers.CharField(required=False, allow_null=True)
-    serial = serializers.CharField(required=False, allow_null=True)
+    code = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    serial = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def create(self, validated_data):
         try:
             with transaction.atomic():
                 code = validated_data.get('code', None)
                 serial = validated_data.get('serial', None)
-                if code is None or serial is None:
+                if code is None or code == "" or serial is None or serial == "":
                     auto_code = get_auto_code_material()
-                    if code is None:
+                    if code is None or code == "":
                         validated_data['code'] = auto_code
-                    if serial is None:
+                    if serial is None or serial == "":
                         validated_data['serial'] = auto_code
 
                 material = super(MaterialDefaultSerializer, self).create(validated_data)
