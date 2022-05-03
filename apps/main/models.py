@@ -82,13 +82,18 @@ class TypePerson(ModelBase):
         )
 
 
+def get_auto_code_person():
+    return get_next_value('code_person', initial_value=100000)
+
+
 class Person(ModelBase):
     code = models.CharField(max_length=255, verbose_name="code", unique=True, help_text="Código de la persona")
     name = models.CharField(max_length=255, verbose_name="name", help_text="Nombre de la persona")
     last_name = models.CharField(max_length=255, verbose_name="lastname", help_text="Apellido de la persona")
     doc_ident = models.CharField(max_length=255, verbose_name="doc_ident", unique=True,
                                  help_text="Documento de Identidad de la persona")
-    address = models.CharField(max_length=255, verbose_name="address", help_text="Dirección de la persona")
+    address = models.CharField(max_length=255, verbose_name="address", null=True, blank=True,
+                               help_text="Dirección de la persona")
     phone = models.CharField(max_length=255, verbose_name="phone", help_text="Teléfono de la persona")
     mobile = models.CharField(max_length=255, verbose_name="mobile", help_text="Número de celular de la persona")
     type_person = models.ForeignKey('main.TypePerson', verbose_name=_('type_person'), on_delete=models.PROTECT,
