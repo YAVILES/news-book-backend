@@ -4,7 +4,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.core.serializers import TypeNewsDefaultSerializer
-from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools
+from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools, \
+    get_auto_code_material
 from apps.setting.tasks import generate_notification_async
 
 
@@ -36,6 +37,24 @@ class VehicleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                code = validated_data.get('code', None)
+                serial = validated_data.get('serial', None)
+                if code is None or serial is None:
+                    auto_code = get_auto_code_material()
+                    if code is None:
+                        validated_data['code'] = auto_code
+                    if serial is None:
+                        validated_data['serial'] = auto_code
+
+                material = super(MaterialDefaultSerializer, self).create(validated_data)
+                return material
+        except ValidationError as error:
+            raise serializers.ValidationError(detail={"error": error.detail})
+
     class Meta:
         model = Material
         fields = serializers.ALL_FIELDS
