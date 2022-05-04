@@ -16,6 +16,7 @@ class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerialize
 
 
 class PersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    code = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     type_person_display = TypePersonDefaultSerializer(read_only=True, source="type_person")
     type_person = serializers.PrimaryKeyRelatedField(
         queryset=TypePerson.objects.all(),

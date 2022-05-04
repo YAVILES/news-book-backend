@@ -19,7 +19,7 @@ def send_email(subject='', body='', emails=None, content_html=None):
         email.send()
 
 
-@shared_task
+@app.task
 def generate_notification_async(news_id):
     from apps.security.models import User
     from apps.setting.models import Notification
@@ -33,7 +33,9 @@ def generate_notification_async(news_id):
         )
         for notification_recurrent in notifications_recurrent:
             groups = notification_recurrent.groups.all().values_list('id', flat=True)
-            emails = User.objects.filter(groups__id__in=groups).values_list('email', flat=True)
+            emails = User.objects.filter(
+                groups__id__in=groups, is_active=True, email__isnull=False
+            ).values_list('email', flat=True)
             send_email(instance.type_news.description, notification_recurrent.description, list(emails))
     except ObjectDoesNotExist:
         pass
