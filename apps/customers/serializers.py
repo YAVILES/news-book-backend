@@ -44,7 +44,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = serializers.ALL_FIELDS
+        fields = ('id', 'name', 'paid_until', 'on_trial', 'created_on', 'email', 'auto_create_schema',)
 
 
 class DomainSerializer(DynamicFieldsMixin, serializers.Serializer):
