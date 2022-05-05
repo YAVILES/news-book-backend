@@ -6,7 +6,7 @@ from rest_framework import serializers
 from apps.customers.models import Client, Domain
 
 
-class ClientSerializer(DynamicFieldsMixin, serializers.Serializer):
+class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     schema_name = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=100)
