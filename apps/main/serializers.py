@@ -23,6 +23,7 @@ class PersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         required=True,
         help_text="Id del tipo de persona"
     )
+    full_name = serializers.CharField(help_text="Nombre y apellido", read_only=True)
 
     def create(self, validated_data):
         try:
