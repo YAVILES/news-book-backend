@@ -16,8 +16,8 @@ from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 from django_filters import rest_framework as filters
 
-from apps.main.models import News, Location
-from apps.main.serializers import NewsDefaultSerializer
+from apps.main.models import News, Location, Material
+from apps.main.serializers import NewsDefaultSerializer, MaterialScopeSerializer
 from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
 from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDefaultSerializer, \
@@ -226,7 +226,10 @@ class IbartiViewSet(viewsets.ViewSet):
             return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
 
         if response.status_code == 200:
-            return Response(response.json(), status=status.HTTP_200_OK)
+            scope = response.json()
+            materials = MaterialScopeSerializer(Material.objects.all(), many=True).data
+            data = scope + materials
+            return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 

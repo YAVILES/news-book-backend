@@ -76,6 +76,18 @@ class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
         fields = serializers.ALL_FIELDS
 
 
+class MaterialScopeSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    code = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    name = serializers.SerializerMethodField(read_only=True)
+
+    def get_name(self, material):
+        return material.description
+
+    class Meta:
+        model = Material
+        fields = ('code', 'name',)
+
+
 class LocationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Location
