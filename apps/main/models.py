@@ -4,6 +4,7 @@ from django.db import models
 import jsonfield
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
 
 from apps.core.models import ModelBase
 from sequences import get_next_value
@@ -99,6 +100,13 @@ class Person(ModelBase):
     type_person = models.ForeignKey('main.TypePerson', verbose_name=_('type_person'), on_delete=models.PROTECT,
                                     help_text="tipo de persona")
     is_active = models.BooleanField(default=True)
+
+    def get_full_name(self):
+        return "{name} {last_name}".format(name=self.name, last_name=self.last_name)
+
+    @cached_property
+    def full_name(self):
+        return self.get_full_name()
 
 
 class PersonNews(ModelBase):
