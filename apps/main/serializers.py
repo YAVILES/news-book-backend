@@ -96,8 +96,7 @@ class LocationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
 
 
 class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    created_by = serializers.HiddenField(
-        default=serializers.CurrentUserDefault())
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
     materials = serializers.PrimaryKeyRelatedField(
         queryset=Material.objects.all(),
         many=True,

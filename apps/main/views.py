@@ -369,7 +369,6 @@ class NewsViewSet(ModelViewSet):
     search_fields = ['employee', 'number', 'template', 'info', 'type_news__description', 'location__code',
                      'location__name']
     permission_classes = (AllowAny,)
-    authentication_classes = []
 
     def create(self, request, *args, **kwargs):
         data = request.data
