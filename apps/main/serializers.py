@@ -23,6 +23,7 @@ class PersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         required=True,
         help_text="Id del tipo de persona"
     )
+    full_name = serializers.CharField(help_text="Nombre y apellido", read_only=True)
 
     def create(self, validated_data):
         try:
@@ -126,7 +127,7 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         write_only=True,
         help_text="Libro donde se genera la novedad"
     )
-    location_display = LocationDefaultSerializer(read_only=True)
+    location_display = LocationDefaultSerializer(read_only=True, source="location")
 
     def create(self, validated_data):
         try:

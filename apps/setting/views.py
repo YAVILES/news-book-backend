@@ -199,10 +199,11 @@ class IbartiViewSet(viewsets.ViewSet):
                 type_news__is_changing_of_the_guard=True
             ).order_by('created').last()
         ).data
-        info = json.loads(data['info'])
+        info = []
+        if data['info']:
+            info = json.loads(data['info'])
         result = []
         for key in info:
-            print(key)
             if str(key).startswith('OESVICA_STAFF') or str(key).startswith('PLANNED_STAFF'):
                 for trab in info[key]:
                     result.append({
