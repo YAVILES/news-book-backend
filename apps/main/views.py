@@ -1,5 +1,7 @@
 import tablib
+from django.db import connections
 from django_filters.rest_framework import DjangoFilterBackend
+from django_tenants.utils import get_tenant_database_alias
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
@@ -10,6 +12,7 @@ from tablib import Dataset
 from django_filters import rest_framework as filters
 
 # Create your views here.
+from apps.customers.models import Client
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
     ScheduleResource, LocationResource, PointResource
 from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule, Location, Point, EquipmentTools
@@ -366,6 +369,7 @@ class NewsViewSet(ModelViewSet):
     search_fields = ['employee', 'number', 'template', 'info', 'type_news__description', 'location__code',
                      'location__name']
     permission_classes = (AllowAny,)
+    authentication_classes = []
 
     def create(self, request, *args, **kwargs):
         data = request.data
@@ -399,6 +403,26 @@ class NewsViewSet(ModelViewSet):
         if self.paginator is None or not_paginator:
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    @action(methods=['GET'], detail=True)
+    def get_allow(self, request, pk):
+        schema_name = self.request.query_params.get('schema_name', None)
+        connection = connections[get_tenant_database_alias()]
+        client = Client.objects.get(schema_name=schema_name)
+        connection.set_tenant(client, True)
+        new = self.get_object()
+        location = ""
+        try:
+            location = new.location.name
+        except ValueError:
+            pass
+
+        data = {
+            "new": NewsDefaultSerializer(new, context=self.get_serializer_context()).data,
+            "client": client.name,
+            "location": location
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)
     def export(self, request):
