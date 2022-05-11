@@ -1,6 +1,3 @@
-# coding=utf-8
-import json
-
 from cryptography.fernet import Fernet
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import Permission, Group
@@ -20,16 +17,6 @@ from apps.security.models import User
 class ChangeSecurityCodeSerializer(serializers.ModelSerializer):
     code = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
-
-    def validate(self, attrs):
-        super().validate(attrs)
-        try:
-            user = User.objects.get(code=attrs.get('code'))
-        except:
-            raise serializers.ValidationError(
-                detail={"code": _('code invalid')})
-
-        return attrs
 
     class Meta:
         model = User

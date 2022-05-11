@@ -1,16 +1,17 @@
-import requests
+# import requests
 import tablib
 import string
 import random
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
 from django.contrib.auth.models import Group
 from django.core.mail import EmailMultiAlternatives
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, serializers, permissions
-from rest_framework.decorators import action, authentication_classes
+from rest_framework import status, serializers
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -43,8 +44,9 @@ class ValidUser(GenericViewSet):
             password_user = serializer.data["password"]
             try:
                 user: User = User.objects.get(code=code_user)
-            except Exception as e:
-                raise serializers.ValidationError(detail={"error": _('Código inválida')})
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError(detail={"error": _('El usuario no se encuentra registrado')})
+
             if user.is_authenticated:
                 serializers.ValidationError(detail={"error": "Este usuario ya tiene una session activa"})
             else:
