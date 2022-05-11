@@ -2,12 +2,12 @@ import tablib
 from django.db import connections
 from django_filters.rest_framework import DjangoFilterBackend
 from django_tenants.utils import get_tenant_database_alias
-from rest_framework import status
+from rest_framework import status, mixins
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from tablib import Dataset
 from django_filters import rest_framework as filters
 
@@ -403,26 +403,6 @@ class NewsViewSet(ModelViewSet):
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
-    @action(methods=['GET'], detail=True)
-    def get_allow(self, request, pk):
-        schema_name = self.request.query_params.get('schema_name', None)
-        connection = connections[get_tenant_database_alias()]
-        client = Client.objects.get(schema_name=schema_name)
-        connection.set_tenant(client, True)
-        new = self.get_object()
-        location = ""
-        try:
-            location = new.location.name
-        except ValueError:
-            pass
-
-        data = {
-            "new": NewsDefaultSerializer(new, context=self.get_serializer_context()).data,
-            "client": client.name,
-            "location": location
-        }
-        return Response(data, status=status.HTTP_200_OK)
-
     @action(methods=['GET'], detail=False)
     def export(self, request):
         dataset = NewsResource().export()
@@ -514,6 +494,32 @@ class NewsViewSet(ModelViewSet):
                 return Response(e, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NewsLinkViewSet(mixins.RetrieveModelMixin, GenericViewSet):
+    queryset = News.objects.all()
+    serializer_class = NewsDefaultSerializer
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
+    def retrieve(self, request, *args, **kwargs):
+        schema_name = self.request.query_params.get('schema_name', None)
+        connection = connections[get_tenant_database_alias()]
+        client = Client.objects.get(schema_name=schema_name)
+        connection.set_tenant(client, True)
+        new = self.get_object()
+        location = ""
+        try:
+            location = new.location.name
+        except ValueError:
+            pass
+        serializer_data = self.get_serializer(new, context=self.get_serializer_context()).data
+        data = {
+            "new": serializer_data,
+            "client": client.name,
+            "location": location
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class ScheduleViewSet(ModelViewSet):
