@@ -183,7 +183,8 @@ def post_save_new(sender, instance: News, **kwargs):
                 else:
                     send_email.delay(
                         instance.type_news.description,
-                        notif.description,
+                        notif.description +
+                        " para acceder usa el siguiente link http://localhost:4200/#/viewlink/"+str(instance.id)+"/dev",
                         emails
                     )
         except Exception as e:

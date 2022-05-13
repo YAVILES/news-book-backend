@@ -358,7 +358,7 @@ class NewsFilter(filters.FilterSet):
     class Meta:
         model = News
         fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name', 'min_number',
-                  'max_number', 'min_created', 'max_created']
+                  'max_number', 'min_created', 'max_created', 'type_news_id']
 
 
 class NewsViewSet(ModelViewSet):
@@ -510,7 +510,8 @@ class NewsLinkViewSet(mixins.RetrieveModelMixin, GenericViewSet):
         new = self.get_object()
         location = ""
         try:
-            location = new.location.name
+            if new.location:
+                location = new.location.name
         except ValueError:
             pass
         serializer_data = self.get_serializer(new, context=self.get_serializer_context()).data
