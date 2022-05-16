@@ -1,5 +1,7 @@
 import tablib
 from django.db import connections
+from django.db.models import CharField, Q
+from django.db.models.functions import Cast
 from django_filters.rest_framework import DjangoFilterBackend
 from django_tenants.utils import get_tenant_database_alias
 from rest_framework import status, mixins
@@ -364,10 +366,9 @@ class NewsFilter(filters.FilterSet):
 class NewsViewSet(ModelViewSet):
     queryset = News.objects.all().order_by('-number')
     serializer_class = NewsDefaultSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = NewsFilter
-    search_fields = ['employee', 'number', 'template', 'info', 'type_news__description', 'location__code',
-                     'location__name']
+
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
@@ -379,6 +380,25 @@ class NewsViewSet(ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def get_queryset(self):
+        queryset = super(NewsViewSet, self).get_queryset()
+        search = self.request.query_params.get('search', None)
+        if search is None:
+            return queryset
+        else:
+            return queryset.annotate(
+                info_format=Cast('info', output_field=CharField()),
+                template_format=Cast('template', output_field=CharField())
+            ).filter(
+                Q(info_format__contains=search) |
+                Q(number__icontains=search) |
+                Q(template_format__icontains=search) |
+                Q(employee__icontains=search) |
+                Q(type_news__description__icontains=search) |
+                Q(location__code__icontains=search) |
+                Q(location__name__icontains=search)
+            )
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
