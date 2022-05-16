@@ -35,7 +35,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                 if on_trial:
                     instance.on_trial = on_trial
                 instance.save(update_fields=['name', 'paid_until', 'on_trial'])
-                
+
                 return instance
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.messages})
@@ -80,3 +80,8 @@ class DomainSerializer(DynamicFieldsMixin, serializers.Serializer):
     class Meta:
         model = Domain
         fields = serializers.ALL_FIELDS
+
+
+class ClientSimpleSerializer(DynamicFieldsMixin, serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=100)

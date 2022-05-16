@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.core.serializers import TypeNewsDefaultSerializer
+from apps.customers.serializers import ClientSimpleSerializer
 from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools, \
     get_auto_code_material, get_auto_code_person
 from apps.setting.tasks import generate_notification_async
@@ -127,6 +128,11 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         help_text="Libro donde se genera la novedad"
     )
     location_display = LocationDefaultSerializer(read_only=True, source="location")
+    client_display = serializers.SerializerMethodField(read_only=True)
+
+    def get_client_display(self, obj):
+        request = self.context.get('request')
+        return ClientSimpleSerializer(request.tenant).data
 
     def create(self, validated_data):
         try:
