@@ -86,14 +86,16 @@ class ValidUser(GenericViewSet):
                     destine_email = user.security_user.email
                 else:
                     destine_email = user.email
-                email = EmailMultiAlternatives(
-                    'Código de Seguridad',
-                    code,
-                    settings.EMAIL_HOST_USER,
-                    [destine_email]
-                )
-                #email.attach_alternative(content, 'text/html')
-                email.send()
+
+                if destine_email:
+                    email = EmailMultiAlternatives(
+                        'Código de Seguridad',
+                        code,
+                        settings.EMAIL_HOST_USER,
+                        [destine_email]
+                    )
+                    #email.attach_alternative(content, 'text/html')
+                    email.send()
             except Exception as e:
                 serializers.ValidationError(detail={"error": "No fue posible enviar el código de seguridad", "msg": e})
 
