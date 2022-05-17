@@ -72,7 +72,7 @@ class ValidUser(GenericViewSet):
             if url_msg:
                 try:
                     requests.post(url_msg)
-                except Exception as e:
+                except:
                     pass
                     # serializers.ValidationError(
                     #     detail={
