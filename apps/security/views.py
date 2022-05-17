@@ -62,23 +62,24 @@ class ValidUser(GenericViewSet):
 
             chars = string.ascii_uppercase + string.digits
             code = ''.join(random.choice(chars) for _ in range(8))
-
+            url_msg = None
             if user.security_user and user.security_user.phone:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.security_user.phone+'/' + code + ''
             else:
                 if user.phone:
                     url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
 
-            try:
-                requests.post(url_msg)
-            except Exception as e:
-                pass
-                # serializers.ValidationError(
-                #     detail={
-                #         "error": "No fue posible enviar el código de seguridad",
-                #         "msg": e.__str__()
-                #     }
-                # )
+            if url_msg:
+                try:
+                    requests.post(url_msg)
+                except Exception as e:
+                    pass
+                    # serializers.ValidationError(
+                    #     detail={
+                    #         "error": "No fue posible enviar el código de seguridad",
+                    #         "msg": e.__str__()
+                    #     }
+                    # )
 
             try:
                 if user.security_user and user.security_user.email:
