@@ -49,7 +49,7 @@ def generate_notification_not_fulfilled(notification_id: str):
     try:
         notification: Notification = Notification.objects.get(pk=notification_id)
         groups = notification.groups.all().values_list('id', flat=True)
-        emails = User.objects.filter(groups__id__in=groups).values_list('email', flat=True)
+        emails = User.objects.filter(groups__id__in=groups).values_list('email', flat=True).distinct()
         send_email(
             notification.type_news.description,
             notification.description + ' - NO CUMPLIDA',
