@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import transaction
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
@@ -7,7 +8,9 @@ from apps.core.serializers import TypeNewsDefaultSerializer
 from apps.customers.serializers import ClientSimpleSerializer
 from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools, \
     get_auto_code_material, get_auto_code_person
-from apps.setting.tasks import generate_notification_async
+from apps.security.models import User
+from apps.setting.models import Notification
+from apps.setting.tasks import generate_notification_async, send_email
 
 
 class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -135,6 +138,7 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         return ClientSimpleSerializer(request.tenant).data
 
     def create(self, validated_data):
+        request = self.context.get('request')
         try:
             with transaction.atomic():
                 info = validated_data.get('info')
@@ -155,9 +159,41 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                                     },
                                 )
 
-                new = super(NewsDefaultSerializer, self).create(validated_data)
-                generate_notification_async.delay(new.id)
-                return new
+                instance = super(NewsDefaultSerializer, self).create(validated_data)
+
+                try:
+                    notifications = Notification.objects.filter(
+                        type_news_id=instance.type_news_id, type=Notification.RECURRENT
+                    )
+                    for notif in notifications:
+                        groups = notif.groups.all().values_list('id', flat=True)
+                        emails = [
+                            str(email)
+                            for email in User.objects.filter(
+                                groups__id__in=groups, is_active=True, email__isnull=False
+                            ).values_list('email', flat=True).distinct()
+                        ]
+
+                        if instance.location:
+                            send_email.delay(
+                                instance.type_news.description,
+                                notif.description + " " + instance.location.name +
+                                " \n Para acceder usa el siguiente link " + settings.HOST_LINKS +
+                                "/#/viewlink/" + str(instance.id) + "/" + request.tenant.schema_name,
+                                emails
+                            )
+                        else:
+                            send_email.delay(
+                                instance.type_news.description,
+                                notif.description +
+                                "\n Para acceder usa el siguiente link " + settings.HOST_LINKS +
+                                "/#/viewlink/" + str(instance.id) + "/" + request.tenant.schema_name,
+                                emails
+                            )
+                except Exception as e:
+                    print(e.__str__())
+                    pass
+                return instance
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.detail})
 
