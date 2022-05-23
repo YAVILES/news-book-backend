@@ -31,6 +31,7 @@ env = environ.Env(
     EMAIL_HOST=(str, 'smtp.googlemail.com'),
     EMAIL_PORT=(int, 587),
     API_IBARTI=(str, 'http://69.10.42.61/api-ibarti2'),
+    HOST_LINKS=(str, 'http://localhost:4200'),
 )
 
 # reading .env file
@@ -344,3 +345,5 @@ CORS_ORIGIN_WHITELIST = [
     'http://194.163.161.64',
     'https://news.ibartisoftware.com.ve'
 ]
+
+HOST_LINKS = env('HOST_LINKS')

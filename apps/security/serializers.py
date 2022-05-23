@@ -165,12 +165,13 @@ class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     is_superuser = serializers.BooleanField(required=False, read_only=True)
     security_user = UserSecuritySerializer(read_only=True)
     locations = LocationDefaultSerializer(read_only=True, many=True)
+    groups_display = RoleDefaultSerializer(read_only=True, many=True, source="groups")
 
     class Meta:
         model = User
         fields = ('id', 'code', 'email', 'name', 'last_name', 'full_name', 'address', 'phone', 'is_superuser',
                   'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha', 'is_oesvica',
-                  'identification_number', 'locations', 'type_user',)
+                  'identification_number', 'locations', 'type_user', 'groups_display',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

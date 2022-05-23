@@ -6,6 +6,7 @@ from django_celery_results.models import TaskResult
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 
+from apps.core.serializers import TypeNewsSimpleSerializer
 from apps.main.models import Schedule
 from apps.main.serializers import ScheduleDefaultSerializer
 from apps.security.serializers import RoleDefaultSerializer
@@ -22,6 +23,7 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
     schedule_display = ScheduleDefaultSerializer(source="schedule", many=True, read_only=True)
     days = serializers.ListField(child=serializers.DateField(), required=False)
     week_days = serializers.ListField(child=serializers.IntegerField(), required=False)
+    type_news_display = TypeNewsSimpleSerializer(read_only=True, source="type_news")
 
     def validate(self, attrs):
         days = attrs.get('days', None)

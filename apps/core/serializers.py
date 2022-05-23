@@ -45,3 +45,18 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
         model = TypeNews
         fields = serializers.ALL_FIELDS
 
+
+class TypeNewsSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    image_display = serializers.SerializerMethodField(read_only=True)
+
+    def get_image_display(self, obj: 'TypeNews'):
+        # request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            image_url = obj.image.url
+            return str(image_url)[1:] if str(image_url).startswith("/") else image_url
+        else:
+            return None
+
+    class Meta:
+        model = TypeNews
+        exclude = ('info', 'template',)
