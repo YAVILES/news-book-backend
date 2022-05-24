@@ -7,7 +7,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
-from django_celery_beat.models import IntervalSchedule, PeriodicTask, CrontabSchedule
+from django_celery_beat.models import IntervalSchedule, CrontabSchedule, PeriodicTask
+from django_tenants_celery_beat.models import PeriodicTaskTenantLink
 
 from apps.core.models import ModelBase, TypeNews
 from apps.main.models import Schedule
@@ -86,51 +87,3 @@ class Notification(ModelBase):
 
     def __str__(self):
         return "{description}".format(description=self.description)
-
-
-def post_save_new(sender, instance: Notification, **kwargs):
-    if isinstance(instance, Notification) and instance.type == Notification.OBLIGATORY:
-        try:
-            instance.periodic_tasks.all().delete()
-            periodic_tasks = []
-            if instance.frequency == Notification.EVERY_DAY:
-                for schedule in instance.schedule.all():
-                    if instance.frequency == Notification.EVERY_DAY:
-                        crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
-                            minute=schedule.final_hour.minute,
-                            hour=schedule.final_hour.hour,
-                            day_of_week='*',
-                            day_of_month='*',
-                            month_of_year='*',
-                            timezone=pytz.timezone('America/Caracas')
-                        )
-                        try:
-                            periodicTask = PeriodicTask.objects.get(
-                                name="{0} {1} {2}".format(instance.description, instance.type_news.description,
-                                                          schedule.description),
-                                task='apps.setting.tasks.generate_notification_not_fulfilled'
-                            )
-                            periodicTask.crontab = crontab_schedule
-                            periodicTask.save(update_fields=['crontab'])
-                        except ObjectDoesNotExist:
-                            periodicTask = PeriodicTask.objects.create(
-                                crontab=crontab_schedule,
-                                args=json.dumps([str(instance.id)]),
-                                name="{0} {1} {2}".format(instance.description, instance.type_news.description,
-                                                          schedule.description),
-                                task='apps.setting.tasks.generate_notification_not_fulfilled'
-                            )
-                        periodic_tasks.append(periodicTask)
-                    elif instance.frequency == Notification.JUST_ONE_DAY:
-                        pass
-                    elif instance.frequency == Notification.MORE_THAN_ONE_DAY:
-                        pass
-                    elif instance.frequency == Notification.BY_DAY_DAYS:
-                        pass
-            instance.periodic_tasks.set(periodic_tasks)
-        except Exception as e:
-            print(e.__str__())
-            pass
-
-
-post_save.connect(post_save_new, sender=Notification)
