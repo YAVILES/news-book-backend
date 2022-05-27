@@ -106,14 +106,14 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
                     )
                     periodicTask = PeriodicTask.objects.create(
                         crontab=crontab_schedule,
-                        args=json.dumps([str(instance.id)]),
+                        args=json.dumps(["Subject", "Body", ["yonathanaviles123@gmail.com"]]),
                         name="{0} {1} {2} {3}".format(
                             instance.description,
                             instance.type_news.description,
                             schedule.description,
                             datetime.datetime.now()
                         ),
-                        task='apps.setting.tasks.generate_notification_not_fulfilled'
+                        task='apps.setting.tasks.send_email'
                     )
                     tl = PeriodicTaskTenantLink(
                         tenant=request.tenant,
