@@ -93,41 +93,42 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
         instance = super(NotificationDefaultSerializer, self).update(instance, validated_data)
         instance.periodic_tasks.all().delete()
         periodic_tasks = []
-        if instance.frequency == Notification.EVERY_DAY:
-            for schedule in instance.schedule.all():
-                if instance.frequency == Notification.EVERY_DAY:
-                    crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=schedule.final_hour.minute,
-                        hour=schedule.final_hour.hour,
-                        day_of_week='*',
-                        day_of_month='*',
-                        month_of_year='*',
-                        timezone=pytz.timezone('America/Caracas')
-                    )
-                    periodicTask = PeriodicTask.objects.create(
-                        crontab=crontab_schedule,
-                        args=json.dumps([str(instance.id)]),
-                        name="{0} {1} {2} {3}".format(
-                            instance.description,
-                            instance.type_news.description,
-                            schedule.description,
-                            datetime.datetime.now()
-                        ),
-                        task='apps.setting.tasks.generate_notification_not_fulfilled'
-                    )
-                    tl = PeriodicTaskTenantLink(
-                        tenant=request.tenant,
-                        periodic_task=periodicTask
-                    )
-                    tl.save(update_fields=[])
-                    periodic_tasks.append(periodicTask)
-                elif instance.frequency == Notification.JUST_ONE_DAY:
-                    pass
-                elif instance.frequency == Notification.MORE_THAN_ONE_DAY:
-                    pass
-                elif instance.frequency == Notification.BY_DAY_DAYS:
-                    pass
-        instance.periodic_tasks.set(periodic_tasks)
+        if instance.type == Notification.OBLIGATORY:
+            if instance.frequency == Notification.EVERY_DAY:
+                for schedule in instance.schedule.all():
+                    if instance.frequency == Notification.EVERY_DAY:
+                        crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                            minute=schedule.final_hour.minute,
+                            hour=schedule.final_hour.hour,
+                            day_of_week='*',
+                            day_of_month='*',
+                            month_of_year='*',
+                            timezone=pytz.timezone('America/Caracas')
+                        )
+                        periodicTask = PeriodicTask.objects.create(
+                            crontab=crontab_schedule,
+                            args=json.dumps([str(instance.id)]),
+                            name="{0} {1} {2} {3}".format(
+                                instance.description,
+                                instance.type_news.description,
+                                schedule.description,
+                                datetime.datetime.now()
+                            ),
+                            task='apps.setting.tasks.generate_notification_not_fulfilled'
+                        )
+                        tl = PeriodicTaskTenantLink(
+                            tenant=request.tenant,
+                            periodic_task=periodicTask
+                        )
+                        tl.save(update_fields=[])
+                        periodic_tasks.append(periodicTask)
+                    elif instance.frequency == Notification.JUST_ONE_DAY:
+                        pass
+                    elif instance.frequency == Notification.MORE_THAN_ONE_DAY:
+                        pass
+                    elif instance.frequency == Notification.BY_DAY_DAYS:
+                        pass
+            instance.periodic_tasks.set(periodic_tasks)
         return instance
 
     class Meta:
