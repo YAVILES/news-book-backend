@@ -161,10 +161,10 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
                 instance = super(NewsDefaultSerializer, self).create(validated_data)
 
-                # Envió de notificaciones recurrentes (correos)
+                # Envió de notificaciones
                 try:
                     notifications = Notification.objects.filter(
-                        type_news_id=instance.type_news_id, type=Notification.RECURRENT
+                        type_news_id=instance.type_news_id
                     )
                     for notif in notifications:
                         groups = notif.groups.all().values_list('id', flat=True)
