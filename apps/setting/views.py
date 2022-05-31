@@ -2,7 +2,6 @@ import time
 import json
 import tablib
 import requests
-from celery.result import AsyncResult
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from django_filters.rest_framework import DjangoFilterBackend
@@ -337,6 +336,8 @@ class TaskResultViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = TaskResultFilter
     search_fields = ['id', 'task_name', 'status']
+    authentication_classes = []
+    permission_classes = (AllowAny, )
 
     def paginate_queryset(self, queryset):
         """

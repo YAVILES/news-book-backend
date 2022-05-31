@@ -1,14 +1,6 @@
-import datetime
-import json
-
-import pytz
 from django.contrib.auth.models import Group
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
-from django_celery_beat.models import IntervalSchedule, CrontabSchedule, PeriodicTask
-from django_tenants_celery_beat.models import PeriodicTaskTenantLink
 
 from apps.core.models import ModelBase, TypeNews
 from apps.main.models import Schedule
@@ -83,7 +75,13 @@ class Notification(ModelBase):
         size=7
     )
     is_active = models.BooleanField(default=True)
-    periodic_tasks = models.ManyToManyField(PeriodicTask, verbose_name=_('periodic tasks'), related_name='tasks')
+    periodic_tasks = ArrayField(
+        models.CharField(max_length=255),
+        size=255,
+        default=list,
+        null=True,
+        verbose_name=_('periodic tasks ids'),
+    )
 
     def __str__(self):
         return "{description}".format(description=self.description)
