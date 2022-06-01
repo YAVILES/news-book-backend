@@ -156,7 +156,45 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
                         tl.save(update_fields=[])
                         periodic_tasks.append(str(periodicTask.id))
             elif frequency == Notification.BY_DAY_DAYS:
-                pass
+                days = ""
+                for day in week_days:
+                    if day == "":
+                        days += str(day)
+                    else:
+                        days += ", " + str(day)
+
+                for schedule in schedules:
+                    minute = schedule.final_hour.minute
+                    hour = schedule.final_hour.hour
+                    name_task = "{0} {1} {2}".format(
+                        description,
+                        schedule.description,
+                        datetime.datetime.now()
+                    )
+                    crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                        minute=minute,
+                        hour=hour,
+                        day_of_week=days,
+                        day_of_month='*',
+                        month_of_year='*',
+                        timezone=pytz.timezone('America/Caracas')
+                    )
+                    periodicTask = PeriodicTask.objects.create(
+                        crontab=crontab_schedule,
+                        args=json.dumps([str(instance.id)]),
+                        name=name_task,
+                        task='apps.setting.tasks.generate_notification_not_fulfilled',
+                        start_time=day,
+                        one_off=True
+                    )
+                    tl = PeriodicTaskTenantLink(
+                        tenant=request.tenant,
+                        periodic_task=periodicTask,
+                        use_tenant_timezone=True
+                    )
+                    tl.save(update_fields=[])
+                    periodic_tasks.append(str(periodicTask.id))
+
         connection.set_tenant(request.tenant, True)
         instance.periodic_tasks = periodic_tasks
         instance.save(update_fields=['periodic_tasks'])
@@ -265,7 +303,45 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
                         tl.save(update_fields=[])
                         periodic_tasks.append(str(periodicTask.id))
             elif frequency == Notification.BY_DAY_DAYS:
-                pass
+                days = ""
+                for day in week_days:
+                    if day == "":
+                        days += str(day)
+                    else:
+                        days += ", " + str(day)
+
+                for schedule in schedules:
+                    minute = schedule.final_hour.minute
+                    hour = schedule.final_hour.hour
+                    name_task = "{0} {1} {2}".format(
+                        description,
+                        schedule.description,
+                        datetime.datetime.now()
+                    )
+                    crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                        minute=minute,
+                        hour=hour,
+                        day_of_week=days,
+                        day_of_month='*',
+                        month_of_year='*',
+                        timezone=pytz.timezone('America/Caracas')
+                    )
+                    periodicTask = PeriodicTask.objects.create(
+                        crontab=crontab_schedule,
+                        args=json.dumps([str(instance.id)]),
+                        name=name_task,
+                        task='apps.setting.tasks.generate_notification_not_fulfilled',
+                        start_time=day,
+                        one_off=True
+                    )
+                    tl = PeriodicTaskTenantLink(
+                        tenant=request.tenant,
+                        periodic_task=periodicTask,
+                        use_tenant_timezone=True
+                    )
+                    tl.save(update_fields=[])
+                    periodic_tasks.append(str(periodicTask.id))
+
         connection.set_tenant(request.tenant, True)
         instance.periodic_tasks = periodic_tasks
         instance.save(update_fields=['periodic_tasks'])
