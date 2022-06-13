@@ -71,66 +71,40 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
             PeriodicTask.objects.filter(id__in=periodic_tasks_pre).delete()
 
         periodic_tasks = []
-
-        if type_notif == Notification.OBLIGATORY:
-            if frequency == Notification.EVERY_DAY:
-                for schedule in schedules:
-                    minute = schedule.final_hour.minute
-                    hour = schedule.final_hour.hour
-                    name_task = "{0} {1} {2}".format(
-                        description,
-                        schedule.description,
-                        datetime.datetime.now()
-                    )
-                    crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=minute,
-                        hour=hour,
-                        day_of_week='*',
-                        day_of_month='*',
-                        month_of_year='*',
-                        timezone=pytz.timezone('America/Caracas')
-                    )
-                    periodicTask = PeriodicTask.objects.create(
-                        crontab=crontab_schedule,
-                        args=json.dumps([str(instance.id)]),
-                        name=name_task,
-                        task='apps.setting.tasks.generate_notification_not_fulfilled',
-                        start_time=datetime.datetime.now()
-                    )
-                    tl = PeriodicTaskTenantLink(
-                        tenant=request.tenant,
-                        periodic_task=periodicTask,
-                        use_tenant_timezone=True
-                    )
-                    tl.save(update_fields=[])
-                    periodic_tasks.append(str(periodicTask.id))
-            elif frequency == Notification.JUST_ONE_DAY:
-                for schedule in schedules:
-                    name_task = "{0} {1} {2}".format(
-                        description,
-                        schedule.description,
-                        datetime.datetime.now()
-                    )
-                    clocked_schedule, _ = ClockedSchedule.objects.get_or_create(
-                        clocked_time=schedule.final_hour
-                    )
-                    periodicTask = PeriodicTask.objects.create(
-                        clocked=clocked_schedule,
-                        args=json.dumps([str(instance.id)]),
-                        name=name_task,
-                        task='apps.setting.tasks.generate_notification_not_fulfilled',
-                        start_time=day,
-                        one_off=True
-                    )
-                    tl = PeriodicTaskTenantLink(
-                        tenant=request.tenant,
-                        periodic_task=periodicTask,
-                        use_tenant_timezone=True
-                    )
-                    tl.save(update_fields=[])
-                    periodic_tasks.append(str(periodicTask.id))
-            elif frequency == Notification.MORE_THAN_ONE_DAY:
-                for day in days:
+        if instance.is_active:
+            if type_notif == Notification.OBLIGATORY:
+                if frequency == Notification.EVERY_DAY:
+                    for schedule in schedules:
+                        minute = schedule.final_hour.minute
+                        hour = schedule.final_hour.hour
+                        name_task = "{0} {1} {2}".format(
+                            description,
+                            schedule.description,
+                            datetime.datetime.now()
+                        )
+                        crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                            minute=minute,
+                            hour=hour,
+                            day_of_week='*',
+                            day_of_month='*',
+                            month_of_year='*',
+                            timezone=pytz.timezone('America/Caracas')
+                        )
+                        periodicTask = PeriodicTask.objects.create(
+                            crontab=crontab_schedule,
+                            args=json.dumps([str(instance.id)]),
+                            name=name_task,
+                            task='apps.setting.tasks.generate_notification_not_fulfilled',
+                            start_time=datetime.datetime.now()
+                        )
+                        tl = PeriodicTaskTenantLink(
+                            tenant=request.tenant,
+                            periodic_task=periodicTask,
+                            use_tenant_timezone=True
+                        )
+                        tl.save(update_fields=[])
+                        periodic_tasks.append(str(periodicTask.id))
+                elif frequency == Notification.JUST_ONE_DAY:
                     for schedule in schedules:
                         name_task = "{0} {1} {2}".format(
                             description,
@@ -155,45 +129,71 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
                         )
                         tl.save(update_fields=[])
                         periodic_tasks.append(str(periodicTask.id))
-            elif frequency == Notification.BY_DAY_DAYS:
-                days = ""
-                for day in week_days:
-                    if day == "":
-                        days += str(day)
-                    else:
-                        days += ", " + str(day)
+                elif frequency == Notification.MORE_THAN_ONE_DAY:
+                    for day in days:
+                        for schedule in schedules:
+                            name_task = "{0} {1} {2}".format(
+                                description,
+                                schedule.description,
+                                datetime.datetime.now()
+                            )
+                            clocked_schedule, _ = ClockedSchedule.objects.get_or_create(
+                                clocked_time=schedule.final_hour
+                            )
+                            periodicTask = PeriodicTask.objects.create(
+                                clocked=clocked_schedule,
+                                args=json.dumps([str(instance.id)]),
+                                name=name_task,
+                                task='apps.setting.tasks.generate_notification_not_fulfilled',
+                                start_time=day,
+                                one_off=True
+                            )
+                            tl = PeriodicTaskTenantLink(
+                                tenant=request.tenant,
+                                periodic_task=periodicTask,
+                                use_tenant_timezone=True
+                            )
+                            tl.save(update_fields=[])
+                            periodic_tasks.append(str(periodicTask.id))
+                elif frequency == Notification.BY_DAY_DAYS:
+                    days = ""
+                    for day in week_days:
+                        if day == "":
+                            days += str(day)
+                        else:
+                            days += ", " + str(day)
 
-                for schedule in schedules:
-                    minute = schedule.final_hour.minute
-                    hour = schedule.final_hour.hour
-                    name_task = "{0} {1} {2}".format(
-                        description,
-                        schedule.description,
-                        datetime.datetime.now()
-                    )
-                    crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=minute,
-                        hour=hour,
-                        day_of_week=days,
-                        day_of_month='*',
-                        month_of_year='*',
-                        timezone=pytz.timezone('America/Caracas')
-                    )
-                    periodicTask = PeriodicTask.objects.create(
-                        crontab=crontab_schedule,
-                        args=json.dumps([str(instance.id)]),
-                        name=name_task,
-                        task='apps.setting.tasks.generate_notification_not_fulfilled',
-                        start_time=day,
-                        one_off=True
-                    )
-                    tl = PeriodicTaskTenantLink(
-                        tenant=request.tenant,
-                        periodic_task=periodicTask,
-                        use_tenant_timezone=True
-                    )
-                    tl.save(update_fields=[])
-                    periodic_tasks.append(str(periodicTask.id))
+                    for schedule in schedules:
+                        minute = schedule.final_hour.minute
+                        hour = schedule.final_hour.hour
+                        name_task = "{0} {1} {2}".format(
+                            description,
+                            schedule.description,
+                            datetime.datetime.now()
+                        )
+                        crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                            minute=minute,
+                            hour=hour,
+                            day_of_week=days,
+                            day_of_month='*',
+                            month_of_year='*',
+                            timezone=pytz.timezone('America/Caracas')
+                        )
+                        periodicTask = PeriodicTask.objects.create(
+                            crontab=crontab_schedule,
+                            args=json.dumps([str(instance.id)]),
+                            name=name_task,
+                            task='apps.setting.tasks.generate_notification_not_fulfilled',
+                            start_time=day,
+                            one_off=True
+                        )
+                        tl = PeriodicTaskTenantLink(
+                            tenant=request.tenant,
+                            periodic_task=periodicTask,
+                            use_tenant_timezone=True
+                        )
+                        tl.save(update_fields=[])
+                        periodic_tasks.append(str(periodicTask.id))
 
         connection.set_tenant(request.tenant, True)
         instance.periodic_tasks = periodic_tasks
@@ -218,66 +218,40 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
             PeriodicTask.objects.filter(id__in=periodic_tasks_pre).delete()
 
         periodic_tasks = []
-
-        if type_notif == Notification.OBLIGATORY:
-            if frequency == Notification.EVERY_DAY:
-                for schedule in schedules:
-                    minute = schedule.final_hour.minute
-                    hour = schedule.final_hour.hour
-                    name_task = "{0} {1} {2}".format(
-                        description,
-                        schedule.description,
-                        datetime.datetime.now()
-                    )
-                    crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=minute,
-                        hour=hour,
-                        day_of_week='*',
-                        day_of_month='*',
-                        month_of_year='*',
-                        timezone=pytz.timezone('America/Caracas')
-                    )
-                    periodicTask = PeriodicTask.objects.create(
-                        crontab=crontab_schedule,
-                        args=json.dumps([str(instance.id)]),
-                        name=name_task,
-                        task='apps.setting.tasks.generate_notification_not_fulfilled',
-                        start_time=datetime.datetime.now()
-                    )
-                    tl = PeriodicTaskTenantLink(
-                        tenant=request.tenant,
-                        periodic_task=periodicTask,
-                        use_tenant_timezone=True
-                    )
-                    tl.save(update_fields=[])
-                    periodic_tasks.append(str(periodicTask.id))
-            elif frequency == Notification.JUST_ONE_DAY:
-                for schedule in schedules:
-                    name_task = "{0} {1} {2}".format(
-                        description,
-                        schedule.description,
-                        datetime.datetime.now()
-                    )
-                    clocked_schedule, _ = ClockedSchedule.objects.get_or_create(
-                        clocked_time=schedule.final_hour
-                    )
-                    periodicTask = PeriodicTask.objects.create(
-                        clocked=clocked_schedule,
-                        args=json.dumps([str(instance.id)]),
-                        name=name_task,
-                        task='apps.setting.tasks.generate_notification_not_fulfilled',
-                        start_time=day,
-                        one_off=True
-                    )
-                    tl = PeriodicTaskTenantLink(
-                        tenant=request.tenant,
-                        periodic_task=periodicTask,
-                        use_tenant_timezone=True
-                    )
-                    tl.save(update_fields=[])
-                    periodic_tasks.append(str(periodicTask.id))
-            elif frequency == Notification.MORE_THAN_ONE_DAY:
-                for day in days:
+        if instance.is_active:
+            if type_notif == Notification.OBLIGATORY:
+                if frequency == Notification.EVERY_DAY:
+                    for schedule in schedules:
+                        minute = schedule.final_hour.minute
+                        hour = schedule.final_hour.hour
+                        name_task = "{0} {1} {2}".format(
+                            description,
+                            schedule.description,
+                            datetime.datetime.now()
+                        )
+                        crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                            minute=minute,
+                            hour=hour,
+                            day_of_week='*',
+                            day_of_month='*',
+                            month_of_year='*',
+                            timezone=pytz.timezone('America/Caracas')
+                        )
+                        periodicTask = PeriodicTask.objects.create(
+                            crontab=crontab_schedule,
+                            args=json.dumps([str(instance.id)]),
+                            name=name_task,
+                            task='apps.setting.tasks.generate_notification_not_fulfilled',
+                            start_time=datetime.datetime.now()
+                        )
+                        tl = PeriodicTaskTenantLink(
+                            tenant=request.tenant,
+                            periodic_task=periodicTask,
+                            use_tenant_timezone=True
+                        )
+                        tl.save(update_fields=[])
+                        periodic_tasks.append(str(periodicTask.id))
+                elif frequency == Notification.JUST_ONE_DAY:
                     for schedule in schedules:
                         name_task = "{0} {1} {2}".format(
                             description,
@@ -302,45 +276,71 @@ class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
                         )
                         tl.save(update_fields=[])
                         periodic_tasks.append(str(periodicTask.id))
-            elif frequency == Notification.BY_DAY_DAYS:
-                days = ""
-                for day in week_days:
-                    if day == "":
-                        days += str(day)
-                    else:
-                        days += ", " + str(day)
+                elif frequency == Notification.MORE_THAN_ONE_DAY:
+                    for day in days:
+                        for schedule in schedules:
+                            name_task = "{0} {1} {2}".format(
+                                description,
+                                schedule.description,
+                                datetime.datetime.now()
+                            )
+                            clocked_schedule, _ = ClockedSchedule.objects.get_or_create(
+                                clocked_time=schedule.final_hour
+                            )
+                            periodicTask = PeriodicTask.objects.create(
+                                clocked=clocked_schedule,
+                                args=json.dumps([str(instance.id)]),
+                                name=name_task,
+                                task='apps.setting.tasks.generate_notification_not_fulfilled',
+                                start_time=day,
+                                one_off=True
+                            )
+                            tl = PeriodicTaskTenantLink(
+                                tenant=request.tenant,
+                                periodic_task=periodicTask,
+                                use_tenant_timezone=True
+                            )
+                            tl.save(update_fields=[])
+                            periodic_tasks.append(str(periodicTask.id))
+                elif frequency == Notification.BY_DAY_DAYS:
+                    days = ""
+                    for day in week_days:
+                        if day == "":
+                            days += str(day)
+                        else:
+                            days += ", " + str(day)
 
-                for schedule in schedules:
-                    minute = schedule.final_hour.minute
-                    hour = schedule.final_hour.hour
-                    name_task = "{0} {1} {2}".format(
-                        description,
-                        schedule.description,
-                        datetime.datetime.now()
-                    )
-                    crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=minute,
-                        hour=hour,
-                        day_of_week=days,
-                        day_of_month='*',
-                        month_of_year='*',
-                        timezone=pytz.timezone('America/Caracas')
-                    )
-                    periodicTask = PeriodicTask.objects.create(
-                        crontab=crontab_schedule,
-                        args=json.dumps([str(instance.id)]),
-                        name=name_task,
-                        task='apps.setting.tasks.generate_notification_not_fulfilled',
-                        start_time=day,
-                        one_off=True
-                    )
-                    tl = PeriodicTaskTenantLink(
-                        tenant=request.tenant,
-                        periodic_task=periodicTask,
-                        use_tenant_timezone=True
-                    )
-                    tl.save(update_fields=[])
-                    periodic_tasks.append(str(periodicTask.id))
+                    for schedule in schedules:
+                        minute = schedule.final_hour.minute
+                        hour = schedule.final_hour.hour
+                        name_task = "{0} {1} {2}".format(
+                            description,
+                            schedule.description,
+                            datetime.datetime.now()
+                        )
+                        crontab_schedule, _ = CrontabSchedule.objects.get_or_create(
+                            minute=minute,
+                            hour=hour,
+                            day_of_week=days,
+                            day_of_month='*',
+                            month_of_year='*',
+                            timezone=pytz.timezone('America/Caracas')
+                        )
+                        periodicTask = PeriodicTask.objects.create(
+                            crontab=crontab_schedule,
+                            args=json.dumps([str(instance.id)]),
+                            name=name_task,
+                            task='apps.setting.tasks.generate_notification_not_fulfilled',
+                            start_time=day,
+                            one_off=True
+                        )
+                        tl = PeriodicTaskTenantLink(
+                            tenant=request.tenant,
+                            periodic_task=periodicTask,
+                            use_tenant_timezone=True
+                        )
+                        tl.save(update_fields=[])
+                        periodic_tasks.append(str(periodicTask.id))
 
         connection.set_tenant(request.tenant, True)
         instance.periodic_tasks = periodic_tasks
