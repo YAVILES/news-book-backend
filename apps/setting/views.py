@@ -196,7 +196,8 @@ class IbartiViewSet(viewsets.ViewSet):
             News.objects.filter(
                 location__code=code_location,
                 type_news__is_changing_of_the_guard=True
-            ).order_by('created').last()
+            ).order_by('created').last(),
+            context=self.get_serializer_context()
         ).data
         info = []
         if data['info']:
