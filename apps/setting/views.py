@@ -197,7 +197,7 @@ class IbartiViewSet(viewsets.ViewSet):
                 location__code=code_location,
                 type_news__is_changing_of_the_guard=True
             ).order_by('created').last(),
-            context=self.get_serializer_context()
+            context={'request': request}
         ).data
         info = []
         if data['info']:
