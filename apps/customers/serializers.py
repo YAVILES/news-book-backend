@@ -6,7 +6,7 @@ from rest_framework import serializers
 from apps.customers.models import Client, Domain
 
 
-class ClientSerializer(DynamicFieldsMixin, serializers.Serializer):
+class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     schema_name = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=100)
@@ -35,7 +35,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.Serializer):
                 if on_trial:
                     instance.on_trial = on_trial
                 instance.save(update_fields=['name', 'paid_until', 'on_trial'])
-                
+
                 return instance
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.messages})
@@ -44,7 +44,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.Serializer):
 
     class Meta:
         model = Client
-        fields = serializers.ALL_FIELDS
+        fields = ('id', 'name', 'paid_until', 'on_trial', 'created_on', 'email', 'auto_create_schema', 'schema_name',)
 
 
 class DomainSerializer(DynamicFieldsMixin, serializers.Serializer):
@@ -80,3 +80,8 @@ class DomainSerializer(DynamicFieldsMixin, serializers.Serializer):
     class Meta:
         model = Domain
         fields = serializers.ALL_FIELDS
+
+
+class ClientSimpleSerializer(DynamicFieldsMixin, serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=100)

@@ -104,3 +104,17 @@ python manage.py migrate_schemas --executor=multiprocessing
 
 # collectstatic
 python manage.py collectstatic_schemas --schema=your_tenant_schema_name
+
+
+
+## Poner en marcha Celery worker
+celery -A newsbookbackend worker --loglevel=info
+
+## Poner en marcha Celery beat
+celery -A newsbookbackend beat -l info
+
+## Poner en marcha Celery worker/beat
+celery -A newsbookbackend worker --beat -l info -S django
+
+## Eliminar tareas pendientes de celery redis
+celery -A newsbookbackend purge

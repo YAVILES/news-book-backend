@@ -77,7 +77,7 @@ class MaterialAdmin(TenantAdminMixin, admin.ModelAdmin):
 
 @admin.register(News)
 class NewsAdmin(TenantAdminMixin, admin.ModelAdmin):
-    list_display = ('info',)
+    list_display = ('number', 'info',)
 
 
 @admin.register(Location)

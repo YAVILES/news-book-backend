@@ -20,16 +20,16 @@ class CustomAuthenticationBackend(ModelBackend):
         if username is None or password is None:
             return
         try:
-            user = UserModel._default_manager.get_by_natural_key(str(username).lower())
+            user = UserModel._default_manager.get_by_natural_key(username)
         except UserModel.DoesNotExist:
-            raise exceptions.AuthenticationFailed('El usuario no existe')
+            raise exceptions.AuthenticationFailed({"error": 'El usuario no existe'})
         else:
             if hasattr(request, 'data'):
                 security_code = request.data.get('security_code', None)
                 if user_verified_security_code(user, security_code) or not security_code:
                     return user
                 else:
-                    raise exceptions.AuthenticationFailed('Código de seguridad inválido')
+                    raise exceptions.AuthenticationFailed({"error": 'Código de seguridad inválido'})
             else:
                 return user
 

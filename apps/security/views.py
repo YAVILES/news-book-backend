@@ -3,14 +3,15 @@ import tablib
 import string
 import random
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
 from django.contrib.auth.models import Group
 from django.core.mail import EmailMultiAlternatives
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, serializers, permissions
-from rest_framework.decorators import action, authentication_classes
+from rest_framework import status, serializers
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -43,8 +44,9 @@ class ValidUser(GenericViewSet):
             password_user = serializer.data["password"]
             try:
                 user: User = User.objects.get(code=code_user)
-            except Exception as e:
-                raise serializers.ValidationError(detail={"error": _('Código inválida')})
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError(detail={"error": _('El usuario no se encuentra registrado')})
+
             if user.is_authenticated:
                 serializers.ValidationError(detail={"error": "Este usuario ya tiene una session activa"})
             else:
@@ -60,32 +62,44 @@ class ValidUser(GenericViewSet):
 
             chars = string.ascii_uppercase + string.digits
             code = ''.join(random.choice(chars) for _ in range(8))
-            email = EmailMultiAlternatives(
-                'Un correo de prueba',
-                code,
-                settings.EMAIL_HOST_USER,
-                [user.email]
-            )
+            url_msg = None
             if user.security_user and user.security_user.phone:
                 url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.security_user.phone+'/' + code + ''
             else:
-                url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
+                if user.phone:
+                    url_msg = 'http://oesvica.ddns.net:5500/api-utilidades/api/send/'+user.phone+'/' + code + ''
+
+            if url_msg:
+                try:
+                    pass
+                    # requests.post(url_msg)
+                except:
+                    pass
+                    # serializers.ValidationError(
+                    #     detail={
+                    #         "error": "No fue posible enviar el código de seguridad",
+                    #         "msg": e.__str__()
+                    #     }
+                    # )
 
             try:
-                requests.post(url_msg)
-            except Exception as e:
-                serializers.ValidationError(
-                    detail={
-                        "msg": "No fue posible enviar el código de seguridad",
-                        "error": e.__str__()
-                    }
-                )
+                if user.security_user and user.security_user.email:
+                    destine_email = user.security_user.email
+                else:
+                    destine_email = user.email
 
-            # email.attach_alternative(content, 'text/html')
-            #try:
-            #    email.send()
-            #except ValueError as e:
-            #    serializers.ValidationError(detail={"msg": "No fue posible enviar el código de seguridad", "error": e})
+                if destine_email:
+                    email = EmailMultiAlternatives(
+                        'Código de Seguridad',
+                        code,
+                        settings.EMAIL_HOST_USER,
+                        [destine_email]
+                    )
+                    #email.attach_alternative(content, 'text/html')
+                    email.send()
+            except Exception as e:
+                serializers.ValidationError(detail={"error": "No fue posible enviar el código de seguridad", "msg": e})
+
             user.is_verified_security_code = False
             user.security_code = code
             user.save(update_fields=['security_code'])
@@ -124,7 +138,7 @@ class UserViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = UserFilter
     serializer_class = UserSimpleSerializer
-    search_fields = ['name', 'last_name' 'email', 'code']
+    search_fields = ['name', 'last_name', 'email', 'code']
     permission_classes = (AllowAny,)
 
     def paginate_queryset(self, queryset):

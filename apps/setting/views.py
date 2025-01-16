@@ -1,10 +1,8 @@
-from datetime import datetime
-
-from django.conf import settings
-
+import time
+import json
 import tablib
 import requests
-from django.core.mail.message import EmailMultiAlternatives
+from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -17,15 +15,16 @@ from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 from django_filters import rest_framework as filters
 
-from apps.main.models import News
-from apps.main.serializers import NewsDefaultSerializer
+from apps.main.models import News, Location, Material
+from apps.main.serializers import NewsDefaultSerializer, MaterialScopeSerializer
 from apps.setting.admin import NotificationResource
 from apps.setting.models import Notification
-from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDefaultSerializer
+from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDefaultSerializer, \
+    PeriodicTaskDefaultSerializer
 
-from apps.setting.tasks import generate_notification_async
+from apps.setting.tasks import generate_notification_async, generate_notification_not_fulfilled
 
-url_api_ibart = 'http://127.0.0.1/api-ibarti2'  # 'http://69.10.42.61/api-ibarti2'
+url_api_ibart = 'http://84.46.244.183/api-ibarti2'
 
 
 class NotificationViewSet(ModelViewSet):
@@ -54,6 +53,12 @@ class NotificationViewSet(ModelViewSet):
         if self.paginator is None or not_paginator:
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    @action(methods=['POST'], detail=False)
+    def my_task(self, request):
+        _id = str(Notification.objects.last().id)
+        generate_notification_not_fulfilled.delay(_id)
+        return Response({}, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)
     def export(self, request):
@@ -151,10 +156,15 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def planned_staff(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
+
+        hour = time.strftime('%H:%M', time.localtime())
         response = requests.get(
             url=url_api_ibart + "/manpower-planning/planned-staff",
-            params={"location": code_location}
+            params={"location": code_location, "hour": hour}
         )
         if response.status_code == 200:
             return Response(response.json(), status=status.HTTP_200_OK)
@@ -163,9 +173,12 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def oesvica_staff(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
-            url=url_api_ibart + "/manpower-planning/planned-staff",
+            url=url_api_ibart + "/manpower-planning/oesvica-staff",
             params={"location": code_location}
         )
         if response.status_code == 200:
@@ -175,18 +188,36 @@ class IbartiViewSet(viewsets.ViewSet):
 
     @action(methods=['GET'], detail=False)
     def former_guard(self, request):
-        code_location = self.request.query_params.get('code_location', None)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', None)
         data = NewsDefaultSerializer(
             News.objects.filter(
                 location__code=code_location,
                 type_news__is_changing_of_the_guard=True
-            ).last()
+            ).order_by('created').last(),
+            context=self.get_serializer_context()
         ).data
-        return Response(data['info'], status=status.HTTP_200_OK)
+        info = []
+        if data['info']:
+            info = json.loads(data['info'])
+        result = []
+        for key in info:
+            if str(key).startswith('OESVICA_STAFF') or str(key).startswith('PLANNED_STAFF'):
+                for trab in info[key]:
+                    result.append({
+                        "cod_ficha": trab.get("cod_ficha"),
+                        "name_and_surname": trab.get("name_and_surname")
+                    })
+        return Response(result, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)
     def sub_line_scope(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
         try:
             response = requests.get(
                 url=url_api_ibart + "/inventory/scope",
@@ -196,13 +227,19 @@ class IbartiViewSet(viewsets.ViewSet):
             return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
 
         if response.status_code == 200:
-            return Response(response.json(), status=status.HTTP_200_OK)
+            scope = response.json()
+            materials = MaterialScopeSerializer(Material.objects.all(), many=True).data
+            data = scope + materials
+            return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['GET'], detail=False)
     def location_current(self, request):
-        code_location = self.request.query_params.get('code_location', 157)
+        if 'location' in request.headers and request.headers['location']:
+            code_location = Location.objects.get(pk=request.headers['location']).code
+        else:
+            code_location = self.request.query_params.get('code_location', 157)
         try:
             response = requests.get(
                 url=url_api_ibart + "/client/location",
@@ -213,6 +250,26 @@ class IbartiViewSet(viewsets.ViewSet):
 
         if response.status_code == 200:
             return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['GET'], detail=False)
+    def valid_ficha(self, request):
+        ficha = self.request.query_params.get('ficha', None)
+        try:
+            response = requests.get(
+                url=url_api_ibart + "/ficha/get",
+                params={"ficha": ficha}
+            )
+        except Exception as e:
+            return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+
+        if response.status_code == 200:
+            data = response.json()
+            if not hasattr(data, 'error'):
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
@@ -280,6 +337,8 @@ class TaskResultViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = TaskResultFilter
     search_fields = ['id', 'task_name', 'status']
+    authentication_classes = []
+    permission_classes = (AllowAny, )
 
     def paginate_queryset(self, queryset):
         """
@@ -322,3 +381,7 @@ class TaskResultViewSet(ModelViewSet):
         else:
             return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class PeriodicTaskViewSet(ModelViewSet):
+    queryset = PeriodicTask.objects.all()
+    serializer_class = PeriodicTaskDefaultSerializer

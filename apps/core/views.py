@@ -20,6 +20,7 @@ class TypeNewsViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['description']
     permission_classes = (AllowAny, )
+    authentication_classes = []
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
 from datetime import timedelta
-
 import environ
 
 env = environ.Env(
@@ -32,6 +31,7 @@ env = environ.Env(
     EMAIL_HOST=(str, 'smtp.googlemail.com'),
     EMAIL_PORT=(int, 587),
     API_IBARTI=(str, 'http://69.10.42.61/api-ibarti2'),
+    HOST_LINKS=(str, 'http://localhost:4200'),
 )
 
 # reading .env file
@@ -49,7 +49,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', 'news.ibartisoftware.com.ve']
 
 # Application definition
 
@@ -74,8 +74,9 @@ SHARED_APPS = (
     'sequences',
     'constance',
     'constance.backends.database',
-    'django_celery_beat',
     'django_celery_results',
+    'django_celery_beat',
+    'django_tenants_celery_beat',
 )
 
 TENANT_APPS = (
@@ -90,7 +91,6 @@ TENANT_APPS = (
     'django.contrib.staticfiles',
     'constance',
     'constance.backends.database',
-    'django_celery_beat',
     'django_celery_results',
 
     # APPS
@@ -110,7 +110,7 @@ TENANT_APPS = (
     'constance.backends.database',
     'sequences',
     'django_ace',
-    'fcm_django',
+    # 'fcm_django',
     'import_export',
     'multiselectfield',
 )
@@ -118,8 +118,9 @@ TENANT_APPS = (
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    # 'django_tenants.middleware.main.TenantMainMiddleware',
+    'newsbookbackend.middlewares.XHeaderTenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -135,17 +136,13 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
-            "loaders": [
-                "django_tenants.template.loaders.filesystem.Loader",  # Must be first
-                "django.template.loaders.filesystem.Loader",
-                "django.template.loaders.app_directories.Loader",
             ],
         },
     },
@@ -201,7 +198,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = env('TIME_ZONE')
 
 USE_I18N = True
 
@@ -235,8 +232,9 @@ REST_FRAMEWORK = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_URL = 'static/'
+# STATIC_ROOT = '/var/www/html/static'  # os.path.join(BASE_DIR, "static")
+STATIC_ROOT = '/static/'
 
 STATICFILES_FINDERS = [
     "django_tenants.staticfiles.finders.TenantFileSystemFinder",  # Must be first
@@ -254,11 +252,12 @@ STATICFILES_STORAGE = "django_tenants.staticfiles.storage.TenantStaticFilesStora
 MULTITENANT_RELATIVE_STATIC_ROOT = ""  # (default: create sub-directory for each tenant)
 
 MEDIA_URL = env('MEDIA_URL')
-MEDIA_ROOT = "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = "/var/www/html/"  # "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
 
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
-MULTITENANT_RELATIVE_MEDIA_ROOT = "media"  # (default: create sub-directory for each tenant)
+MULTITENANT_RELATIVE_MEDIA_ROOT = "media/%s"  # (default: create sub-directory for each tena
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=365),
@@ -294,7 +293,8 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
-    'location'
+    'location',
+    'X-Dts-Schema'
 ]
 
 EMAIL_HOST = env('EMAIL_HOST')
@@ -303,25 +303,25 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_PASSWORD')
 EMAIL_USE_TLS = True
 
-FCM_DJANGO_SETTINGS = {
-    "APP_VERBOSE_NAME": "dev",
-    # Your firebase API KEY
-    "FCM_SERVER_KEY": "AAAAeWGzOo0:APA91bHPN3qpqTj-nlK3YncKz6U3aeLUnX40cvspvAeA_VnGloINmoA-MH7WTu91Fn2WJs6VWT4xNCPwA8TLpSHQNvCICUxTkOfanGtuXsG-esshTUO1wRt4FM2-GBNFkwW1bzhrtfU0",
-    # true if you want to have only one active device per registered user at a time
-    # default: False
-    "ONE_DEVICE_PER_USER": False,
-    # devices to which notifications cannot be sent,
-    # are deleted upon receiving error response from FCM
-    # default: False
-    "DELETE_INACTIVE_DEVICES": True,
-}
+# FCM_DJANGO_SETTINGS = {
+#     "APP_VERBOSE_NAME": "dev",
+#     # Your firebase API KEY
+#     "FCM_SERVER_KEY": "AAAAeWGzOo0:APA91bHPN3qpqTj-nlK3YncKz6U3aeLUnX40cvspvAeA_VnGloINmoA-MH7WTu91Fn2WJs6VWT4xNCPwA8TLpSHQNvCICUxTkOfanGtuXsG-esshTUO1wRt4FM2-GBNFkwW1bzhrtfU0",
+#     # true if you want to have only one active device per registered user at a time
+#     # default: False
+#     "ONE_DEVICE_PER_USER": False,
+#     # devices to which notifications cannot be sent,
+#     # are deleted upon receiving error response from FCM
+#     # default: False
+#     "DELETE_INACTIVE_DEVICES": True,
+# }
 
 # Config Import Export
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 IMPORT_EXPORT_IMPORT_PERMISSION_CODE = 'change'
 
 # CELERY STUFF
-BROKER_URL = 'redis://localhost:6379'
+BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -336,11 +336,14 @@ INTERNAL_IPS = [
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURE_SSL_REDIRECT = True
-# SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 # CSRF_COOKIE_SECURE = True
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:4200',
-    'http://127.0.0.1',
-    'http://194.163.161.64'
+    'http://127.0.0.1:8000',
+    'http://194.163.161.64',
+    'https://news.ibartisoftware.com.ve'
 ]
+
+HOST_LINKS = env('HOST_LINKS')

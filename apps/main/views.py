@@ -1,15 +1,20 @@
 import tablib
+from django.db import connections
+from django.db.models import CharField, Q
+from django.db.models.functions import Cast
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status
+from django_tenants.utils import get_tenant_database_alias
+from rest_framework import status, mixins
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from tablib import Dataset
 from django_filters import rest_framework as filters
 
 # Create your views here.
+from apps.customers.models import Client
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
     ScheduleResource, LocationResource, PointResource
 from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule, Location, Point, EquipmentTools
@@ -355,15 +360,15 @@ class NewsFilter(filters.FilterSet):
     class Meta:
         model = News
         fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name', 'min_number',
-                  'max_number', 'min_created', 'max_created']
+                  'max_number', 'min_created', 'max_created', 'type_news_id']
 
 
 class NewsViewSet(ModelViewSet):
     queryset = News.objects.all().order_by('-number')
     serializer_class = NewsDefaultSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = NewsFilter
-    search_fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name']
+
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
@@ -376,12 +381,32 @@ class NewsViewSet(ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    def get_queryset(self):
+        queryset = super(NewsViewSet, self).get_queryset()
+        search = self.request.query_params.get('search', None)
+        if search is None:
+            return queryset
+        else:
+            return queryset.annotate(
+                info_format=Cast('info', output_field=CharField()),
+                template_format=Cast('template', output_field=CharField())
+            ).filter(
+                Q(info_format__contains=search) |
+                Q(number__icontains=search) |
+                Q(template_format__icontains=search) |
+                Q(employee__icontains=search) |
+                Q(type_news__description__icontains=search) |
+                Q(location__code__icontains=search) |
+                Q(location__name__icontains=search)
+            )
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        '''
-        if 'location' in request.headers and request.headers['location']:
+
+        if 'location' in request.headers and request.headers['location'] and request.headers['location'] != '' and \
+                request.headers['location'] is not None:
             queryset = queryset.filter(location_id=request.headers['location'])
-        '''
+
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, context=self.get_serializer_context())
@@ -489,6 +514,33 @@ class NewsViewSet(ModelViewSet):
                 return Response(e, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "the field parameter is mandatory"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NewsLinkViewSet(mixins.RetrieveModelMixin, GenericViewSet):
+    queryset = News.objects.all()
+    serializer_class = NewsDefaultSerializer
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
+    def retrieve(self, request, *args, **kwargs):
+        schema_name = self.request.query_params.get('schema_name', None)
+        connection = connections[get_tenant_database_alias()]
+        client = Client.objects.get(schema_name=schema_name)
+        connection.set_tenant(client, True)
+        new = self.get_object()
+        location = ""
+        try:
+            if new.location:
+                location = new.location.name
+        except ValueError:
+            pass
+        serializer_data = self.get_serializer(new, context=self.get_serializer_context()).data
+        data = {
+            "new": serializer_data,
+            "client": client.name,
+            "location": location
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class ScheduleViewSet(ModelViewSet):

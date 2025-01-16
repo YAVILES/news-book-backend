@@ -4,9 +4,15 @@ from django.db import models
 import jsonfield
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
 
 from apps.core.models import ModelBase
 from sequences import get_next_value
+from apps.setting.tasks import send_email
+
+
+def get_auto_code_material():
+    return get_next_value('code_material', initial_value=1000000)
 
 
 class Material(ModelBase):
@@ -21,7 +27,7 @@ class EquipmentTools(ModelBase):
     serial = models.CharField(max_length=255, verbose_name="serial", unique=True, help_text="Serial")
     description = models.CharField(max_length=255, verbose_name="description", null=True, help_text="Descripción")
     mark = models.CharField(max_length=255, verbose_name="mark", null=True, help_text="Marca")
-    model = models.CharField(max_length=255, verbose_name="model", null=True,  help_text="Modelo")
+    model = models.CharField(max_length=255, verbose_name="model", null=True, help_text="Modelo")
     color = models.CharField(max_length=255, verbose_name="color", null=True, help_text="Color")
     year = models.CharField(max_length=255, verbose_name="year", null=True, help_text="Año")
     license_plate = models.CharField(max_length=255, verbose_name="license_plate", null=True, help_text="Placa")
@@ -57,8 +63,9 @@ class VehicleNews(ModelBase):
 class TypePerson(ModelBase):
     description = models.CharField(max_length=255, verbose_name="code", unique=True,
                                    help_text="Descripción del Tipo de Persona")
-    priority = models.CharField( max_length=255, verbose_name="code", help_text="Prioridad del tipo de persona")
+    priority = models.CharField(max_length=255, verbose_name="code", help_text="Prioridad del tipo de persona")
     is_active = models.BooleanField(default=True)
+    is_institution = models.BooleanField(default=False)
 
     # Deletes an type person
     def delete(self, using=None, keep_parents=False):
@@ -76,18 +83,30 @@ class TypePerson(ModelBase):
         )
 
 
+def get_auto_code_person():
+    return get_next_value('code_person', initial_value=100000)
+
+
 class Person(ModelBase):
     code = models.CharField(max_length=255, verbose_name="code", unique=True, help_text="Código de la persona")
     name = models.CharField(max_length=255, verbose_name="name", help_text="Nombre de la persona")
     last_name = models.CharField(max_length=255, verbose_name="lastname", help_text="Apellido de la persona")
     doc_ident = models.CharField(max_length=255, verbose_name="doc_ident", unique=True,
                                  help_text="Documento de Identidad de la persona")
-    address = models.CharField( max_length=255, verbose_name="address", help_text="Dirección de la persona")
+    address = models.CharField(max_length=255, verbose_name="address", null=True, blank=True,
+                               help_text="Dirección de la persona")
     phone = models.CharField(max_length=255, verbose_name="phone", help_text="Teléfono de la persona")
     mobile = models.CharField(max_length=255, verbose_name="mobile", help_text="Número de celular de la persona")
     type_person = models.ForeignKey('main.TypePerson', verbose_name=_('type_person'), on_delete=models.PROTECT,
                                     help_text="tipo de persona")
     is_active = models.BooleanField(default=True)
+
+    def get_full_name(self):
+        return "{name} {last_name}".format(name=self.name, last_name=self.last_name)
+
+    @cached_property
+    def full_name(self):
+        return self.get_full_name()
 
 
 class PersonNews(ModelBase):
@@ -108,7 +127,7 @@ class News(ModelBase):
     template = jsonfield.JSONField(default=list)
     info = jsonfield.JSONField(default=dict)
     created_by = models.ForeignKey('security.User', verbose_name=_('created_by'), on_delete=models.PROTECT,
-                                   help_text="Usuario por el que fue crada la novedad",  null=True)
+                                   help_text="Usuario por el que fue crada la novedad", null=True)
     materials = models.ManyToManyField(Material, verbose_name=_('materials'), related_name='news', through=MaterialNews)
     vehicles = models.ManyToManyField(Vehicle, verbose_name=_('vehicles'), related_name='news', through=VehicleNews)
     people = models.ManyToManyField(Person, verbose_name=_('people'), related_name='news', through=PersonNews)
@@ -134,28 +153,3 @@ class Point(ModelBase):
     code = models.CharField(max_length=255, verbose_name=_('code'), unique=True, null=False, blank=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
     is_active = models.BooleanField(default=True)
-
-
-#    SIGNALS
-def post_save_client(sender, instance: News, **kwargs):
-    from apps.security.models import User
-    if isinstance(instance, News) and not kwargs['created']:
-        try:
-            emails = User.objects.filter(
-                is_active=True, email__isnull=False).values_list('email', flat=True)
-            email = EmailMultiAlternatives(
-                instance.type_news.description,
-                'TEST EMAIL',
-                settings.EMAIL_HOST_USER,
-                emails
-            )
-            # email.attach_alternative(content, 'text/html')
-            try:
-                email.send()
-            except ValueError as e:
-                pass
-        except:
-            pass
-
-
-post_save.connect(post_save_client, sender=News)

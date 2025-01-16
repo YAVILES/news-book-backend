@@ -1,6 +1,3 @@
-# coding=utf-8
-import json
-
 from cryptography.fernet import Fernet
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import Permission, Group
@@ -20,16 +17,6 @@ from apps.security.models import User
 class ChangeSecurityCodeSerializer(serializers.ModelSerializer):
     code = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
-
-    def validate(self, attrs):
-        super().validate(attrs)
-        try:
-            user = User.objects.get(code=attrs.get('code'))
-        except:
-            raise serializers.ValidationError(
-                detail={"code": _('code invalid')})
-
-        return attrs
 
     class Meta:
         model = User
@@ -65,6 +52,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        request = self.context.get('request')
         password = validated_data.pop('password')
         email = validated_data.get('email')
         code = validated_data.get('code')
@@ -72,7 +60,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if books:
             validated_data['locations'] = books
         validated_data['email'] = str(email).lower()
-        validated_data['code'] = str(code).lower()
+
+        schema_name = request.headers.get('X-Dts-Schema', 'public')
+        validated_data['code'] = str(code).lower() + "@" + schema_name
+        validated_data['schema_name'] = schema_name
         try:
             with transaction.atomic():
                 user = super(UserCreateSerializer, self).create(validated_data)
@@ -82,6 +73,18 @@ class UserCreateSerializer(serializers.ModelSerializer):
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.messages})
         return validated_data
+
+    def update(self, instance, validated_data):
+        try:
+            with transaction.atomic():
+                password = validated_data.pop('password', None)
+                user = super(UserCreateSerializer, self).update(instance, validated_data)
+                if password:
+                    user.set_password(password)
+                    user.save(update_fields=['password'])
+        except ValueError as e:
+            raise serializers.ValidationError(detail={"error": e})
+        return user
 
     class Meta:
         model = User
@@ -162,12 +165,13 @@ class UserSimpleSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     is_superuser = serializers.BooleanField(required=False, read_only=True)
     security_user = UserSecuritySerializer(read_only=True)
     locations = LocationDefaultSerializer(read_only=True, many=True)
+    groups_display = RoleDefaultSerializer(read_only=True, many=True, source="groups")
 
     class Meta:
         model = User
         fields = ('id', 'code', 'email', 'name', 'last_name', 'full_name', 'address', 'phone', 'is_superuser',
                   'is_staff', 'groups', 'info', 'is_active', 'security_user', 'ficha', 'is_oesvica',
-                  'identification_number', 'locations', 'type_user',)
+                  'identification_number', 'locations', 'type_user', 'groups_display',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

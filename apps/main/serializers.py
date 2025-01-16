@@ -1,11 +1,16 @@
+from django.conf import settings
 from django.db import transaction
 from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.core.serializers import TypeNewsDefaultSerializer
-from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools
-from apps.setting.tasks import generate_notification_async
+from apps.customers.serializers import ClientSimpleSerializer
+from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools, \
+    get_auto_code_material, get_auto_code_person
+from apps.security.models import User
+from apps.setting.models import Notification
+from apps.setting.tasks import generate_notification_async, send_email
 
 
 class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -15,12 +20,27 @@ class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerialize
 
 
 class PersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    code = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     type_person_display = TypePersonDefaultSerializer(read_only=True, source="type_person")
     type_person = serializers.PrimaryKeyRelatedField(
         queryset=TypePerson.objects.all(),
         required=True,
         help_text="Id del tipo de persona"
     )
+    full_name = serializers.CharField(help_text="Nombre y apellido", read_only=True)
+
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                code = validated_data.get('code', None)
+                if code is None or code == "":
+                    auto_code = get_auto_code_person()
+                    validated_data['code'] = auto_code
+
+                person = super(PersonDefaultSerializer, self).create(validated_data)
+                return person
+        except ValidationError as error:
+            raise serializers.ValidationError(detail={"error": error.detail})
 
     class Meta:
         model = Person
@@ -36,9 +56,41 @@ class VehicleDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class MaterialDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    code = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    serial = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                code = validated_data.get('code', None)
+                serial = validated_data.get('serial', None)
+                if code is None or code == "" or serial is None or serial == "":
+                    auto_code = get_auto_code_material()
+                    if code is None or code == "":
+                        validated_data['code'] = auto_code
+                    if serial is None or serial == "":
+                        validated_data['serial'] = auto_code
+
+                material = super(MaterialDefaultSerializer, self).create(validated_data)
+                return material
+        except ValidationError as error:
+            raise serializers.ValidationError(detail={"error": error.detail})
+
     class Meta:
         model = Material
         fields = serializers.ALL_FIELDS
+
+
+class MaterialScopeSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    code = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    name = serializers.SerializerMethodField(read_only=True)
+
+    def get_name(self, material):
+        return material.description
+
+    class Meta:
+        model = Material
+        fields = ('code', 'name',)
 
 
 class LocationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -48,8 +100,7 @@ class LocationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
 
 
 class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    created_by = serializers.HiddenField(
-        default=serializers.CurrentUserDefault())
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
     materials = serializers.PrimaryKeyRelatedField(
         queryset=Material.objects.all(),
         many=True,
@@ -79,9 +130,15 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         write_only=True,
         help_text="Libro donde se genera la novedad"
     )
-    location = LocationDefaultSerializer(read_only=True)
+    location_display = LocationDefaultSerializer(read_only=True, source="location")
+    client_display = serializers.SerializerMethodField(read_only=True)
+
+    def get_client_display(self, obj):
+        request = self.context.get('request')
+        return ClientSimpleSerializer(request.tenant).data
 
     def create(self, validated_data):
+        request = self.context.get('request')
         try:
             with transaction.atomic():
                 info = validated_data.get('info')
@@ -102,9 +159,42 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                                     },
                                 )
 
-                new = super(NewsDefaultSerializer, self).create(validated_data)
-                generate_notification_async.delay(new.id)
-                return new
+                instance = super(NewsDefaultSerializer, self).create(validated_data)
+
+                # Envió de notificaciones
+                try:
+                    notifications = Notification.objects.filter(
+                        type_news_id=instance.type_news_id
+                    )
+                    for notif in notifications:
+                        groups = notif.groups.all().values_list('id', flat=True)
+                        emails = [
+                            str(email)
+                            for email in User.objects.filter(
+                                groups__id__in=groups, is_active=True, email__isnull=False
+                            ).values_list('email', flat=True).distinct()
+                        ]
+
+                        if instance.location:
+                            send_email.delay(
+                                instance.type_news.description,
+                                notif.description + " " + instance.location.name +
+                                " \n Para acceder usa el siguiente link " + settings.HOST_LINKS +
+                                "/#/viewlink/" + str(instance.id) + "/" + request.tenant.schema_name,
+                                emails
+                            )
+                        else:
+                            send_email.delay(
+                                instance.type_news.description,
+                                notif.description +
+                                "\n Para acceder usa el siguiente link " + settings.HOST_LINKS +
+                                "/#/viewlink/" + str(instance.id) + "/" + request.tenant.schema_name,
+                                emails
+                            )
+                except Exception as e:
+                    print(e.__str__())
+                    pass
+                return instance
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.detail})
 
