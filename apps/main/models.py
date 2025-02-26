@@ -52,6 +52,7 @@ class Vehicle(ModelBase):
                                      help_text="Placa del vehiculo")
     owner_full_name = models.CharField(max_length=255, verbose_name="owner full name", unique=True,
                                        help_text="Nombre y Apellido del propieatario del vehiculo", null=True)
+    model = models.CharField(max_length=255, verbose_name="model", help_text="Modelo del vehiculo", null=True)
     is_active = models.BooleanField(default=True)
 
 
@@ -66,6 +67,8 @@ class TypePerson(ModelBase):
     priority = models.CharField(max_length=255, verbose_name="code", help_text="Prioridad del tipo de persona")
     is_active = models.BooleanField(default=True)
     is_institution = models.BooleanField(default=False)
+    requires_company_data = models.BooleanField(default=False)
+    requires_guide_number = models.BooleanField(default=False)
 
     # Deletes an type person
     def delete(self, using=None, keep_parents=False):
