@@ -33,7 +33,7 @@ class Domain(DomainMixin):
 def handle_schema_migrated(sender, **kwargs):
     schema_name = kwargs['schema_name']
     connection = connections[get_tenant_database_alias()]
-    print(schema_name)
+
     try:
         client = Client.objects.get(schema_name=schema_name)
         connection.set_tenant(client, True)

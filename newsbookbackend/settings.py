@@ -30,7 +30,7 @@ env = environ.Env(
     EMAIL_HOST_USER=(str, "example@gmail.com"),
     EMAIL_HOST=(str, 'smtp.googlemail.com'),
     EMAIL_PORT=(int, 587),
-    API_IBARTI=(str, 'http://69.10.42.61/api-ibarti2'),
+    API_IBARTI=(str, 'http://localhost/api-ibarti2'),
     HOST_LINKS=(str, 'http://localhost:4200'),
 )
 
@@ -252,7 +252,7 @@ STATICFILES_STORAGE = "django_tenants.staticfiles.storage.TenantStaticFilesStora
 MULTITENANT_RELATIVE_STATIC_ROOT = ""  # (default: create sub-directory for each tenant)
 
 MEDIA_URL = env('MEDIA_URL')
-MEDIA_ROOT = "/var/www/html/"  # "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = "/opt/lampp/htdocs/"  # "C:/xampp/htdocs/"  # os.path.join(BASE_DIR, "media")
 
 DEFAULT_FILE_STORAGE = "django_tenants.files.storage.TenantFileSystemStorage"
 
@@ -347,3 +347,5 @@ CORS_ORIGIN_WHITELIST = [
 ]
 
 HOST_LINKS = env('HOST_LINKS')
+
+API_IBARTI = env('API_IBARTI')

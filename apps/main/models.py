@@ -68,6 +68,7 @@ class TypePerson(ModelBase):
     is_active = models.BooleanField(default=True)
     is_institution = models.BooleanField(default=False)
     requires_company_data = models.BooleanField(default=False)
+    requires_guide_number = models.BooleanField(default=False)
 
     # Deletes an type person
     def delete(self, using=None, keep_parents=False):

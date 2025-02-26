@@ -2,6 +2,7 @@ import time
 import json
 import tablib
 import requests
+from django.conf import settings
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from django_filters.rest_framework import DjangoFilterBackend
@@ -23,8 +24,6 @@ from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDe
     PeriodicTaskDefaultSerializer
 
 from apps.setting.tasks import generate_notification_async, generate_notification_not_fulfilled
-
-url_api_ibart = 'http://84.46.244.183/api-ibarti2'
 
 
 class NotificationViewSet(ModelViewSet):
@@ -163,7 +162,7 @@ class IbartiViewSet(viewsets.ViewSet):
 
         hour = time.strftime('%H:%M', time.localtime())
         response = requests.get(
-            url=url_api_ibart + "/manpower-planning/planned-staff",
+            url=settings.API_IBARTI + "/manpower-planning/planned-staff",
             params={"location": code_location, "hour": hour}
         )
         if response.status_code == 200:
@@ -178,7 +177,7 @@ class IbartiViewSet(viewsets.ViewSet):
         else:
             code_location = self.request.query_params.get('code_location', 157)
         response = requests.get(
-            url=url_api_ibart + "/manpower-planning/oesvica-staff",
+            url=settings.API_IBARTI + "/manpower-planning/oesvica-staff",
             params={"location": code_location}
         )
         if response.status_code == 200:
@@ -220,7 +219,7 @@ class IbartiViewSet(viewsets.ViewSet):
             code_location = self.request.query_params.get('code_location', 157)
         try:
             response = requests.get(
-                url=url_api_ibart + "/inventory/scope",
+                url=settings.API_IBARTI + "/inventory/scope",
                 params={"location": code_location}
             )
         except Exception as e:
@@ -242,7 +241,7 @@ class IbartiViewSet(viewsets.ViewSet):
             code_location = self.request.query_params.get('code_location', 157)
         try:
             response = requests.get(
-                url=url_api_ibart + "/client/location",
+                url=settings.API_IBARTI + "/client/location",
                 params={"location": code_location}
             )
         except Exception as e:
@@ -258,7 +257,7 @@ class IbartiViewSet(viewsets.ViewSet):
         ficha = self.request.query_params.get('ficha', None)
         try:
             response = requests.get(
-                url=url_api_ibart + "/ficha/get",
+                url=settings.API_IBARTI + "/ficha/get",
                 params={"ficha": ficha}
             )
         except Exception as e:
