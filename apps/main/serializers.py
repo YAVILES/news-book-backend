@@ -132,6 +132,11 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     )
     location_display = LocationDefaultSerializer(read_only=True, source="location")
     client_display = serializers.SerializerMethodField(read_only=True)
+    link = serializers.SerializerMethodField(read_only=True)
+
+    def get_link(self, obj):
+        request = self.context.get('request')
+        return settings.HOST_LINKS + "/#/viewlink/" + str(obj.id) + "/" + request.tenant.schema_name
 
     def get_client_display(self, obj):
         request = self.context.get('request')
