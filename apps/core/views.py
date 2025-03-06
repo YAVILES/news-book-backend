@@ -24,6 +24,10 @@ class TypeNewsViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        filtered = self.request.query_params.get('filtered', None)
+
+        if filtered:
+            queryset = queryset.filter(id__in=request.tenant.type_news.all().values_list('id', flat=True))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
