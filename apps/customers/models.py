@@ -5,6 +5,9 @@ from django_tenants.models import TenantMixin, DomainMixin
 from django_tenants.signals import schema_migrated
 from django.db import connections
 from django_tenants.utils import get_tenant_database_alias
+from django.utils.translation import ugettext_lazy as _
+
+from apps.core.models import TypeNews
 from apps.security.models import User
 from django_tenants_celery_beat.models import TenantTimezoneMixin
 
@@ -15,6 +18,7 @@ class Client(TenantTimezoneMixin, TenantMixin):
     on_trial = models.BooleanField()
     created_on = models.DateField(auto_now_add=True)
     email = models.EmailField(null=True)
+    type_news = models.ManyToManyField(TypeNews, related_name='clients', verbose_name=_('type news'))
 
     # default true, schema will be automatically created and synced when it is saved
     auto_create_schema = True
