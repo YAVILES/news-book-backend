@@ -43,11 +43,6 @@ class ClientViewSet(ModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def duplicate_type_persons(self, request):
-        from django.db import connections
-        from django_tenants.utils import get_tenant_database_alias
-        from apps.customers.models import Client
-        from apps.main.models import TypePerson
-
         # Cambiar al esquema `public`
         public_schema_name = "public"
         connection = connections[get_tenant_database_alias()]
