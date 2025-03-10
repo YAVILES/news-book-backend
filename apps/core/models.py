@@ -77,4 +77,3 @@ class TypeNews(ModelBase):
 
     def __str__(self):
         return "{description}".format(description=self.description)
-
