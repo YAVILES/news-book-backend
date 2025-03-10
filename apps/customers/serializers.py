@@ -37,6 +37,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                 paid_until = validated_data.pop('paid_until', None)
                 on_trial = validated_data.pop('on_trial', None)
                 type_news = validated_data.pop('type_news', None)
+                schema_name = validated_data.pop('schema_name', None)
 
                 if type_news:
                     instance.type_news.set(type_news)
@@ -49,6 +50,16 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                 if on_trial:
                     instance.on_trial = on_trial
                 instance.save(update_fields=['name', 'email', 'paid_until', 'on_trial'])
+
+                if email:
+                    try:
+                        code = 'admin@' + schema_name
+                        user_admin = User.objects.get(code=code)
+                        if user_admin:
+                            user_admin.email = email
+                            user_admin.save(update_fields=['email'])
+                    except:
+                        pass
 
                 return instance
         except ValidationError as error:
