@@ -52,6 +52,8 @@ class ClientViewSet(ModelViewSet):
         # Obtener todos los tipos de personas del esquema `public`
         public_type_persons = TypePerson.objects.all()
 
+        print(public_type_persons)
+
         # Recorrer todos los clientes
         for client in Client.objects.all():
             # Cambiar al esquema del cliente
@@ -62,7 +64,7 @@ class ClientViewSet(ModelViewSet):
                 # Verificar si el tipo de persona ya existe en el esquema del cliente
                 if not TypePerson.objects.filter(description=type_person.description).exists():
                     # Crear una copia del tipo de persona en el esquema del cliente
-                    TypePerson.objects.create(
+                    tp = TypePerson.objects.create(
                         description=type_person.description,
                         priority=type_person.priority,
                         is_active=type_person.is_active,
@@ -70,6 +72,7 @@ class ClientViewSet(ModelViewSet):
                         requires_company_data=type_person.requires_company_data,
                         requires_guide_number=type_person.requires_guide_number,
                     )
+                    print(tp.description, client.schema_name)
 
             print(f"Tipos de personas copiados al esquema del cliente: {client.schema_name}")
 
