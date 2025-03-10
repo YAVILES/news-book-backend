@@ -47,23 +47,23 @@ class ClientViewSet(ModelViewSet):
         public_schema_name = "public"
         connection = connections[get_tenant_database_alias()]
         public_client = Client.objects.get(schema_name=public_schema_name)
-        connection.set_tenant(public_client)
+        connection.set_tenant(public_client)  # Cambiar al tenant público
 
-        # Obtener todos los tipos de personas del esquema `public`
-        public_type_persons = TypePerson.objects.all()
-
-        print(public_type_persons)
+        # Obtener todos los tipos de personas del esquema `public` y almacenarlos en una lista
+        public_type_persons = list(TypePerson.objects.all())
+        print(f"Tipos de personas en el esquema público: {len(public_type_persons)}")
 
         # Recorrer todos los clientes
         for client in Client.objects.all():
             # Cambiar al esquema del cliente
             connection.set_tenant(client)
 
+            # Verificar el esquema actual
+            print(f"Esquema actual: {client.schema_name}")
+
             # Copiar los tipos de personas al esquema del cliente
             for type_person in public_type_persons:
-                # Verificar si el tipo de persona ya existe en el esquema del cliente
                 if not TypePerson.objects.filter(description=type_person.description).exists():
-                    # Crear una copia del tipo de persona en el esquema del cliente
                     tp = TypePerson.objects.create(
                         description=type_person.description,
                         priority=type_person.priority,
@@ -72,9 +72,7 @@ class ClientViewSet(ModelViewSet):
                         requires_company_data=type_person.requires_company_data,
                         requires_guide_number=type_person.requires_guide_number,
                     )
-                    print(tp.description, client.schema_name)
-
-            print(f"Tipos de personas copiados al esquema del cliente: {client.schema_name}")
+                    print(f"Creado: {tp.description} en el esquema {client.schema_name}")
 
         # Volver al esquema `public` al finalizar
         connection.set_tenant(public_client)
