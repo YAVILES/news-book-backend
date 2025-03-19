@@ -3,6 +3,7 @@ from django_restql.mixins import DynamicFieldsMixin
 from rest_framework import serializers
 from django.db import transaction
 from apps.core.models import TypeNews
+import re
 
 
 class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
