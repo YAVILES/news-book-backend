@@ -16,6 +16,14 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
             image_url = obj.image.url
             if image_url.startswith("/http:/"):
                 image_url = image_url.replace("/http:/", "http://")
+
+            image_url = re.sub(
+                r'media/([^/]+)/',  # Busca 'media/<cualquier-cosa-no-/>/'
+                r'media/public/',  # Reemplaza por 'media/public/'
+                image_url,
+                count=1  # Solo la primera coincidencia
+            )
+
             return image_url
         else:
             return None
