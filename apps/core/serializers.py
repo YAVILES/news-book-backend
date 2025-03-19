@@ -15,8 +15,8 @@ class TypeNewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer)
     def get_image_display(self, obj: 'TypeNews'):
         if obj.image and hasattr(obj.image, 'url'):
             image_url = obj.image.url
-            if image_url.startswith("/http:/"):
-                image_url = image_url.replace("/http:/", "http://")
+            if image_url.startswith("/http:"):
+                image_url = image_url.replace("/http:", "http:")
 
             image_url = re.sub(
                 r'media/([^/]+)/',  # Busca 'media/<cualquier-cosa-no-/>/'
