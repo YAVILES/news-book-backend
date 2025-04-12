@@ -145,7 +145,7 @@ class News(ModelBase):
 
 
 class Location(ModelBase):
-    code = models.CharField(max_length=255, verbose_name=_('code'), unique=True, null=False, blank=False)
+    code = models.CharField(max_length=255, verbose_name=_('code'), null=False, blank=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
     phone1 = models.CharField(max_length=255, verbose_name=_('phone1'), blank=True, null=True)
     phone2 = models.CharField(max_length=255, verbose_name=_('phone2'), blank=True, null=True)
