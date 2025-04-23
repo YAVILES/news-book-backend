@@ -17,7 +17,7 @@ class ClientViewSet(ModelViewSet):
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['name', 'email']
+    search_fields = ['name', 'email', 'schema_name']
     permission_classes = (AllowAny,)
     authentication_classes = []
 
