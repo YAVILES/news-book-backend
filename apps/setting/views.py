@@ -191,6 +191,7 @@ class IbartiViewSet(viewsets.ViewSet):
             code_location = Location.objects.get(pk=request.headers['location']).code
         else:
             code_location = self.request.query_params.get('code_location', None)
+        '''
         data = NewsDefaultSerializer(
             News.objects.filter(
                 location__code=code_location,
@@ -210,6 +211,18 @@ class IbartiViewSet(viewsets.ViewSet):
                         "name_and_surname": trab.get("name_and_surname")
                     })
         return Response(result, status=status.HTTP_200_OK)
+        '''
+
+        hour = time.strftime('%H:%M', time.localtime())
+        response = requests.get(
+            url=settings.API_IBARTI + "/manpower-planning/former-guard",
+            params={"location": code_location, "hour": hour}
+        )
+        if response.status_code == 200:
+            return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(methods=['GET'], detail=False)
     def sub_line_scope(self, request):
@@ -217,21 +230,26 @@ class IbartiViewSet(viewsets.ViewSet):
             code_location = Location.objects.get(pk=request.headers['location']).code
         else:
             code_location = self.request.query_params.get('code_location', 157)
-        try:
-            response = requests.get(
-                url=settings.API_IBARTI + "/inventory/scope",
-                params={"location": code_location}
-            )
-        except Exception as e:
-            return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+        show_scope = self.request.query_params.get('show_scope', False)
+        data = MaterialScopeSerializer(Material.objects.all(), many=True).data
 
-        if response.status_code == 200:
-            scope = response.json()
-            materials = MaterialScopeSerializer(Material.objects.all(), many=True).data
-            data = scope + materials
-            return Response(data, status=status.HTTP_200_OK)
+        if show_scope == True or show_scope == "true":
+            try:
+                response = requests.get(
+                    url=settings.API_IBARTI + "/inventory/scope",
+                    params={"location": code_location}
+                )
+            except Exception as e:
+                return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+
+            if response.status_code == 200:
+                scope = response.json()
+                data = scope + data
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)
     def location_current(self, request):
