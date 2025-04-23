@@ -63,17 +63,18 @@ class ValidUser(GenericViewSet):
             chars = string.ascii_uppercase + string.digits
             code = ''.join(random.choice(chars) for _ in range(8))
 
-            try:
-                requests.post(
-                    url=settings.API_WHATSAPP,
-                    data={
-                        "phoneNumber": user.security_user.phone
-                        if user.security_user and user.security_user.phone else user.phone,
-                        "message": f'Código de Seguridad: {code}'
-                    }
-                )
-            except Exception:
-                pass
+            if (user.security_user and user.security_user.phone) or user.phone:
+                try:
+                    requests.post(
+                        url=settings.API_WHATSAPP,
+                        data={
+                            "phoneNumber": user.security_user.phone
+                            if user.security_user and user.security_user.phone else user.phone,
+                            "message": f'Código de Seguridad: {code}'
+                        }
+                    )
+                except Exception:
+                    pass
 
             try:
                 if user.security_user and user.security_user.email:
