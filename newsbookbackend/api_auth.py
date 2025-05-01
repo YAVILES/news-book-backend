@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django_tenants.utils import get_tenant_model
 from apps.api.models import APIConsumer
-
+from datetime import timezone
 
 class APIAuthMiddleware:
     def __init__(self, get_response):
