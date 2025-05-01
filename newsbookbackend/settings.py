@@ -60,6 +60,7 @@ SHARED_APPS = (
     'apps.security',
     'apps.main',
     'apps.setting',
+    'apps.api',
 
     'django.contrib.contenttypes',
 
@@ -121,6 +122,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     # 'django_tenants.middleware.main.TenantMainMiddleware',
     'newsbookbackend.middlewares.XHeaderTenantMiddleware',
+    'newsbookbackend.api_auth.APIAuthMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -294,7 +296,8 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'location',
-    'X-Dts-Schema'
+    'X-Dts-Schema',
+    'X-API-Token'
 ]
 
 EMAIL_HOST = env('EMAIL_HOST')
