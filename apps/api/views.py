@@ -5,6 +5,8 @@ from drf_yasg2 import openapi
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django_tenants.utils import tenant_context
+from django_tenants.utils import get_tenant_model, get_public_schema_name
+from django.db import connection
 from rest_framework.permissions import AllowAny
 from apps.api.base_views import SecureAPIView
 from apps.main.models import News
@@ -121,3 +123,122 @@ class NoveltiesAPI(SecureAPIView):
             ).order_by('-created')
 
             return Response(list(novelties))
+
+
+class TypeNewsAPI(SecureAPIView):
+    """Devuelve todos los tipos de novedades disponibles."""
+    permission_classes = (AllowAny,)
+
+    @swagger_auto_schema(
+        operation_description="Lista de todos los tipos de novedades disponibles",
+        manual_parameters=[
+            openapi.Parameter(
+                'X-API-Token',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description="Token de autenticación",
+            ),
+            openapi.Parameter(
+                'X-Dts-Schema',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Schema del tenant (opcional para super tokens)",
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Lista de tipos de novedades",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(type=openapi.TYPE_STRING),
+                            'description': openapi.Schema(type=openapi.TYPE_STRING),
+                            'is_active': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                            'is_changing_of_the_guard': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        }
+                    )
+                )
+            ),
+            403: "Acceso no autorizado"
+        }
+    )
+    def get(self, request):
+        with tenant_context(request.tenant):
+            if request.tenant:
+                queryset = request.tenant.type_news.all()
+            else:
+                queryset = TypeNews.objects.all()
+
+            types = queryset.values(
+                'code',
+                'description',
+                'is_active',
+                'is_changing_of_the_guard'
+            ).order_by('description')
+
+            return Response(list(types))
+
+
+class ClientsAPI(SecureAPIView):
+    """Devuelve la lista de clientes (tenants) disponibles."""
+    permission_classes = (AllowAny,)
+
+    @swagger_auto_schema(
+        operation_description="Lista de clientes (tenants) disponibles",
+        manual_parameters=[
+            openapi.Parameter(
+                'X-API-Token',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description="Token de autenticación",
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Lista de clients",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'schema_name': openapi.Schema(type=openapi.TYPE_STRING),
+                            'name': openapi.Schema(type=openapi.TYPE_STRING),
+                            'email': openapi.Schema(type=openapi.TYPE_STRING),
+                            'created_on': openapi.Schema(type=openapi.TYPE_STRING, format='date')
+                        }
+                    )
+                )
+            ),
+            403: "Acceso no autorizado"
+        }
+    )
+    def get(self, request):
+        # Solo para super tokens con acceso completo
+        if not request.api_consumer.has_full_access:
+            return Response(
+                {'error': 'Se requiere token con acceso completo para esta operación'},
+                status=403
+            )
+
+        # Conexión directa al schema public
+        original_schema = connection.schema_name
+        try:
+            connection.set_schema(get_public_schema_name())
+            Client = get_tenant_model()
+            clients = Client.objects.all().exclude(schema_name='public').values(
+                'schema_name',
+                'name',
+                'email',
+                'created_on'
+            ).order_by('name')
+
+            return Response(list(clients))
+
+        finally:
+            # Restaurar schema original
+            connection.set_schema(original_schema)
