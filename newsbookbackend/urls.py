@@ -60,9 +60,9 @@ if settings.DEBUG:
 
 api_schema_view = get_schema_view(
     openapi.Info(
-        title="API para Zoho Analytics",
+        title="API Libro de novedades",
         default_version='v1',
-        description="Endpoints exclusivos para integración con Zoho.",
+        description="Endpoints exclusivos para integraciones con terceros.",
         license=openapi.License(name="Solo uso interno"),
     ),
     public=True,
