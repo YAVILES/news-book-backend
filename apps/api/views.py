@@ -111,7 +111,9 @@ class NoveltiesAPI(SecureAPIView):
             if date_to:
                 queryset = queryset.filter(created__lte=date_to)
 
-            novelties = queryset.values(
+            novelties = queryset.extra(
+                select={'created': "TO_CHAR(main_news.created, 'YYYY-MM-DD HH24:MI')"}
+            ).values(
                 'number',
                 'created',
                 'type_news__code',
