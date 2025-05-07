@@ -121,7 +121,8 @@ class NoveltiesAPI(SecureAPIView):
                 'location__id',
                 'location__code',
                 'location__name',
-                'employee'
+                'employee',
+                'info'
             ).order_by('-created')
 
             return Response(list(novelties))
