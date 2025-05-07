@@ -139,6 +139,14 @@ class NoveltyByTypeAPI(SecureAPIView):
     """
     permission_classes = (AllowAny,)
 
+    @staticmethod
+    def parse_date(date_str):
+        try:
+            naive_date = datetime.strptime(date_str, '%Y-%m-%d')
+            return make_aware(naive_date)
+        except (ValueError, TypeError):
+            raise InvalidDateException()
+        
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
