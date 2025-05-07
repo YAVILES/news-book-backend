@@ -11,6 +11,7 @@ from rest_framework.permissions import AllowAny
 from apps.api.base_views import SecureAPIView
 from apps.main.models import News
 from rest_framework.exceptions import APIException
+from django.conf import settings
 
 
 class InvalidDateException(APIException):
@@ -111,8 +112,9 @@ class NoveltiesAPI(SecureAPIView):
             if date_to:
                 queryset = queryset.filter(created__lte=date_to)
 
+            to_char = f'TO_CHAR(main_news.created AT TIME ZONE \'{settings.TIME_ZONE}\', \'YYYY-MM-DD HH24:MI\')'
             novelties = queryset.extra(
-                select={'created': "TO_CHAR(main_news.created, 'YYYY-MM-DD HH24:MI')"}
+                select={'created': to_char}
             ).values(
                 'number',
                 'created',
