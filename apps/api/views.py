@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from django.utils.timezone import make_aware
 from drf_yasg2.utils import swagger_auto_schema
 from drf_yasg2 import openapi
@@ -9,6 +10,8 @@ from django_tenants.utils import get_tenant_model, get_public_schema_name
 from django.db import connection
 from rest_framework.permissions import AllowAny
 from apps.api.base_views import SecureAPIView
+from django.shortcuts import get_object_or_404
+from apps.core.models import TypeNews
 from apps.main.models import News
 from rest_framework.exceptions import APIException
 from django.conf import settings
@@ -123,11 +126,191 @@ class NoveltiesAPI(SecureAPIView):
                 'location__id',
                 'location__code',
                 'location__name',
+                'employee'
+            ).order_by('-created')
+
+            return Response(list(novelties))
+
+
+class NoveltyByTypeAPI(SecureAPIView):
+    """
+    Endpoint que devuelve formatos diferentes según el tipo de novedad.
+    Ejemplo: /api/novelties/accidente/ o /api/novelties/mantenimiento/
+    """
+    permission_classes = (AllowAny,)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'X-API-Token',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description="Token de autenticación",
+            ),
+            openapi.Parameter(
+                'X-Dts-Schema',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Schema del tenant (opcional para super tokens)",
+            ),
+            openapi.Parameter(
+                'date_from',
+                openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                format='date',
+                description="Fecha inicial (YYYY-MM-DD)"
+            ),
+            openapi.Parameter(
+                'date_to',
+                openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                format='date',
+                description="Fecha final (YYYY-MM-DD)"
+            ),
+            openapi.Parameter(
+                'type_new',
+                openapi.IN_PATH,
+                type=openapi.TYPE_STRING,
+                description="Código del tipo de novedad (ej: 'accidente', 'mantenimiento')"
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Novedades formateadas según tipo",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'number': openapi.Schema(type=openapi.TYPE_INTEGER),
+                            'created': openapi.Schema(type=openapi.TYPE_STRING),
+                            'employee': openapi.Schema(type=openapi.TYPE_STRING),
+                        }
+                    )
+                )
+            )
+        }
+    )
+    def get(self, request, type_new):
+        # 1. Obtener el tipo de novedad
+        response_data = []
+        novelty_type = get_object_or_404(TypeNews, code=type_new)
+
+        date_from = None
+        date_to = None
+
+        if 'date_from' in request.GET:
+            date_from = self.parse_date(request.GET['date_from'])
+
+        if 'date_to' in request.GET:
+            date_to = self.parse_date(request.GET['date_to'])
+
+        # Validación de fechas
+        if date_from and date_to and date_from > date_to:
+            raise InvalidDateException("La fecha inicial no puede ser mayor que la final")
+
+        with tenant_context(request.tenant):
+            queryset = News.objects.filter(type_news_id=novelty_type.id)
+
+            if date_from:
+                queryset = queryset.filter(created__gte=date_from)
+
+            if date_to:
+                queryset = queryset.filter(created__lte=date_to)
+
+            to_char = f'TO_CHAR(main_news.created AT TIME ZONE \'{settings.TIME_ZONE}\', \'YYYY-MM-DD HH24:MI\')'
+            novelties = queryset.extra(
+                select={'created': to_char}
+            ).values(
+                'number',
+                'created',
                 'employee',
                 'info'
             ).order_by('-created')
 
-            return Response(list(novelties))
+            response_data = self._format_by_type(novelties, novelty_type.code)
+
+        return Response(list(response_data))
+
+    def _extract_attached_files(self, info_data):
+        file_key = next((k for k in info_data if k.startswith('ATTACHED_FILE_')), None)
+        return info_data.get(file_key, {}).get('attachedFiles') if file_key else None
+
+    def _extract_vehicle_data(self, info_data):
+        """
+        Extrae y estructura los datos del vehículo del campo info,
+        buscando cualquier clave que comience con 'VEHICLE'
+        """
+        # Buscar la clave que comienza con VEHICLE_
+        vehicle_key = next(
+            (key for key in info_data.keys() if key.startswith('VEHICLE_')),
+            None
+        )
+
+        if not vehicle_key:
+            return None
+
+        vehicle_info = info_data[vehicle_key]
+
+        # Estructura base
+        vehicle_data = {
+            'hora': vehicle_info.get('hour'),
+            'tipo_movimiento': 'ENTRADA' if vehicle_info.get('movement_type') == 'employee' else 'SALIDA',
+            'placa': vehicle_info.get('license_plate'),
+            'modelo': vehicle_info.get('model'),
+            'propietario': vehicle_info.get('owner_full_name')
+        }
+
+        # Datos específicos para vehículos de carga
+        # cargo_data = vehicle_info.get('cargo_vehicle', None)
+
+        # vehicle_data.update({
+        #     'documento': cargo_data.get('document_number'),
+        #     'precintado': cargo_data.get('sealed'),
+        #     'numero_precinto': cargo_data.get('seal_number'),
+        #     'placa_remolque': cargo_data.get('trailer_plate')
+        # })
+
+        vehicle_data['tipo_propietario'] = vehicle_info.get('owner_type', '').upper()
+
+
+        # Materiales (si existen)
+        # if 'materials' in vehicle_info:
+        #     vehicle_data['materiales'] = vehicle_info['materials'].get('value', [])
+
+        return vehicle_data
+
+    def _format_by_type(self, queryset, type_code):
+        """Transforma los datos según el tipo de novedad"""
+        result = []
+
+        for item in queryset:
+            base_data = {
+                'number': item['number'],
+                'fecha': item['created']
+            }
+
+            # Procesamiento especial según el tipo
+            info_data = json.loads(item.pop('info', {}))
+
+            if type_code == '004':
+                vehicle_data = self._extract_vehicle_data(info_data)
+                if vehicle_data:
+                    base_data.update(vehicle_data)
+
+                # Agregar observaciones si existen
+                free_text_key = next(
+                    (key for key in info_data.keys() if key.startswith('FREE_TEXT_')),
+                    None
+                )
+                if free_text_key:
+                    base_data['observaciones'] = info_data[free_text_key]
+
+            result.append(base_data)
+
+        return result
 
 
 class TypeNewsAPI(SecureAPIView):
