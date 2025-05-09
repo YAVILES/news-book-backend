@@ -342,12 +342,12 @@ class NoveltyByTypeAPI(SecureAPIView):
                 'acompanantes': person_info.get('accompany_visitor'),
                 'empresa': person_info.get('company_name', ''),
                 'rif': person_info.get('rif', ''),
-                'persona_autoriza': person_info.get('name_recibe', ''),
-                'identificacion_autoriza': person_info.get('ident_recibe', ''),
-                'cargo_autoriza': person_info.get('cargo_recibe', ''),
+                'persona_autoriza': person_info.get('name_recibe', '').replace("-", ""),
+                'identificacion_autoriza': person_info.get('ident_recibe', '').replace("-", ""),
+                'cargo_autoriza': person_info.get('cargo_recibe', '').replace("-", ""),
                 'numero_guia_factura': person_info.get('guide_number', ''),
-                'instituccion': person_info.get('instituccion', ''),
-                'observacion': person_info.get('observacion', ''),
+                'instituccion': person_info.get('instituccion', '').replace("-", ""),
+                'observacion': person_info.get('observacion', '').replace("-", ""),
 
             }
 
