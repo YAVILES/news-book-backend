@@ -339,15 +339,18 @@ class NoveltyByTypeAPI(SecureAPIView):
                 'razon_visita': person_info.get('reason_visit'),
                 'lugar_recepcion': person_info.get('place_of_reception'),
                 'numero_tarjeta': person_info.get('assigned_card_number'),
-                'acompanantes': person_info.get('accompany_visitor')
-            }
-
-            # Datos específicos para visitantes
-            person_data.update({
+                'acompanantes': person_info.get('accompany_visitor'),
                 'empresa': person_info.get('company_name', ''),
+                'rif': person_info.get('rif', ''),
                 'persona_autoriza': person_info.get('name_recibe', ''),
-                'cargo_autoriza': person_info.get('cargo_recibe', '')
-            })
+                'identificacion_autoriza': person_info.get('ident_recibe', ''),
+                'cargo_autoriza': person_info.get('cargo_recibe', ''),
+                'cargo_autoriza': person_info.get('cargo_recibe', ''),
+                'numero_guia_factura': person_info.get('guide_number', ''),
+                'instituccion': person_info.get('instituccion', ''),
+                'observacion': person_info.get('observacion', ''),
+
+            }
 
             persons.append(person_data)
 
