@@ -146,25 +146,33 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         request = self.context.get('request')
         try:
             with transaction.atomic():
-                info = validated_data.get('info')
-                for key in list(info.keys()):
-                    obj = info[key]
-                    if 'materials' in obj and isinstance(obj['materials'], dict):
-                        materials_data = obj['materials'].get('value', [])
-                        if isinstance(materials_data, list):
-                            for material in materials_data:
-                                if isinstance(material, dict):  # Validación adicional
-                                    equipment_tool, created = EquipmentTools.objects.update_or_create(
-                                        serial=material.get('serial'),
-                                        defaults={
-                                            'description': material.get('description'),
-                                            'mark': material.get('mark'),
-                                            'model': material.get('model'),
-                                            'color': material.get('color'),
-                                            'year': material.get('year'),
-                                            'license_plate': material.get('license_plate'),
-                                        },
-                                    )
+                info = validated_data.get('info', {})
+
+                for key, obj in info.items():
+                    try:
+                        # Solo procesar si es un diccionario y tiene 'materials'
+                        if isinstance(obj, dict) and 'materials' in obj:
+                            materials_value = obj['materials']
+                            # Verificar si materials_value es un diccionario con 'value'
+                            if isinstance(materials_value, dict) and 'value' in materials_value:
+                                materials_list = materials_value['value']
+                                if isinstance(materials_list, list):
+                                    for material in materials_list:
+                                        if isinstance(material, dict):
+                                            equipment_tool, created = EquipmentTools.objects.update_or_create(
+                                                serial=material.get('serial', ''),
+                                                defaults={
+                                                    'description': material.get('description', ''),
+                                                    'mark': material.get('mark', ''),
+                                                    'model': material.get('model', ''),
+                                                    'color': material.get('color', ''),
+                                                    'year': material.get('year', ''),
+                                                    'license_plate': material.get('license_plate', ''),
+                                                },
+                                            )
+                    except (TypeError, AttributeError) as e:
+                        print(f"Error procesando material en clave {key}: {str(e)}")
+                        continue
 
                 instance = super(NewsDefaultSerializer, self).create(validated_data)
 
@@ -202,6 +210,7 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                     print(e.__str__())
                     pass
                 return instance
+            return None
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.detail})
 
