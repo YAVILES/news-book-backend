@@ -12,9 +12,10 @@ from rest_framework.permissions import AllowAny
 from apps.api.base_views import SecureAPIView
 from django.shortcuts import get_object_or_404
 from apps.core.models import TypeNews
-from apps.main.models import News
+from apps.main.models import News, TypePerson
 from rest_framework.exceptions import APIException
 from django.conf import settings
+from django.core.cache import cache
 
 
 class InvalidDateException(APIException):
@@ -290,6 +291,68 @@ class NoveltyByTypeAPI(SecureAPIView):
 
         return vehicle_data
 
+    def _get_person_types_map(self):
+        """Obtiene todos los tipos de persona con cache"""
+        cache_key = 'all_person_types'
+        types = cache.get(cache_key)
+
+        if not types:
+            types = {
+                str(tp.id): {
+                    'descripcion': tp.description,
+                    'prioridad': tp.priority,
+                    'es_institucion': tp.is_institution,
+                    'requiere_datos_empresa': tp.requires_company_data
+                }
+                for tp in TypePerson.objects.filter(is_active=True)
+            }
+            cache.set(cache_key, types, timeout=60 * 60 * 24)  # Cache por 24 horas
+        return types
+
+    def _extract_person_data(self, info_data):
+        """
+        Extrae y estructura datos de personas del campo info,
+        buscando claves que comiencen con 'PERSON_'
+        """
+        persons = []
+        type_map = self._get_person_types_map()
+
+        # Buscar todas las claves de persona
+        person_keys = [key for key in info_data.keys()
+                       if key.startswith('PERSON_') and isinstance(info_data[key], dict)]
+
+        for key in person_keys:
+            person_info = info_data[key]
+
+            type_person_id = person_info.get('type_person')
+            type_data = type_map.get(type_person_id, {})
+
+            # Datos base
+            person_data = {
+                'tipo_id': type_person_id,
+                'tipo_descripcion': type_data.get('descripcion', 'Desconocido'),
+                'nombre_completo': person_info.get('full_name'),
+                'identificacion': person_info.get('identification_number'),
+                'hora': person_info.get('hour'),
+                'tipo_movimiento': 'ENTRADA' if person_info.get('movement_type') == 'employee' else 'SALIDA',
+                'ingreso_material': 'SI' if person_info.get('entry') else 'NO',
+                'razon_visita': person_info.get('reason_visit'),
+                'lugar_recepcion': person_info.get('place_of_reception'),
+                'numero_tarjeta': person_info.get('assigned_card_number'),
+                'acompanantes': person_info.get('accompany_visitor')
+            }
+
+            # Datos específicos para visitantes
+            person_data.update({
+                'empresa': person_info.get('company_name', ''),
+                'persona_autoriza': person_info.get('name_recibe', ''),
+                'cargo_autoriza': person_info.get('cargo_recibe', '')
+            })
+
+            persons.append(person_data)
+
+        return persons
+
     def _format_by_type(self, queryset, type_code):
         """Transforma los datos según el tipo de novedad"""
         result = []
@@ -315,6 +378,29 @@ class NoveltyByTypeAPI(SecureAPIView):
                 )
                 if free_text_key:
                     base_data['observaciones'] = info_data[free_text_key]
+
+            elif type_code == '006':  # Control de visitantes
+                # Extraer datos de personas
+                persons_data = self._extract_person_data(info_data)
+                if persons_data:
+                    base_data['personas'] = persons_data
+
+                # Extraer selección (ej: SELECTION_2)
+                selection_key = next(
+                    (key for key in info_data.keys() if key.startswith('SELECTION_')),
+                    None
+                )
+                if selection_key:
+                    base_data['autorizacion'] = info_data[selection_key]
+
+                # Extraer archivos adjuntos
+                # attached_files = [
+                #     info_data[key]['attachedFiles']
+                #     for key in info_data.keys()
+                #     if key.startswith('ATTACHED_FILE_') and info_data[key].get('attachedFiles')
+                # ]
+                # if attached_files:
+                #     base_data['archivos_adjuntos'] = attached_files
 
             result.append(base_data)
 
