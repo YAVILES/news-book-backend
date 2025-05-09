@@ -24,6 +24,65 @@ class InvalidDateException(APIException):
     default_code = 'invalid_date'
 
 
+class TypePersonAPI(SecureAPIView):
+    """Devuelve novedades filtradas por tenant."""
+    permission_classes = (AllowAny,)
+
+    @swagger_auto_schema(
+        operation_description="Lista de tipos de personas filtradas filtradas por cliente",
+        manual_parameters=[
+            openapi.Parameter(
+                'X-API-Token',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description="Token de autenticación",
+            ),
+            openapi.Parameter(
+                'X-Dts-Schema',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Schema del tenant",
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description="Lista de tipo de personas",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'id': openapi.Schema(type=openapi.TYPE_STRING),
+                            'description': openapi.Schema(type=openapi.TYPE_STRING),
+                            'priority': openapi.Schema(type=openapi.TYPE_STRING),
+                            'is_active': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                            'is_institution': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                            'requires_company_data': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                            'requires_guide_number': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        }
+                    )
+                )
+            ),
+            403: "Acceso no autorizado"
+        }
+    )
+    def get(self, request):
+        with tenant_context(request.tenant):
+            queryset = TypePerson.objects.all().values(
+                'id',
+                'description',
+                'priority',
+                'is_active',
+                'is_institution',
+                'requires_company_data',
+                'requires_guide_number'
+            )
+
+        return Response(list(queryset))
+
+
 class NoveltiesAPI(SecureAPIView):
     """Devuelve novedades filtradas por tenant."""
     permission_classes = (AllowAny,)
