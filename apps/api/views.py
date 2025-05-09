@@ -345,7 +345,6 @@ class NoveltyByTypeAPI(SecureAPIView):
                 'persona_autoriza': person_info.get('name_recibe', ''),
                 'identificacion_autoriza': person_info.get('ident_recibe', ''),
                 'cargo_autoriza': person_info.get('cargo_recibe', ''),
-                'cargo_autoriza': person_info.get('cargo_recibe', ''),
                 'numero_guia_factura': person_info.get('guide_number', ''),
                 'instituccion': person_info.get('instituccion', ''),
                 'observacion': person_info.get('observacion', ''),
