@@ -149,20 +149,22 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                 info = validated_data.get('info')
                 for key in list(info.keys()):
                     obj = info[key]
-                    if 'materials' in obj:
-                        if 'value' in obj['materials']:
-                            for material in obj['materials']['value']:
-                                equipment_tool, created = EquipmentTools.objects.update_or_create(
-                                    serial=material['serial'],
-                                    defaults={
-                                        'description': material['description'],
-                                        'mark': material['mark'],
-                                        'model': material['model'],
-                                        'color': material['color'],
-                                        'year': material['year'],
-                                        'license_plate': material['license_plate'],
-                                    },
-                                )
+                    if 'materials' in obj and isinstance(obj['materials'], dict):
+                        materials_data = obj['materials'].get('value', [])
+                        if isinstance(materials_data, list):
+                            for material in materials_data:
+                                if isinstance(material, dict):  # Validación adicional
+                                    equipment_tool, created = EquipmentTools.objects.update_or_create(
+                                        serial=material.get('serial'),
+                                        defaults={
+                                            'description': material.get('description'),
+                                            'mark': material.get('mark'),
+                                            'model': material.get('model'),
+                                            'color': material.get('color'),
+                                            'year': material.get('year'),
+                                            'license_plate': material.get('license_plate'),
+                                        },
+                                    )
 
                 instance = super(NewsDefaultSerializer, self).create(validated_data)
 
