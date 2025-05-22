@@ -295,7 +295,8 @@ class NoveltyByTypeAPI(SecureAPIView):
                 'number',
                 'created',
                 'employee',
-                'info'
+                'info',
+                'template'
             ).order_by('-created')
 
             response_data = self._format_by_type(novelties, novelty_type.code)
@@ -426,8 +427,50 @@ class NoveltyByTypeAPI(SecureAPIView):
 
             # Procesamiento especial según el tipo
             info_data = json.loads(item.pop('info', {}))
+            template_data = json.loads(item.get('template', '[]'))
 
-            if type_code == '004':
+            if type_code == '001':  # Cambio de guardia
+                processed_data = {}
+                field_mapping = {}
+
+                # Primero creamos un mapeo de los campos basado en el template
+                for field in template_data:
+                    if field['code'] in ['SELECTION', 'FREE_TEXT']:
+                        # Buscamos el campo correspondiente en info_data
+                        for key in info_data.keys():
+                            if key.startswith(field['code'] + '_'):
+                                label = field.get('label', '').lower().replace(' ', '_')
+                                if label:
+                                    field_mapping[key] = label
+                                else:
+                                    # Si no hay label, usamos el código como último recurso
+                                    field_mapping[key] = field['code'].lower()
+
+                # Procesamos los campos mapeados
+                for key, value in info_data.items():
+                    if key in field_mapping:
+                        processed_data[field_mapping[key]] = value
+                    elif key.startswith('PLANNED_STAFF_'):
+                        if 'personal_recibe' not in processed_data:
+                            processed_data['personal_recibe'] = value
+                        elif 'personal_disponible_dia_libre' not in processed_data:
+                            processed_data['personal_disponible_dia_libre'] = value
+                        elif 'personal_faltante' not in processed_data:
+                            processed_data['personal_faltante'] = value
+                    elif key.startswith('OESVICA_STAFF_'):
+                        processed_data['personal_no_planificado'] = value
+                    elif key.startswith('FORMER_GUARD_'):
+                        processed_data['personal_entrega'] = value
+                    elif key.startswith('ATTACHED_FILE_'):
+                        attached_files = self._extract_attached_files(info_data)
+                        if attached_files:
+                            processed_data['archivos_adjuntos'] = attached_files
+                    elif key.startswith('ERRATA_'):
+                        processed_data['erratas'] = value
+
+                base_data.update(processed_data)
+
+            elif type_code == '004':
                 vehicle_data = self._extract_vehicle_data(info_data)
                 if vehicle_data:
                     base_data.update(vehicle_data)
