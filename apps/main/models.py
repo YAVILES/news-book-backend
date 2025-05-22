@@ -17,7 +17,9 @@ def get_auto_code_material():
 
 class Material(ModelBase):
     code = models.CharField(max_length=255, verbose_name="code", unique=True, help_text="Código del material")
-    serial = models.CharField(max_length=255, verbose_name="serial", unique=True, help_text="Serial del material")
+    serial = models.CharField(
+        max_length=255, verbose_name="serial", help_text="Serial del material", null=True, blank=True
+    )
     description = models.CharField(max_length=255, verbose_name="description", unique=True,
                                    help_text="Descripción del material")
     is_active = models.BooleanField(default=True)
@@ -98,10 +100,13 @@ class Person(ModelBase):
                                  help_text="Documento de Identidad de la persona")
     address = models.CharField(max_length=255, verbose_name="address", null=True, blank=True,
                                help_text="Dirección de la persona")
-    phone = models.CharField(max_length=255, verbose_name="phone", help_text="Teléfono de la persona")
-    mobile = models.CharField(max_length=255, verbose_name="mobile", help_text="Número de celular de la persona")
+    phone = models.CharField(max_length=255, verbose_name="phone", help_text="Teléfono de la persona", null=True, blank=True)
+    mobile = models.CharField(max_length=255, verbose_name="mobile", help_text="Número de celular de la persona", null=True, blank=True)
     type_person = models.ForeignKey('main.TypePerson', verbose_name=_('type_person'), on_delete=models.PROTECT,
                                     help_text="tipo de persona")
+    company =  models.CharField(max_length=255, verbose_name="address", null=True, blank=True)
+    rif = models.CharField(max_length=255, verbose_name="rif", null=True, blank=True)
+
     is_active = models.BooleanField(default=True)
 
     def get_full_name(self):
@@ -145,7 +150,7 @@ class News(ModelBase):
 
 
 class Location(ModelBase):
-    code = models.CharField(max_length=255, verbose_name=_('code'), unique=True, null=False, blank=False)
+    code = models.CharField(max_length=255, verbose_name=_('code'), null=False, blank=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
     phone1 = models.CharField(max_length=255, verbose_name=_('phone1'), blank=True, null=True)
     phone2 = models.CharField(max_length=255, verbose_name=_('phone2'), blank=True, null=True)

@@ -1,18 +1,3 @@
-"""btpb2b URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 import debug_toolbar
 from django.conf import settings
 from django.conf.urls import include
@@ -22,8 +7,10 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg2.views import get_schema_view
+from drf_yasg2.utils import swagger_auto_schema
 from drf_yasg2 import openapi
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+from apps.api import urls as api_urls
 
 from apps.security.views import CustomTokenObtainPairView
 from apps.setting.views import TestEmailView
@@ -62,8 +49,31 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     # Short URLss
-    url(r'^s/', include('django_short_url.urls', namespace='django_short_url'))
+    url(r'^s/', include('django_short_url.urls', namespace='django_short_url')),
+
+    path('api/api/', include(api_urls)),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 if settings.DEBUG:
     urlpatterns += url(r'^__debug__/', include(debug_toolbar.urls)),
+
+
+api_schema_view = get_schema_view(
+    openapi.Info(
+        title="API Libro de novedades",
+        default_version='v1',
+        description="Endpoints exclusivos para integraciones con terceros.",
+        license=openapi.License(name="Solo uso interno"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+    patterns=[
+        path('api/api/', include(api_urls)),  # Esto conecta los endpoints con la documentación
+    ],
+)
+
+urlpatterns += [
+    path('api/swagger/', api_schema_view.with_ui('swagger', cache_timeout=0), name='api-swagger'),
+    path('api/redoc/', api_schema_view.with_ui('redoc', cache_timeout=0), name='api-redoc'),
+]
+
