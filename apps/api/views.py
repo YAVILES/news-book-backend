@@ -502,9 +502,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                     if not person_info.get('type_person'):
                         processed_data['autorizador'] = {
                             'nombre': person_info.get('full_name'),
-                            'identificacion': person_info.get('identification_number'),
-                            'cargo': person_info.get('position', ''),
-                            'telefono': person_info.get('phone', '')
+                            'identificacion': person_info.get('identification_number')
                         }
                     else:
                         # Es una persona normal
