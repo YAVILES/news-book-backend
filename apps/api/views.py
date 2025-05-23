@@ -352,17 +352,21 @@ class NoveltyByTypeAPI(SecureAPIView):
         return vehicle_data
 
     def _get_person_types_map(self):
-        """Obtiene todos los tipos de persona"""
-        types = {
-            str(tp.id): {
-                'descripcion': tp.description,
-                'prioridad': tp.priority,
-                'es_institucion': tp.is_institution,
-                'requiere_datos_empresa': tp.requires_company_data
-            }
-            for tp in TypePerson.objects.all()
-        }
+        """Obtiene todos los tipos de persona con cache"""
+        cache_key = 'all_person_types'
+        types = cache.get(cache_key)
 
+        if not types:
+            types = {
+                str(tp.id): {
+                    'descripcion': tp.description,
+                    'prioridad': tp.priority,
+                    'es_institucion': tp.is_institution,
+                    'requiere_datos_empresa': tp.requires_company_data
+                }
+                for tp in TypePerson.objects.filter(is_active=True)
+            }
+            cache.set(cache_key, types, timeout=60 * 60 * 24)  # Cache por 24 horas
         return types
 
     def _extract_person_data(self, info_data):
@@ -418,7 +422,8 @@ class NoveltyByTypeAPI(SecureAPIView):
         for item in queryset:
             base_data = {
                 'number': item['number'],
-                'fecha': item['created']
+                'fecha': item['created'],
+                'empleado': item['employee']
             }
 
             # Procesamiento especial según el tipo
@@ -480,27 +485,97 @@ class NoveltyByTypeAPI(SecureAPIView):
                     base_data['observaciones'] = info_data[free_text_key]
 
             elif type_code == '006':  # Control de visitantes
-                # Extraer datos de personas
-                persons_data = self._extract_person_data(info_data)
-                if persons_data:
-                    base_data['personas'] = persons_data
+                processed_data = {
+                    'personas': [],
+                    'personas_adicionales': [],
+                    'autorizador': {},
+                    'archivos_adjuntos': []
+                }
+                type_map = self._get_person_types_map()
 
-                # Extraer selección (ej: SELECTION_2)
-                selection_key = next(
-                    (key for key in info_data.keys() if key.startswith('SELECTION_')),
-                    None
-                )
-                if selection_key:
-                    base_data['autorizacion'] = info_data[selection_key]
+                # Procesamiento basado en el template
+                for field in template_data:
+                    field_code = field.get('code')
+                    field_label = field.get('label', '').lower().replace(' ', '_') or field_code.lower()
 
-                # Extraer archivos adjuntos
-                # attached_files = [
-                #     info_data[key]['attachedFiles']
-                #     for key in info_data.keys()
-                #     if key.startswith('ATTACHED_FILE_') and info_data[key].get('attachedFiles')
-                # ]
-                # if attached_files:
-                #     base_data['archivos_adjuntos'] = attached_files
+                    # 1. Campos SELECTION (elecciones)
+                    if field_code == 'SELECTION':
+                        for key in info_data:
+                            if key.startswith('SELECTION_'):
+                                processed_data[field_label] = info_data[key]
+                                break
+
+                    # 2. Campos PERSON (personas principales)
+                    elif field_code == 'PERSON' and 'autoriza' not in field_label.lower():
+                        for key in info_data:
+                            if key.startswith('PERSON_'):
+                                person_info = info_data[key]
+                                type_person_id = person_info.get('type_person')
+                                type_data = type_map.get(type_person_id, {})
+                                person_data = {
+                                    'tipo_id': type_person_id,
+                                    'tipo_descripcion': type_data.get('descripcion', 'Desconocido'),
+                                    'nombre_completo': person_info.get('full_name'),
+                                    'identificacion': person_info.get('identification_number'),
+                                    'hora': person_info.get('hour'),
+                                    'tipo_movimiento': 'ENTRADA' if person_info.get(
+                                        'movement_type') == 'employee' else 'SALIDA',
+                                    'razon_visita': person_info.get('reason_visit'),
+                                    'lugar_recepcion': person_info.get('place_of_reception'),
+                                    'numero_tarjeta': person_info.get('assigned_card_number'),
+                                    'acompanantes': person_info.get('accompany_visitor'),
+                                    'empresa': person_info.get('company_name'),
+                                    'rif': person_info.get('rif')
+                                }
+                                processed_data['personas'].append(person_data)
+
+                    # 3. Campos PERSON (autorizador)
+                    elif field_code == 'PERSON' and 'autoriza' in field_label.lower():
+                        for key in info_data:
+                            if key.startswith('PERSON_'):
+                                person_info = info_data[key]
+                                autorizador_data = {
+                                    'nombre': person_info.get('full_name'),
+                                    'identificacion': person_info.get('identification_number'),
+                                    'cargo': person_info.get('position')
+                                }
+                                processed_data['autorizador'] = autorizador_data
+                                break
+
+                    # 4. Campos PERSONS (personas adicionales)
+                    elif field_code == 'PERSONS':
+                        for key in info_data:
+                            if key.startswith('PERSONS_'):
+                                for person in info_data[key]:
+                                    processed_data['personas_adicionales'].append({
+                                        'nombre': person.get('full_name'),
+                                        'numero_tarjeta': person.get('assigned_card_number')
+                                    })
+
+                    # 5. Campos ATTACHED_FILE
+                    # elif field_code == 'ATTACHED_FILE':
+                    #     for key in info_data:
+                    #         if key.startswith('ATTACHED_FILE_'):
+                    #             files = info_data[key].get('attachedFiles', [])
+                    #             if files:
+                    #                 processed_data['archivos_adjuntos'].extend(files)
+
+                    # 6. Campos ERRATA
+                    elif field_code == 'ERRATA':
+                        for key in info_data:
+                            if key.startswith('ERRATA_'):
+                                processed_data['erratas'] = {
+                                    'editado': info_data[key].get('edited', False),
+                                    'observacion': info_data[key].get('observation_errata', '')
+                                }
+                                break
+
+                # Limpieza de campos vacíos
+                for key in list(processed_data.keys()):
+                    if isinstance(processed_data[key], list) and not processed_data[key]:
+                        del processed_data[key]
+
+                base_data.update(processed_data)
 
             result.append(base_data)
 
