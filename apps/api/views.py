@@ -419,6 +419,14 @@ class NoveltyByTypeAPI(SecureAPIView):
         """Transforma los datos según el tipo de novedad"""
         result = []
 
+        # Mapeo de condiciones de salud
+        HEALTH_CONDITIONS = {
+            'good': 'Buena',
+            'average': 'Regular',
+            'bad': 'Mala',
+            'not_in_service': 'No se encuentra en el servicio'
+        }
+
         for item in queryset:
             base_data = {
                 'number': item['number'],
@@ -498,7 +506,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                                 'codigo_ficha': member.get('cod_ficha'),
                                 'telefono': member.get('telefono'),
                                 'estado': member.get('guard_status'),
-                                'condicion_salud': member.get('health_condition')
+                                'condicion_salud': HEALTH_CONDITIONS.get(member.get('health_condition', ''), 'Desconocida')
                             })
 
                 # 3. Procesar archivos adjuntos (ATTACHED_FILE_)
