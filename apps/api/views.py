@@ -471,6 +471,62 @@ class NoveltyByTypeAPI(SecureAPIView):
 
                 base_data.update(processed_data)
 
+            elif type_code == '003':  # Rondas Perimetrales
+                processed_data = {
+                    'ronda': {},
+                    'personal': [],
+                    'archivos_adjuntos': []
+                }
+
+                # 1. Procesar datos de la ronda (ROUND_)
+                for key in info_data:
+                    if key.startswith('ROUND_'):
+                        round_data = info_data[key]
+                        processed_data['ronda'] = {
+                            'numero': round_data.get('number'),
+                            'hora_inicio': round_data.get('hour_start'),
+                            'hora_fin': round_data.get('hour_end'),
+                            'observaciones': round_data.get('observation')
+                        }
+
+                # 2. Procesar personal (PLANNED_STAFF_)
+                for key in info_data:
+                    if key.startswith('PLANNED_STAFF_'):
+                        for member in info_data[key]:
+                            processed_data['personal'].append({
+                                'nombre': member.get('name_and_surname'),
+                                'codigo_ficha': member.get('cod_ficha'),
+                                'telefono': member.get('telefono'),
+                                'estado': member.get('guard_status'),
+                                'condicion_salud': member.get('health_condition')
+                            })
+
+                # 3. Procesar archivos adjuntos (ATTACHED_FILE_)
+                # for key in info_data:
+                #     if key.startswith('ATTACHED_FILE_'):
+                #         files = info_data[key].get('attachedFiles')
+                #         if files:
+                #             processed_data['archivos_adjuntos'].extend(files)
+
+                # 4. Procesar erratas (ERRATA_)
+                for key in info_data:
+                    if key.startswith('ERRATA_'):
+                        processed_data['erratas'] = {
+                            'editado': info_data[key].get('edited', False),
+                            'observacion': info_data[key].get('observation_errata', '')
+                        }
+                        break
+
+                # Limpieza de campos vacíos
+                if not processed_data['personal']:
+                    del processed_data['personal']
+                if not processed_data['archivos_adjuntos']:
+                    del processed_data['archivos_adjuntos']
+                if not processed_data.get('erratas', {}).get('observacion'):
+                    processed_data.pop('erratas', None)
+
+                base_data.update(processed_data)
+
             elif type_code == '004':
                 vehicle_data = self._extract_vehicle_data(info_data)
                 if vehicle_data:
