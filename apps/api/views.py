@@ -505,7 +505,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                                 'nombre': member.get('name_and_surname'),
                                 'codigo_ficha': member.get('cod_ficha'),
                                 'telefono': member.get('telefono'),
-                                'estado': member.get('guard_status'),
+                                # 'estado': member.get('guard_status'),
                                 # 'condicion_salud': HEALTH_CONDITIONS.get(member.get('health_condition', ''), 'Desconocida')
                             })
 
