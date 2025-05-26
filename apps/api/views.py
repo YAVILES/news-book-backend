@@ -506,7 +506,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                                 'codigo_ficha': member.get('cod_ficha'),
                                 'telefono': member.get('telefono'),
                                 'estado': member.get('guard_status'),
-                                'condicion_salud': HEALTH_CONDITIONS.get(member.get('health_condition', ''), 'Desconocida')
+                                # 'condicion_salud': HEALTH_CONDITIONS.get(member.get('health_condition', ''), 'Desconocida')
                             })
 
                 # 3. Procesar archivos adjuntos (ATTACHED_FILE_)
