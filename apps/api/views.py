@@ -559,6 +559,11 @@ class NoveltyByTypeAPI(SecureAPIView):
 
                 # Primero procesamos todas las PERSON
                 person_keys = [k for k in info_data if k.startswith('PERSON_')]
+
+                tipo_descripcion = 'N/A'
+                tipo_movimiento = ''
+                razon_visita = ''
+
                 for key in person_keys:
                     person_info = info_data[key]
 
@@ -572,15 +577,19 @@ class NoveltyByTypeAPI(SecureAPIView):
                         # Es una persona normal
                         type_person_id = person_info.get('type_person')
                         type_data = type_map.get(type_person_id, {})
+
+                        tipo_descripcion = type_data.get('descripcion', 'Desconocido')
+                        tipo_movimiento = 'ENTRADA' if person_info.get('movement_type') == 'employee' else 'SALIDA'
+                        razon_visita = person_info.get('reason_visit')
+
                         processed_data['personas'].append({
                             'tipo_id': type_person_id,
-                            'tipo_descripcion': type_data.get('descripcion', 'Desconocido'),
+                            'tipo_descripcion': tipo_descripcion,
                             'nombre_completo': person_info.get('full_name'),
                             'identificacion': person_info.get('identification_number'),
                             'hora': person_info.get('hour'),
-                            'tipo_movimiento': 'ENTRADA' if person_info.get(
-                                'movement_type') == 'employee' else 'SALIDA',
-                            'razon_visita': person_info.get('reason_visit'),
+                            'tipo_movimiento': tipo_movimiento,
+                            'razon_visita': razon_visita,
                             'lugar_recepcion': person_info.get('place_of_reception'),
                             'numero_tarjeta': person_info.get('assigned_card_number'),
                             'fue_acompanado_por_oficial': person_info.get('accompany_visitor', 0),
@@ -609,7 +618,10 @@ class NoveltyByTypeAPI(SecureAPIView):
                                     processed_data['personas_adicionales'].append({
                                         'identificacion': person.get('identification_number'),
                                         'nombre': person.get('full_name'),
-                                        'numero_tarjeta': person.get('assigned_card_number')
+                                        'numero_tarjeta': person.get('assigned_card_number'),
+                                        'tipo_descripcion': tipo_descripcion,
+                                        'tipo_movimiento': tipo_movimiento,
+                                        'razon_visita': razon_visita,
                                     })
 
                     # Campos ATTACHED_FILE
