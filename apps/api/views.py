@@ -583,7 +583,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                             'razon_visita': person_info.get('reason_visit'),
                             'lugar_recepcion': person_info.get('place_of_reception'),
                             'numero_tarjeta': person_info.get('assigned_card_number'),
-                            'acompanantes': person_info.get('accompany_visitor', 0),
+                            'fue_acompanado_por_oficial': person_info.get('accompany_visitor', 0),
                             'empresa': person_info.get('company_name', ''),
                             'rif': person_info.get('rif', '')
                         })
