@@ -607,6 +607,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                             if key.startswith('PERSONS_'):
                                 for person in info_data[key]:
                                     processed_data['personas_adicionales'].append({
+                                        'identificacion': person.get('identification_number'),
                                         'nombre': person.get('full_name'),
                                         'numero_tarjeta': person.get('assigned_card_number')
                                     })
