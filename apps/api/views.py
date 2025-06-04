@@ -629,7 +629,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                     person_info = info_data[key]
 
                     # Detección del autorizador (no tiene type_person)
-                    if not person_info.get('type_person'):
+                    if not person_info.get('entry'):
                         processed_data['autorizador'] = {
                             'nombre': person_info.get('full_name', '').strip(),
                             'identificacion': person_info.get('identification_number')
