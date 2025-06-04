@@ -116,7 +116,7 @@ class PersonViewSet(ModelViewSet):
     queryset = Person.objects.all()
     serializer_class = PersonDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['code', 'name', 'last_name', 'doc_ident']
+    search_fields = ['code', 'name', 'last_name', 'doc_ident', 'blacklist_reason']
     permission_classes = (AllowAny,)
 
     def paginate_queryset(self, queryset):
