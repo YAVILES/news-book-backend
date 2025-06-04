@@ -479,6 +479,74 @@ class NoveltyByTypeAPI(SecureAPIView):
 
                 base_data.update(processed_data)
 
+            elif type_code == '002':  # Materiales de Trabajo
+                processed_data = {
+                    'materiales_oesvica': [],
+                    'materiales_cliente': [],
+                    'archivos_adjuntos': []
+                }
+
+                # 1. Procesar materiales de Oesvica (SUB_LINE_1)
+                if 'SUB_LINE_1' in info_data:
+                    for material in info_data['SUB_LINE_1']:
+                        processed_data['materiales_oesvica'].append({
+                            'codigo': material.get('code'),
+                            'item': material.get('item'),
+                            'nombre': material.get('name'),
+                            'cantidad': material.get('amount', 0),
+                            'observacion': material.get('observation', ''),
+                            'condicion': {
+                                'codigo': material.get('health_condition'),
+                                'descripcion': HEALTH_CONDITIONS.get(
+                                    material.get('health_condition'),
+                                    'Desconocida'
+                                )
+                            }
+                        })
+
+                # 2. Procesar materiales del cliente (SUB_LINE_3)
+                if 'SUB_LINE_3' in info_data:
+                    for material in info_data['SUB_LINE_3']:
+                        processed_data['materiales_cliente'].append({
+                            'codigo': material.get('code'),
+                            'item': material.get('item'),
+                            'nombre': material.get('name'),
+                            'cantidad': material.get('amount', 0),
+                            'observacion': material.get('observation', ''),
+                            'condicion': {
+                                'codigo': material.get('health_condition'),
+                                'descripcion': HEALTH_CONDITIONS.get(
+                                    material.get('health_condition'),
+                                    'Desconocida'
+                                )
+                            }
+                        })
+
+                # 3. Procesar archivos adjuntos (ATTACHED_FILE_4)
+                # if 'ATTACHED_FILE_4' in info_data:
+                #     files = info_data['ATTACHED_FILE_4'].get('attachedFiles')
+                #     if files:
+                #         processed_data['archivos_adjuntos'] = files
+
+                # 4. Procesar erratas (ERRATA_5)
+                if 'ERRATA_5' in info_data:
+                    processed_data['erratas'] = {
+                        'editado': info_data['ERRATA_5'].get('edited', False),
+                        'observacion': info_data['ERRATA_5'].get('observation_errata', '')
+                    }
+
+                # Limpieza de campos vacíos
+                if not processed_data['materiales_oesvica']:
+                    del processed_data['materiales_oesvica']
+                if not processed_data['materiales_cliente']:
+                    del processed_data['materiales_cliente']
+                if not processed_data['archivos_adjuntos']:
+                    del processed_data['archivos_adjuntos']
+                if not processed_data.get('erratas', {}).get('observacion'):
+                    processed_data.pop('erratas', None)
+
+                base_data.update(processed_data)
+
             elif type_code == '003':  # Rondas Perimetrales
                 processed_data = {
                     'ronda': {},
