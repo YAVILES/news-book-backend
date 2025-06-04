@@ -616,6 +616,61 @@ class NoveltyByTypeAPI(SecureAPIView):
                 if free_text_key:
                     base_data['observaciones'] = info_data[free_text_key]
 
+            elif type_code == '005':  # Registro Entrada/Salida Empleados Coca-Cola
+                processed_data = {
+                    'empleados': [],
+                    'autorizador': None,
+                    'archivos_adjuntos': []
+                }
+
+                person_keys = [k for k in info_data if k.startswith('PERSON_')]
+
+                for key in person_keys:
+                    person_info = info_data[key]
+
+                    # Detección del autorizador (no tiene type_person)
+                    if not person_info.get('type_person'):
+                        processed_data['autorizador'] = {
+                            'nombre': autorizador_info.get('full_name', '').strip(),
+                            'identificacion': autorizador_info.get('identification_number')
+                        }
+                    else:
+                        # Es una persona normal
+                        processed_data['empleados'].append({
+                            'nombre_completo': empleado_info.get('full_name', '').strip(),
+                            'identificacion': empleado_info.get('identification_number'),
+                            'hora': empleado_info.get('hour'),
+                            'tipo_movimiento': 'ENTRADA' if empleado_info.get('entry') else 'SALIDA',
+                            'razon_visita': empleado_info.get('reason_visit'),
+                            'numero_tarjeta': empleado_info.get('assigned_card_number'),
+                            'observaciones': empleado_info.get('observacion', '')
+                        })
+                        
+                # Procesar archivos adjuntos (ATTACHED_FILE_4)
+                # if 'ATTACHED_FILE_4' in info_data:
+                #     files = info_data['ATTACHED_FILE_4'].get('attachedFiles')
+                #     if files:
+                #         processed_data['archivos_adjuntos'] = files
+
+                # Procesar erratas (ERRATA_5)
+                if 'ERRATA_5' in info_data:
+                    processed_data['erratas'] = {
+                        'editado': info_data['ERRATA_5'].get('edited', False),
+                        'observacion': info_data['ERRATA_5'].get('observation_errata', '')
+                    }
+
+                # Limpieza de campos vacíos
+                if not processed_data['empleados']:
+                    del processed_data['empleados']
+                if not processed_data['archivos_adjuntos']:
+                    del processed_data['archivos_adjuntos']
+                if processed_data.get('autorizador') and not processed_data['autorizador'].get('nombre'):
+                    del processed_data['autorizador']
+                if not processed_data.get('erratas', {}).get('observacion'):
+                    processed_data.pop('erratas', None)
+
+                base_data.update(processed_data)
+
             elif type_code == '006':  # Control de visitantes
                 processed_data = {
                     'personas': [],
