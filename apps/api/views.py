@@ -823,26 +823,27 @@ class NoveltyByTypeAPI(SecureAPIView):
                         })
 
                 # Procesar persona (transportista/empleado)
-                person_key = next((k for k in info_data if k.startswith('PERSON_')), None)
-                if person_key:
-                    person_info = info_data[person_key]
+                person_keys = [k for k in info_data if k.startswith('PERSON_')]
+
+                # La primera persona es generalmente el transportista/empleado
+                if len(person_keys) > 0:
+                    person_info = info_data[person_keys[0]]
                     processed_data['persona'] = {
                         'nombre_completo': person_info.get('full_name', '').strip(),
                         'identificacion': person_info.get('identification_number'),
-                        'empresa': person_info.get('company_name'),
-                        'rif': person_info.get('rif'),
-                        'hora': person_info.get('hour'),
-                        'numero_guia': person_info.get('guide_number'),
-                        'tipo_movimiento': 'ENTRADA' if person_info.get('entry') else 'SALIDA'
+                        'empresa': person_info.get('company_name', ''),
+                        'rif': person_info.get('rif', ''),
+                        'hora': person_info.get('hour', ''),
+                        'numero_guia': person_info.get('guide_number', ''),
+                        'tipo_movimiento': 'ENTRADA' if person_info.get('entry', False) else 'SALIDA'
                     }
 
-                # Procesar autorizador
-                autorizador_key = next((k for k in info_data if k.startswith('PERSON_') and k != person_key), None)
-                if autorizador_key:
-                    autorizador_info = info_data[autorizador_key]
+                # La segunda persona (si existe) es generalmente el autorizador
+                if len(person_keys) > 1:
+                    autorizador_info = info_data[person_keys[1]]
                     processed_data['autorizador'] = {
                         'nombre_completo': autorizador_info.get('full_name', '').strip(),
-                        'identificacion': autorizador_info.get('identification_number')
+                        'identificacion': autorizador_info.get('identification_number', '')
                     }
 
                 # Procesar archivos adjuntos
