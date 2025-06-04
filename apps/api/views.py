@@ -631,19 +631,19 @@ class NoveltyByTypeAPI(SecureAPIView):
                     # Detección del autorizador (no tiene type_person)
                     if not person_info.get('type_person'):
                         processed_data['autorizador'] = {
-                            'nombre': autorizador_info.get('full_name', '').strip(),
-                            'identificacion': autorizador_info.get('identification_number')
+                            'nombre': person_info.get('full_name', '').strip(),
+                            'identificacion': person_info.get('identification_number')
                         }
                     else:
                         # Es una persona normal
                         processed_data['empleados'].append({
-                            'nombre_completo': empleado_info.get('full_name', '').strip(),
-                            'identificacion': empleado_info.get('identification_number'),
-                            'hora': empleado_info.get('hour'),
-                            'tipo_movimiento': 'ENTRADA' if empleado_info.get('entry') else 'SALIDA',
-                            'razon_visita': empleado_info.get('reason_visit'),
-                            'numero_tarjeta': empleado_info.get('assigned_card_number'),
-                            'observaciones': empleado_info.get('observacion', '')
+                            'nombre_completo': person_info.get('full_name', '').strip(),
+                            'identificacion': person_info.get('identification_number'),
+                            'hora': person_info.get('hour'),
+                            'tipo_movimiento': 'ENTRADA' if person_info.get('entry') else 'SALIDA',
+                            'razon_visita': person_info.get('reason_visit'),
+                            'numero_tarjeta': person_info.get('assigned_card_number'),
+                            'observaciones': person_info.get('observacion', '')
                         })
                         
                 # Procesar archivos adjuntos (ATTACHED_FILE_4)
