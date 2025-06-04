@@ -778,6 +778,97 @@ class NoveltyByTypeAPI(SecureAPIView):
 
                 base_data.update(processed_data)
 
+            elif type_code == '007':  # Reporte de Entrada y Salida de Activos
+                processed_data = {
+                    'tipo_activo': None,
+                    'descripcion_activo': None,
+                    'unidades_empaque': [],
+                    'motivo': None,
+                    'condicion_activo': None,
+                    'cantidad_total': None,
+                    'persona': None,
+                    'autorizador': None,
+                    'archivos_adjuntos': []
+                }
+
+                # Extraer datos básicos del formulario
+                if 'SELECTION_2' in info_data:
+                    processed_data['tipo_activo'] = info_data['SELECTION_2']
+
+                if 'FREE_TEXT_3' in info_data:
+                    processed_data['descripcion_activo'] = info_data['FREE_TEXT_3']
+
+                if 'FREE_TEXT_11' in info_data:
+                    processed_data['motivo'] = info_data['FREE_TEXT_11']
+
+                if 'SELECTION_12' in info_data:
+                    processed_data['condicion_activo'] = info_data['SELECTION_12']
+
+                if 'AMOUNT_13' in info_data:
+                    processed_data['cantidad_total'] = info_data['AMOUNT_13']
+
+                # Procesar unidades de empaque
+                empaque_mapping = {
+                    'SELECTION_5': 'AMOUNT_8',  # Unidad 1 (Cajas) -> Cantidad
+                    'SELECTION_7': 'AMOUNT_10',  # Unidad 2 (Paletas) -> Cantidad
+                    'SELECTION_9': 'AMOUNT_13'  # Unidad 3 -> Cantidad
+                }
+
+                for unit_key, amount_key in empaque_mapping.items():
+                    if unit_key in info_data and info_data[unit_key] and amount_key in info_data and info_data[
+                        amount_key]:
+                        processed_data['unidades_empaque'].append({
+                            'tipo': info_data[unit_key],
+                            'cantidad': info_data[amount_key]
+                        })
+
+                # Procesar persona (transportista/empleado)
+                person_key = next((k for k in info_data if k.startswith('PERSON_')), None)
+                if person_key:
+                    person_info = info_data[person_key]
+                    processed_data['persona'] = {
+                        'nombre_completo': person_info.get('full_name', '').strip(),
+                        'identificacion': person_info.get('identification_number'),
+                        'empresa': person_info.get('company_name'),
+                        'rif': person_info.get('rif'),
+                        'hora': person_info.get('hour'),
+                        'numero_guia': person_info.get('guide_number'),
+                        'tipo_movimiento': 'ENTRADA' if person_info.get('entry') else 'SALIDA'
+                    }
+
+                # Procesar autorizador
+                autorizador_key = next((k for k in info_data if k.startswith('PERSON_') and k != person_key), None)
+                if autorizador_key:
+                    autorizador_info = info_data[autorizador_key]
+                    processed_data['autorizador'] = {
+                        'nombre_completo': autorizador_info.get('full_name', '').strip(),
+                        'identificacion': autorizador_info.get('identification_number')
+                    }
+
+                # Procesar archivos adjuntos
+                # attached_file_key = next((k for k in info_data if k.startswith('ATTACHED_FILE_')), None)
+                # if attached_file_key:
+                #     attached_files = self._extract_attached_files(info_data)
+                #     if attached_files:
+                #         processed_data['archivos_adjuntos'] = attached_files
+
+                # Procesar erratas
+                if 'ERRATA_17' in info_data:
+                    processed_data['erratas'] = {
+                        'editado': info_data['ERRATA_17'].get('edited', False),
+                        'observacion': info_data['ERRATA_17'].get('observation_errata', '')
+                    }
+
+                # Limpieza de campos vacíos
+                if not processed_data['unidades_empaque']:
+                    del processed_data['unidades_empaque']
+                if not processed_data['archivos_adjuntos']:
+                    del processed_data['archivos_adjuntos']
+                if not processed_data.get('erratas', {}).get('observacion'):
+                    processed_data.pop('erratas', None)
+
+                base_data.update(processed_data)
+
             result.append(base_data)
 
         return result
