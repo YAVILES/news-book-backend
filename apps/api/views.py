@@ -625,11 +625,12 @@ class NoveltyByTypeAPI(SecureAPIView):
 
                 person_keys = [k for k in info_data if k.startswith('PERSON')]
 
-                for key in person_keys:
+                for index, key in enumerate(person_keys):
                     person_info = info_data[key]
 
                     # Detección del autorizador (no tiene type_person)
-                    if not person_info.get('entry'):
+                    # Solo se registra como autorizador si es el último elemento
+                    if index == len(person_keys) - 1:
                         processed_data['autorizador'] = {
                             'nombre': person_info.get('full_name', '').strip(),
                             'identificacion': person_info.get('identification_number')
