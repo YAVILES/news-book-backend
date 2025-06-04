@@ -623,7 +623,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                     'archivos_adjuntos': []
                 }
 
-                person_keys = [k for k in info_data if k.startswith('PERSON_')]
+                person_keys = [k for k in info_data if k.startswith('PERSON')]
 
                 for key in person_keys:
                     person_info = info_data[key]
