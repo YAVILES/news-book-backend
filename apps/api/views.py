@@ -870,6 +870,64 @@ class NoveltyByTypeAPI(SecureAPIView):
 
                 base_data.update(processed_data)
 
+            elif type_code == '0010':  # Novedad Importante
+                processed_data = {
+                    'descripcion': None,
+                    'fecha': None,
+                    'hora': None,
+                    'personal_involucrado': [],
+                    'archivos_adjuntos': []
+                }
+
+                # Extraer datos básicos del formulario
+                if 'FREE_TEXT_1' in info_data:
+                    processed_data['descripcion'] = info_data['FREE_TEXT_1']
+
+                if 'DATE_2' in info_data and info_data['DATE_2']:
+                    try:
+                        # Convertir fecha a formato estándar si existe
+                        processed_data['fecha'] = self.parse_date(info_data['DATE_2']).strftime('%Y-%m-%d')
+                    except (ValueError, TypeError):
+                        processed_data['fecha'] = info_data[
+                            'DATE_2']  # Conservar el valor original si no se puede parsear
+
+                if 'HOUR_3' in info_data:
+                    processed_data['hora'] = info_data['HOUR_3']
+
+                # Procesar personal de OESVICA involucrado
+                if 'OESVICA_STAFF_4' in info_data and isinstance(info_data['OESVICA_STAFF_4'], list):
+                    for miembro in info_data['OESVICA_STAFF_4']:
+                        if isinstance(miembro, dict):  # Validación adicional por seguridad
+                            processed_data['personal_involucrado'].append({
+                                'nombre': miembro.get('name_and_surname', '').strip(),
+                                'codigo_ficha': miembro.get('cod_ficha', ''),
+                                'telefono': miembro.get('telefono', '')
+                            })
+
+                # Procesar archivos adjuntos
+                # attached_file_key = next((k for k in info_data if k.startswith('ATTACHED_FILE_')), None)
+                # if attached_file_key and info_data[attached_file_key].get('attachedFiles'):
+                #     processed_data['archivos_adjuntos'] = info_data[attached_file_key]['attachedFiles']
+
+                # Procesar erratas si existen
+                if 'ERRATA_6' in info_data:
+                    processed_data['erratas'] = {
+                        'editado': info_data['ERRATA_6'].get('edited', False),
+                        'observacion': info_data['ERRATA_6'].get('observation_errata', '')
+                    }
+
+                # Limpieza de campos vacíos
+                if not processed_data['personal_involucrado']:
+                    del processed_data['personal_involucrado']
+                if not processed_data['archivos_adjuntos']:
+                    del processed_data['archivos_adjuntos']
+                if not processed_data.get('erratas', {}).get('observacion'):
+                    processed_data.pop('erratas', None)
+                if not processed_data['fecha']:
+                    del processed_data['fecha']
+
+                base_data.update(processed_data)
+
             result.append(base_data)
 
         return result
