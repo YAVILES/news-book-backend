@@ -1,6 +1,6 @@
 import tablib
 from django.db import connections
-from django.db.models import CharField, Q
+from django.db.models import CharField, Q, Func, Value, TextField
 from django.db.models.functions import Cast
 from django_filters.rest_framework import DjangoFilterBackend
 from django_tenants.utils import get_tenant_database_alias
@@ -12,6 +12,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from tablib import Dataset
 from django_filters import rest_framework as filters
+
+from django.db.models.fields import BooleanField
+from django.db.models.expressions import ExpressionWrapper
 
 # Create your views here.
 from apps.customers.models import Client
@@ -362,11 +365,40 @@ class NewsFilter(filters.FilterSet):
     min_created = filters.DateFilter(field_name="created", lookup_expr='gte')
     max_created = filters.DateFilter(field_name="created", lookup_expr='lte')
     type_news = filters.NumberFilter(lookup_expr='icontains')
+    contains_attached_files = filters.BooleanFilter(method='filter_contains_attached_files')
 
     class Meta:
         model = News
         fields = ['employee', 'number', 'template', 'info', 'location__code', 'location__name', 'min_number',
-                  'max_number', 'min_created', 'max_created', 'type_news_id']
+                  'max_number', 'min_created', 'max_created', 'type_news_id', 'contains_attached_files']
+
+    def filter_contains_attached_files(self, queryset, name, value):
+        """
+        Filtro mejorado que verifica archivos adjuntos con contenido válido
+        """
+        # Convertimos el JSON a texto para buscar patrones
+        queryset = queryset.annotate(
+            info_text=Cast('info', TextField())
+        )
+
+        # Patrones para buscar
+        if value:
+            return queryset.filter(
+                Q(info_text__contains='"ATTACHED_FILE_') &
+                (
+                    # Para array no vacío: "attachedFiles": [...elementos...]
+                        Q(info_text__contains='"attachedFiles": [') &
+                        ~Q(info_text__contains='"attachedFiles": []') |
+                        # Para string no vacío: "attachedFiles": "valor"
+                        Q(info_text__contains='"attachedFiles": "') &
+                        ~Q(info_text__contains='"attachedFiles": ""')
+                )
+            )
+        else:
+            return queryset.exclude(
+                Q(info_text__contains='"ATTACHED_FILE_') &
+                Q(info_text__contains='"attachedFiles": [')
+            )
 
 
 class NewsViewSet(ModelViewSet):

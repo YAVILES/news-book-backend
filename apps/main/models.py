@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
+from datetime import datetime
+import json
 import jsonfield
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
@@ -146,6 +148,24 @@ class News(ModelBase):
                                 help_text="Ficha del trabajador que generó la novedad")
     location = models.ForeignKey('Location', verbose_name=_('location'), on_delete=models.PROTECT,
                                  help_text="Ubicación o Libro donde se generó la novedad", null=True)
+
+    @cached_property
+    def contains_attached_files(self):
+        try:
+            if not self.info:  # Si info está vacío
+                return False
+
+            info_data = self.info if isinstance(self.info, dict) else json.loads(self.info)
+            for key, value in info_data.items():
+                if key.startswith('ATTACHED_FILE_'):
+                    attached_files = value.get('attachedFiles')
+                    # Verifica si attachedFiles tiene contenido
+                    if attached_files and ((isinstance(attached_files, (list, dict)) and attached_files) or
+                                           (isinstance(attached_files, str) and attached_files.strip())):
+                            return True
+            return False
+        except (json.JSONDecodeError, AttributeError):
+            return False
 
     class Meta:
         verbose_name = _('new')
