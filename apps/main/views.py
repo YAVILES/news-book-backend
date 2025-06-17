@@ -112,11 +112,17 @@ class TypePersonViewSet(ModelViewSet):
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
 
+class PersonFilter(filters.FilterSet):
+    class Meta:
+        model = Person
+        fields = ['code', 'doc_ident', 'blacklist', 'type_person_id', 'is_active']
+
 class PersonViewSet(ModelViewSet):
     queryset = Person.objects.all()
     serializer_class = PersonDefaultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['code', 'name', 'last_name', 'doc_ident']
+    filterset_class = PersonFilter
+    search_fields = ['code', 'name', 'last_name', 'doc_ident', 'blacklist_reason']
     permission_classes = (AllowAny,)
 
     def paginate_queryset(self, queryset):

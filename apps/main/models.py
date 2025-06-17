@@ -106,7 +106,8 @@ class Person(ModelBase):
                                     help_text="tipo de persona")
     company =  models.CharField(max_length=255, verbose_name="address", null=True, blank=True)
     rif = models.CharField(max_length=255, verbose_name="rif", null=True, blank=True)
-
+    blacklist = models.BooleanField(default=False)
+    blacklist_reason = models.CharField(max_length=500, verbose_name="blacklist reason", null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
     def get_full_name(self):
