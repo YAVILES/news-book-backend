@@ -109,6 +109,8 @@ class Person(ModelBase):
     blacklist = models.BooleanField(default=False)
     blacklist_reason = models.CharField(max_length=500, verbose_name="blacklist reason", null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    default_visit_reason = models.CharField(max_length=255, verbose_name="Motivo de visita por defecto", null=True, blank=True)
+    default_visit_location = models.CharField(max_length=500, verbose_name="Lugar de visita por defecto", null=True, blank=True)
 
     def get_full_name(self):
         return "{name} {last_name}".format(name=self.name, last_name=self.last_name)
