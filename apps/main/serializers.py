@@ -133,6 +133,11 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     location_display = LocationDefaultSerializer(read_only=True, source="location")
     client_display = serializers.SerializerMethodField(read_only=True)
     link = serializers.SerializerMethodField(read_only=True)
+    contains_attached_files = serializers.SerializerMethodField()
+
+    def get_contains_attached_files(self, obj):
+        # Accede una vez para que se cachee
+        return obj.contains_attached_files
 
     def get_link(self, obj):
         request = self.context.get('request')
