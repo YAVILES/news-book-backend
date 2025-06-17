@@ -113,16 +113,6 @@ class TypePersonViewSet(ModelViewSet):
 
 
 class PersonFilter(filters.FilterSet):
-    number = filters.NumberFilter(lookup_expr='icontains')
-    employee = filters.CharFilter(lookup_expr='icontains')
-    template = filters.CharFilter(lookup_expr='icontains')
-    info = filters.CharFilter(lookup_expr='icontains')
-    min_number = filters.NumberFilter(field_name="number", lookup_expr='gte')
-    max_number = filters.NumberFilter(field_name="number", lookup_expr='lte')
-    min_created = filters.DateFilter(field_name="created", lookup_expr='gte')
-    max_created = filters.DateFilter(field_name="created", lookup_expr='lte')
-    type_news = filters.NumberFilter(lookup_expr='icontains')
-
     class Meta:
         model = Person
         fields = ['code', 'doc_ident', 'blacklist', 'type_person_id', 'is_active']
