@@ -167,6 +167,29 @@ class News(ModelBase):
         except (json.JSONDecodeError, AttributeError):
             return False
 
+    @cached_property
+    def person_types(self):
+        """
+        Retorna una lista de los tipos de persona presentes en la novedad
+        Versión cacheada para mejor rendimiento
+        """
+        if not self.info:
+            return []
+
+        # Asume que info puede ser ya un dict (depende de tu JSONField)
+        info_data = self.info if isinstance(self.info, dict) else json.loads(self.info)
+
+        type_persons = []
+        person_keys = [key for key in info_data.keys()
+                       if key.startswith('PERSON_') and isinstance(info_data[key], dict)]
+
+        for key in person_keys:
+            person_info = info_data[key]
+            if person_info.get('type_person'):
+                type_persons.append(str(person_info['type_person']))  # Asegurar string para consistencia
+
+        return list(set(type_persons))
+
     class Meta:
         verbose_name = _('new')
         verbose_name_plural = _('news')
