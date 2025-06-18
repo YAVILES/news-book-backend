@@ -366,6 +366,7 @@ class NewsFilter(filters.FilterSet):
     max_created = filters.DateFilter(field_name="created", lookup_expr='lte')
     type_news = filters.NumberFilter(lookup_expr='icontains')
     contains_attached_files = filters.BooleanFilter(method='filter_contains_attached_files')
+    person_type = filters.CharFilter(method='filter_by_person_type')
 
     class Meta:
         model = News
@@ -400,6 +401,24 @@ class NewsFilter(filters.FilterSet):
                 Q(info_text__contains='"attachedFiles": [')
             )
 
+    def filter_by_person_type(self, queryset, name, value):
+        """
+        Filtra novedades que contengan el tipo de persona especificado
+        value: ID del tipo de persona a filtrar (como string)
+        """
+        if not value:
+            return queryset
+
+        # Convertimos el JSON a texto para buscar patrones
+        queryset = queryset.annotate(
+            info_text=Cast('info', TextField())
+        )
+
+        # Buscamos el patrón: "PERSON_" seguido de cualquier cosa y luego "type_person": "valor"
+        return queryset.filter(
+            Q(info_text__contains='"PERSON_') &
+            Q(info_text__contains=f'"type_person": "{value}"')
+        )
 
 class NewsViewSet(ModelViewSet):
     queryset = News.objects.all().order_by('-number')

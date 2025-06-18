@@ -18,6 +18,25 @@ from django.conf import settings
 from django.core.cache import cache
 
 
+def get_person_types_map():
+    """Obtiene todos los tipos de persona con cache"""
+    cache_key = 'all_person_types'
+    types = cache.get(cache_key)
+
+    if not types:
+        types = {
+            str(tp.id): {
+                'descripcion': tp.description,
+                'prioridad': tp.priority,
+                'es_institucion': tp.is_institution,
+                'requiere_datos_empresa': tp.requires_company_data
+            }
+            for tp in TypePerson.objects.filter(is_active=True)
+        }
+        cache.set(cache_key, types, timeout=60 * 60 * 24)  # Cache por 24 horas
+    return types
+
+
 class InvalidDateException(APIException):
     status_code = 400
     default_detail = 'Formato de fecha inválido. Use YYYY-MM-DD'
@@ -351,31 +370,13 @@ class NoveltyByTypeAPI(SecureAPIView):
 
         return vehicle_data
 
-    def _get_person_types_map(self):
-        """Obtiene todos los tipos de persona con cache"""
-        cache_key = 'all_person_types'
-        types = cache.get(cache_key)
-
-        if not types:
-            types = {
-                str(tp.id): {
-                    'descripcion': tp.description,
-                    'prioridad': tp.priority,
-                    'es_institucion': tp.is_institution,
-                    'requiere_datos_empresa': tp.requires_company_data
-                }
-                for tp in TypePerson.objects.filter(is_active=True)
-            }
-            cache.set(cache_key, types, timeout=60 * 60 * 24)  # Cache por 24 horas
-        return types
-
     def _extract_person_data(self, info_data):
         """
         Extrae y estructura datos de personas del campo info,
         buscando claves que comiencen con 'PERSON_'
         """
         persons = []
-        type_map = self._get_person_types_map()
+        type_map = get_person_types_map()
 
         # Buscar todas las claves de persona
         person_keys = [key for key in info_data.keys()
@@ -679,7 +680,7 @@ class NoveltyByTypeAPI(SecureAPIView):
                     'autorizador': None,
                     'archivos_adjuntos': []
                 }
-                type_map = self._get_person_types_map()
+                type_map = get_person_types_map()
 
                 # Primero procesamos todas las PERSON
                 person_keys = [k for k in info_data if k.startswith('PERSON_')]

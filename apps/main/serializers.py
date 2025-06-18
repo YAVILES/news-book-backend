@@ -11,6 +11,7 @@ from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedu
 from apps.security.models import User
 from apps.setting.models import Notification
 from apps.setting.tasks import generate_notification_async, send_email
+from apps.api.views import get_person_types_map
 
 
 class TypePersonDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -134,10 +135,21 @@ class NewsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     client_display = serializers.SerializerMethodField(read_only=True)
     link = serializers.SerializerMethodField(read_only=True)
     contains_attached_files = serializers.SerializerMethodField()
+    person_types = serializers.SerializerMethodField()
+    person_types_details = serializers.SerializerMethodField()
 
     def get_contains_attached_files(self, obj):
         # Accede una vez para que se cachee
         return obj.contains_attached_files
+
+    def get_person_types(self, obj):
+        """Retorna la lista de IDs de tipos de persona"""
+        return obj.person_types
+
+    def get_person_types_details(self, obj):
+        """Retorna detalles completos de los tipos de persona usando tu mapa cacheado"""
+        type_map = get_person_types_map()
+        return [type_map.get(t_id, {}) for t_id in obj.person_types if t_id in type_map]
 
     def get_link(self, obj):
         request = self.context.get('request')
