@@ -6,8 +6,8 @@ from rest_framework.exceptions import ValidationError
 
 from apps.core.serializers import TypeNewsDefaultSerializer
 from apps.customers.serializers import ClientSimpleSerializer
-from apps.main.models import TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools, \
-    get_auto_code_material, get_auto_code_person
+from apps.main.models import AccessEntry, TypePerson, Person, Vehicle, Material, News, Schedule, Location, Point, EquipmentTools, \
+    get_auto_code_material, get_auto_code_person, AccessGroup
 from apps.security.models import User
 from apps.setting.models import Notification
 from apps.setting.tasks import generate_notification_async, send_email
@@ -255,3 +255,31 @@ class EquipmentToolsDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeria
     class Meta:
         model = EquipmentTools
         fields = serializers.ALL_FIELDS
+
+
+class AccessGroupSerializer(serializers.ModelSerializer):
+    persons = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Person.objects.all()
+    )
+
+    class Meta:
+        model = AccessGroup
+        fields = ['id', 'name', 'description', 'persons']
+
+
+class AccessEntrySerializer(serializers.ModelSerializer):
+    persons = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Person.objects.all()
+    )
+    group = serializers.PrimaryKeyRelatedField(
+        queryset=AccessGroup.objects.all(), allow_null=True, required=False
+    )
+    persons_display = PersonDefaultSerializer(many=True, read_only=True, source='persons')
+    group_display = AccessGroupSerializer(read_only=True, source='group')
+
+    class Meta:
+        model = AccessEntry
+        fields = [
+            'id', 'title', 'description', 'access_type', 'date_start', 'date_end',
+            'start_time', 'end_time', 'week_days', 'persons', 'group', 'persons_display', 'group_display'
+        ]

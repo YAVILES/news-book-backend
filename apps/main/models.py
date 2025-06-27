@@ -207,3 +207,37 @@ class Point(ModelBase):
     code = models.CharField(max_length=255, verbose_name=_('code'), unique=True, null=False, blank=False)
     name = models.CharField(max_length=255, verbose_name=_('name'), unique=True, null=False, blank=False)
     is_active = models.BooleanField(default=True)
+
+
+
+class AccessGroup(ModelBase):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    persons = models.ManyToManyField(Person, related_name='access_groups', blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class AccessEntry(ModelBase):
+    SINGLE = 'single'
+    RECURRING = 'recurrent'
+
+    ACCESS_TYPE_CHOICES = [
+        (SINGLE, 'Simple'),
+        (RECURRING, 'Recurrente'),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    access_type = models.CharField(max_length=20, choices=ACCESS_TYPE_CHOICES, default=SINGLE)
+    date_start = models.DateField(null=True, blank=True) # Solo para 'single'
+    date_end = models.DateField(null=True, blank=True)  # Solo para 'single'
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    week_days = models.JSONField(blank=True, null=True)  # Solo para 'recurring', ej: ["Monday", "Wednesday"]
+    persons = models.ManyToManyField(Person, related_name='access_entries', blank=True)
+    group = models.ForeignKey(AccessGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='access_entries')
+
+    def __str__(self):
+        return self.title

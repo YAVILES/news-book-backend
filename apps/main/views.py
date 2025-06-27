@@ -20,10 +20,10 @@ from django.db.models.expressions import ExpressionWrapper
 from apps.customers.models import Client
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
     ScheduleResource, LocationResource, PointResource
-from apps.main.models import Vehicle, TypePerson, Person, Material, News, Schedule, Location, Point, EquipmentTools
-from apps.main.serializers import VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
+from apps.main.models import AccessEntry, Vehicle, TypePerson, Person, Material, News, Schedule, Location, Point, EquipmentTools, AccessGroup
+from apps.main.serializers import AccessEntrySerializer, VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
     MaterialDefaultSerializer, NewsDefaultSerializer, ScheduleDefaultSerializer, LocationDefaultSerializer, \
-    PointDefaultSerializer, EquipmentToolsDefaultSerializer
+    PointDefaultSerializer, EquipmentToolsDefaultSerializer, AccessGroupSerializer
 
 
 class TypePersonViewSet(ModelViewSet):
@@ -889,6 +889,90 @@ class EquipmentToolsViewSet(ModelViewSet):
         """
         Return a single page of results, or `None` if pagination is disabled.
         """
+        not_paginator = self.request.query_params.get('not_paginator', None)
+        if self.paginator is None or not_paginator:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+
+class AccessGroupFilter(filters.FilterSet):
+    persons = filters.CharFilter(method='filter_by_persons')
+    name = filters.CharFilter(lookup_expr='icontains')
+    description = filters.CharFilter(lookup_expr='icontains')
+    persons__name = filters.CharFilter(lookup_expr='icontains')
+    persons__last_name = filters.CharFilter(lookup_expr='icontains')
+    persons__doc_ident = filters.CharFilter(lookup_expr='icontains')    
+
+    def filter_by_persons(self, queryset, name, value):
+        return queryset.filter(persons__in=value)
+
+    class Meta:
+        model = AccessGroup
+        fields = ['name', 'description', 'persons', 'persons__name', 'persons__last_name', 'persons__doc_ident']
+
+
+class AccessGroupViewSet(ModelViewSet):
+    queryset = AccessGroup.objects.all()
+    serializer_class = AccessGroupSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['name', 'description', 'persons__name', 'persons__last_name', 'persons__doc_ident']
+    permission_classes = (AllowAny,)
+    filterset_class = AccessGroupFilter
+
+    def paginate_queryset(self, queryset):
+        not_paginator = self.request.query_params.get('not_paginator', None)
+        if self.paginator is None or not_paginator:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+
+class AccessEntryFilter(filters.FilterSet):
+    persons = filters.CharFilter(method='filter_by_persons')
+    name = filters.CharFilter(lookup_expr='icontains')
+    description = filters.CharFilter(lookup_expr='icontains')
+    persons__name = filters.CharFilter(lookup_expr='icontains')
+    persons__last_name = filters.CharFilter(lookup_expr='icontains')
+    persons__doc_ident = filters.CharFilter(lookup_expr='icontains')
+    group = filters.CharFilter(lookup_expr='icontains')
+    group__name = filters.CharFilter(lookup_expr='icontains')
+    group__description = filters.CharFilter(lookup_expr='icontains')
+    group__persons__name = filters.CharFilter(lookup_expr='icontains')
+    group__persons__last_name = filters.CharFilter(lookup_expr='icontains')
+    group__persons__doc_ident = filters.CharFilter(lookup_expr='icontains')
+    date_start = filters.DateFilter(lookup_expr='icontains')
+    date_end = filters.DateFilter(lookup_expr='icontains')
+    week_days = filters.CharFilter(method='filter_by_week_days')
+    access_type = filters.CharFilter(lookup_expr='icontains')
+    access_type__in = filters.CharFilter(method='filter_by_access_type')
+
+    def filter_by_persons(self, queryset, name, value):
+        return queryset.filter(persons__in=value)
+
+    def filter_by_week_days(self, queryset, name, value):
+        return queryset.filter(week_days__in=value)
+
+    def filter_by_access_type(self, queryset, name, value):
+        return queryset.filter(access_type__in=value)
+
+    class Meta:
+        model = AccessEntry
+        fields = ['title', 'description', 'date_start', 'date_end', 'persons', 'persons__name', 'persons__last_name', 
+        'persons__doc_ident', 'group', 'group__name', 'group__description', 'group__persons__name', 
+        'group__persons__last_name', 'group__persons__doc_ident', 'week_days', 'access_type', 'access_type__in']
+
+
+class AccessEntryViewSet(ModelViewSet):
+    queryset = AccessEntry.objects.all()
+    serializer_class = AccessEntrySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['title', 'description', 'persons__name', 'persons__last_name', 
+    'persons__doc_ident', 'group__name', 'group__description', 'group__persons__name', 
+    'group__persons__last_name', 'group__persons__doc_ident']
+    
+    permission_classes = (AllowAny,)
+    filterset_class = AccessEntryFilter
+
+    def paginate_queryset(self, queryset):
         not_paginator = self.request.query_params.get('not_paginator', None)
         if self.paginator is None or not_paginator:
             return None
