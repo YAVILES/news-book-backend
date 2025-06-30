@@ -15,6 +15,7 @@ from django_filters import rest_framework as filters
 
 from django.db.models.fields import BooleanField
 from django.db.models.expressions import ExpressionWrapper
+from datetime import datetime
 
 # Create your views here.
 from apps.customers.models import Client
@@ -137,6 +138,92 @@ class PersonViewSet(ModelViewSet):
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
+    @action(methods=['GET'], detail=False, url_path='get-person')
+    def get_person_by_identification(self, request):
+        identification = request.query_params.get('identification', None)
+        try:
+            person = Person.objects.get(doc_ident=identification)
+        except Person.DoesNotExist:
+            return Response({
+                "person": None,
+                "blacklist": False,
+                "has_access": False,
+                "message": "La persona no existe"
+            }, status=status.HTTP_200_OK)
+        data = PersonDefaultSerializer(person).data
+
+        # Verificar blacklist
+        blacklist = person.blacklist
+
+        if blacklist:
+            return Response({
+                "person": data,
+                "blacklist": True,
+                "has_access": False,
+                "message": "Persona bloqueada"
+            }, status=status.HTTP_200_OK)
+
+        # Buscar accesos registrados
+        all_accesses = AccessEntry.objects.filter(Q(persons=person) | Q(group__persons=person))
+        if not all_accesses.exists():
+            return Response({
+                "person": data,
+                "blacklist": False,
+                "has_access": True,
+                "message": "",
+                "access_list": []
+            }, status=status.HTTP_200_OK)
+        # Chequear si tiene acceso vigente
+        now = datetime.now()
+        has_access = False
+        access_details = None
+        for access in all_accesses:
+            if access.access_type == AccessEntry.SINGLE:
+                if access.date_start and access.date_end:
+                    if access.date_start <= now.date() <= access.date_end:
+                        if access.start_time <= now.time() <= access.end_time:
+                            has_access = True
+                            access_details = AccessEntrySerializer(access).data
+                            break
+            elif access.access_type == AccessEntry.RECURRING:
+                if access.week_days and now.strftime('%A') in access.week_days:
+                    if access.start_time <= now.time() <= access.end_time:
+                        has_access = True
+                        access_details = AccessEntrySerializer(access).data
+                        break
+        if has_access:
+            return Response({
+                "person": data,
+                "blacklist": False,
+                "has_access": True,
+                "access_details": access_details,
+                "message": "Acceso permitido",
+                "access_list": []
+            }, status=status.HTTP_200_OK)
+        # Buscar el próximo acceso futuro (single o recurrente)
+        future_accesses = []
+        for access in all_accesses:
+            if access.access_type == AccessEntry.SINGLE:
+                if access.date_start and access.date_end and access.date_end >= now.date():
+                    if access.date_start >= now.date() or (access.date_start <= now.date() <= access.date_end):
+                        future_accesses.append(access)
+            elif access.access_type == AccessEntry.RECURRING:
+                if access.week_days:
+                    future_accesses.append(access)
+        future_accesses = sorted(future_accesses, key=lambda a: (
+            a.date_start if a.access_type == AccessEntry.SINGLE else now.date(),
+            a.start_time
+        ))
+        next_access = future_accesses[0] if future_accesses else None
+        access_list = [AccessEntrySerializer(next_access).data] if next_access else []
+        return Response({
+            "person": data,
+            "blacklist": False,
+            "has_access": False,
+            "message": "No tiene acceso permitido en este momento",
+            "access_list": access_list
+        }, status=status.HTTP_200_OK)
+        
     @action(methods=['GET'], detail=False)
     def export(self, request):
         dataset = PersonResource().export()
@@ -928,7 +1015,7 @@ class AccessGroupViewSet(ModelViewSet):
 
 class AccessEntryFilter(filters.FilterSet):
     persons = filters.CharFilter(method='filter_by_persons')
-    name = filters.CharFilter(lookup_expr='icontains')
+    title = filters.CharFilter(lookup_expr='icontains')
     description = filters.CharFilter(lookup_expr='icontains')
     persons__name = filters.CharFilter(lookup_expr='icontains')
     persons__last_name = filters.CharFilter(lookup_expr='icontains')
@@ -944,7 +1031,19 @@ class AccessEntryFilter(filters.FilterSet):
     week_days = filters.CharFilter(method='filter_by_week_days')
     access_type = filters.CharFilter(lookup_expr='icontains')
     access_type__in = filters.CharFilter(method='filter_by_access_type')
+    min_date_start = filters.DateFilter(field_name='date_start', lookup_expr='gte')
+    max_date_start = filters.DateFilter(field_name='date_start', lookup_expr='lte')
+    min_date_end = filters.DateFilter(field_name='date_end', lookup_expr='gte')
+    max_date_end = filters.DateFilter(field_name='date_end', lookup_expr='lte')
+    min_start_time = filters.TimeFilter(field_name='start_time', lookup_expr='gte')
+    max_start_time = filters.TimeFilter(field_name='start_time', lookup_expr='lte')
+    min_end_time = filters.TimeFilter(field_name='end_time', lookup_expr='gte')
+    max_end_time = filters.TimeFilter(field_name='end_time', lookup_expr='lte')
 
+    min_date = filters.DateFilter(method='filter_by_min_date')
+    max_date = filters.DateFilter(method='filter_by_max_date')
+    persons_global = filters.CharFilter(method='filter_by_persons_global')
+    
     def filter_by_persons(self, queryset, name, value):
         return queryset.filter(persons__in=value)
 
@@ -954,11 +1053,23 @@ class AccessEntryFilter(filters.FilterSet):
     def filter_by_access_type(self, queryset, name, value):
         return queryset.filter(access_type__in=value)
 
+    def filter_by_min_date(self, queryset, name, value):
+        return queryset.filter(date_start__gte=value)
+    
+    def filter_by_max_date(self, queryset, name, value):
+        return queryset.filter(date_end__lte=value)
+
+    def filter_by_persons_global(self, queryset, name, value):
+        return queryset.filter(Q(persons__name__icontains=value) | Q(persons__last_name__icontains=value) | Q(persons__doc_ident__icontains=value)  )
+
+
     class Meta:
         model = AccessEntry
         fields = ['title', 'description', 'date_start', 'date_end', 'persons', 'persons__name', 'persons__last_name', 
         'persons__doc_ident', 'group', 'group__name', 'group__description', 'group__persons__name', 
-        'group__persons__last_name', 'group__persons__doc_ident', 'week_days', 'access_type', 'access_type__in']
+        'group__persons__last_name', 'group__persons__doc_ident', 'week_days', 'access_type', 'access_type__in',
+        'min_date_start', 'max_date_start', 'min_date_end', 'max_date_end', 'min_start_time', 'max_start_time', 'min_end_time', 'max_end_time',
+        'min_date', 'max_date', 'persons_global']
 
 
 class AccessEntryViewSet(ModelViewSet):

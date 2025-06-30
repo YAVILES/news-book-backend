@@ -276,10 +276,11 @@ class AccessEntrySerializer(serializers.ModelSerializer):
     )
     persons_display = PersonDefaultSerializer(many=True, read_only=True, source='persons')
     group_display = AccessGroupSerializer(read_only=True, source='group')
-
+    access_type_display = serializers.CharField(source='get_access_type_display', read_only=True)
+    
     class Meta:
         model = AccessEntry
         fields = [
-            'id', 'title', 'description', 'access_type', 'date_start', 'date_end',
+            'id', 'title', 'description', 'access_type', 'date_start', 'date_end', 'access_type_display',
             'start_time', 'end_time', 'week_days', 'persons', 'group', 'persons_display', 'group_display'
         ]
