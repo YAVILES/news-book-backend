@@ -194,7 +194,7 @@ class NoveltiesAPI(SecureAPIView):
             if date_to:
                 queryset = queryset.filter(created__lte=date_to)
 
-            to_char = f'TO_CHAR(main_news.created AT TIME ZONE \'{settings.TIME_ZONE}\', \'YYYY-MM-DD"T"HH24:MI:SS"Z"\')'
+            to_char = f'TO_CHAR(main_news.created AT TIME ZONE \'{settings.TIME_ZONE}\', \'YYYY-MM-DD HH24:MI\')'
             novelties = queryset.extra(
                 select={'created': to_char}
             ).values(
@@ -307,7 +307,7 @@ class NoveltyByTypeAPI(SecureAPIView):
             if date_to:
                 queryset = queryset.filter(created__lte=date_to)
 
-            to_char = f'TO_CHAR(main_news.created AT TIME ZONE \'{settings.TIME_ZONE}\', \'YYYY-MM-DD"T"HH24:MI:SS"Z"\')'
+            to_char = f'TO_CHAR(main_news.created AT TIME ZONE \'{settings.TIME_ZONE}\', \'YYYY-MM-DD HH24:MI\')'
             novelties = queryset.extra(
                 select={'created': to_char}
             ).values(
