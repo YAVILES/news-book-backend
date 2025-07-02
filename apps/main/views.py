@@ -26,6 +26,10 @@ from apps.main.serializers import AccessEntrySerializer, VehicleDefaultSerialize
     MaterialDefaultSerializer, NewsDefaultSerializer, ScheduleDefaultSerializer, LocationDefaultSerializer, \
     PointDefaultSerializer, EquipmentToolsDefaultSerializer, AccessGroupSerializer
 
+class TypePersonFilter(filters.FilterSet):
+    class Meta:
+        model = TypePerson
+        fields = ['priority', 'is_institution', 'requires_company_data', 'requires_guide_number', 'requires_access_verification']
 
 class TypePersonViewSet(ModelViewSet):
     queryset = TypePerson.objects.all()
@@ -33,7 +37,8 @@ class TypePersonViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['description']
     permission_classes = (AllowAny,)
-
+    filterset_class = TypePersonFilter 
+    
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -117,9 +122,16 @@ class TypePersonViewSet(ModelViewSet):
 
 
 class PersonFilter(filters.FilterSet):
+    requires_access_verification = filters.BooleanFilter(method='filter_requires_access_verification')
+
     class Meta:
         model = Person
-        fields = ['code', 'doc_ident', 'blacklist', 'type_person_id', 'is_active']
+        fields = ['code', 'doc_ident', 'blacklist', 'type_person_id', 'is_active', 'requires_access_verification']
+
+    def filter_requires_access_verification(self, queryset, name, value):
+        if value:
+            return queryset.filter(type_person__requires_access_verification=True)
+        return queryset
 
 class PersonViewSet(ModelViewSet):
     queryset = Person.objects.all()
@@ -187,6 +199,11 @@ class PersonViewSet(ModelViewSet):
                             break
             elif access.access_type == AccessEntry.RECURRING:
                 if access.week_days and now.strftime('%A') in access.week_days:
+                    if access.start_time <= now.time() <= access.end_time:
+                        has_access = True
+                        access_details = AccessEntrySerializer(access).data
+                        break
+                if access.specific_days and now.day in access.specific_days:
                     if access.start_time <= now.time() <= access.end_time:
                         has_access = True
                         access_details = AccessEntrySerializer(access).data

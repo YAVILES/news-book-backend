@@ -73,6 +73,7 @@ class TypePerson(ModelBase):
     is_institution = models.BooleanField(default=False)
     requires_company_data = models.BooleanField(default=False)
     requires_guide_number = models.BooleanField(default=False)
+    requires_access_verification = models.BooleanField(default=False)
 
     # Deletes an type person
     def delete(self, using=None, keep_parents=False):
@@ -218,6 +219,9 @@ class AccessGroup(ModelBase):
     def __str__(self):
         return self.name
 
+def access_entry_path(access_entry: 'AccessEntry', filename):
+    return 'img/access_entry/{0}/{1}'.format(access_entry.id, filename)
+
 
 class AccessEntry(ModelBase):
     SINGLE = 'single'
@@ -238,6 +242,9 @@ class AccessEntry(ModelBase):
     week_days = models.JSONField(blank=True, null=True)  # Solo para 'recurring', ej: ["Monday", "Wednesday"]
     persons = models.ManyToManyField(Person, related_name='access_entries', blank=True)
     group = models.ForeignKey(AccessGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='access_entries')
-
+    specific_days = models.JSONField(blank=True, null=True, help_text="Días específicos del mes (1-31)")
+    voucher = models.ImageField(verbose_name=_('voucher'), upload_to=access_entry_path, null=True,
+                              help_text="Comprobante del acceso")
+    
     def __str__(self):
         return self.title
