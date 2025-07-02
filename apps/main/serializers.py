@@ -261,10 +261,11 @@ class AccessGroupSerializer(serializers.ModelSerializer):
     persons = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Person.objects.all()
     )
-
+    persons_display = PersonDefaultSerializer(many=True, read_only=True, source='persons')
+    
     class Meta:
         model = AccessGroup
-        fields = ['id', 'name', 'description', 'persons']
+        fields = ['id', 'name', 'description', 'persons', 'persons_display']
 
 
 class AccessEntrySerializer(serializers.ModelSerializer):
@@ -278,9 +279,24 @@ class AccessEntrySerializer(serializers.ModelSerializer):
     group_display = AccessGroupSerializer(read_only=True, source='group')
     access_type_display = serializers.CharField(source='get_access_type_display', read_only=True)
     
+    voucher_display = serializers.SerializerMethodField(read_only=True)
+
+    def get_voucher_display(self, obj: 'AccessEntry'):
+        if obj.voucher and hasattr(obj.voucher, 'url'):
+            image_url = obj.voucher.url
+            if image_url.startswith("/http:/"):
+                image_url = image_url.replace("/http:/", "http://")
+            if image_url.startswith("/https:/"):
+                image_url = image_url.replace("/https:/", "https://")
+
+            return image_url
+        else:
+            return None
+
     class Meta:
         model = AccessEntry
         fields = [
             'id', 'title', 'description', 'access_type', 'date_start', 'date_end', 'access_type_display',
-            'start_time', 'end_time', 'week_days', 'persons', 'group', 'persons_display', 'group_display'
+            'start_time', 'end_time', 'week_days', 'persons', 'group', 'persons_display', 'group_display', 'specific_days', 
+            'voucher', 'voucher_display'   
         ]
