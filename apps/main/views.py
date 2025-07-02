@@ -163,10 +163,9 @@ class PersonViewSet(ModelViewSet):
                 "message": "La persona no existe"
             }, status=status.HTTP_200_OK)
         data = PersonDefaultSerializer(person).data
-
         # Verificar blacklist
         blacklist = person.blacklist
-
+    
         if blacklist:
             return Response({
                 "person": data,
@@ -175,9 +174,67 @@ class PersonViewSet(ModelViewSet):
                 "message": "Persona bloqueada"
             }, status=status.HTTP_200_OK)
 
-        # Buscar accesos registrados
-        all_accesses = AccessEntry.objects.filter(Q(persons=person) | Q(group__persons=person))
-        if not all_accesses.exists():
+
+        if person.type_person.requires_access_verification:
+            # Buscar accesos registrados
+            all_accesses = AccessEntry.objects.filter(Q(persons=person) | Q(group__persons=person))
+            # Chequear si tiene acceso vigente
+            now = datetime.now()
+            has_access = False
+            access_details = None
+            for access in all_accesses:
+                if access.access_type == AccessEntry.SINGLE:
+                    if access.date_start and access.date_end:
+                        if access.date_start <= now.date() <= access.date_end:
+                            if access.start_time <= now.time() <= access.end_time:
+                                has_access = True
+                                access_details = AccessEntrySerializer(access).data
+                                break
+                elif access.access_type == AccessEntry.RECURRING:
+                    if access.week_days and now.strftime('%A') in access.week_days:
+                        if access.start_time <= now.time() <= access.end_time:
+                            has_access = True
+                            access_details = AccessEntrySerializer(access).data
+                            break
+                    if access.specific_days and now.day in access.specific_days:
+                        if access.start_time <= now.time() <= access.end_time:
+                            has_access = True
+                            access_details = AccessEntrySerializer(access).data
+                            break
+            if has_access:
+                return Response({
+                    "person": data,
+                    "blacklist": False,
+                    "has_access": True,
+                    "access_details": access_details,
+                    "message": "Acceso permitido",
+                    "access_list": []
+                }, status=status.HTTP_200_OK)
+            # Buscar el próximo acceso futuro (single o recurrente)
+            future_accesses = []
+            for access in all_accesses:
+                if access.access_type == AccessEntry.SINGLE:
+                    if access.date_start and access.date_end and access.date_end >= now.date():
+                        if access.date_start >= now.date() or (access.date_start <= now.date() <= access.date_end):
+                            future_accesses.append(access)
+                elif access.access_type == AccessEntry.RECURRING:
+                    if access.week_days or access.specific_days:
+                        future_accesses.append(access)
+                        
+            future_accesses = sorted(future_accesses, key=lambda a: (
+                a.date_start if a.access_type == AccessEntry.SINGLE else now.date(),
+                a.start_time
+            ))
+            next_access = future_accesses[0] if future_accesses else None
+            access_list = [AccessEntrySerializer(next_access).data] if next_access else []
+            return Response({
+                "person": data,
+                "blacklist": False,
+                "has_access": False,
+                "message": "No tiene acceso permitido en este momento",
+                "access_list": access_list
+            }, status=status.HTTP_200_OK)
+        else:
             return Response({
                 "person": data,
                 "blacklist": False,
@@ -185,62 +242,7 @@ class PersonViewSet(ModelViewSet):
                 "message": "",
                 "access_list": []
             }, status=status.HTTP_200_OK)
-        # Chequear si tiene acceso vigente
-        now = datetime.now()
-        has_access = False
-        access_details = None
-        for access in all_accesses:
-            if access.access_type == AccessEntry.SINGLE:
-                if access.date_start and access.date_end:
-                    if access.date_start <= now.date() <= access.date_end:
-                        if access.start_time <= now.time() <= access.end_time:
-                            has_access = True
-                            access_details = AccessEntrySerializer(access).data
-                            break
-            elif access.access_type == AccessEntry.RECURRING:
-                if access.week_days and now.strftime('%A') in access.week_days:
-                    if access.start_time <= now.time() <= access.end_time:
-                        has_access = True
-                        access_details = AccessEntrySerializer(access).data
-                        break
-                if access.specific_days and now.day in access.specific_days:
-                    if access.start_time <= now.time() <= access.end_time:
-                        has_access = True
-                        access_details = AccessEntrySerializer(access).data
-                        break
-        if has_access:
-            return Response({
-                "person": data,
-                "blacklist": False,
-                "has_access": True,
-                "access_details": access_details,
-                "message": "Acceso permitido",
-                "access_list": []
-            }, status=status.HTTP_200_OK)
-        # Buscar el próximo acceso futuro (single o recurrente)
-        future_accesses = []
-        for access in all_accesses:
-            if access.access_type == AccessEntry.SINGLE:
-                if access.date_start and access.date_end and access.date_end >= now.date():
-                    if access.date_start >= now.date() or (access.date_start <= now.date() <= access.date_end):
-                        future_accesses.append(access)
-            elif access.access_type == AccessEntry.RECURRING:
-                if access.week_days:
-                    future_accesses.append(access)
-        future_accesses = sorted(future_accesses, key=lambda a: (
-            a.date_start if a.access_type == AccessEntry.SINGLE else now.date(),
-            a.start_time
-        ))
-        next_access = future_accesses[0] if future_accesses else None
-        access_list = [AccessEntrySerializer(next_access).data] if next_access else []
-        return Response({
-            "person": data,
-            "blacklist": False,
-            "has_access": False,
-            "message": "No tiene acceso permitido en este momento",
-            "access_list": access_list
-        }, status=status.HTTP_200_OK)
-        
+
     @action(methods=['GET'], detail=False)
     def export(self, request):
         dataset = PersonResource().export()
