@@ -13,6 +13,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     name = serializers.CharField(max_length=100)
     paid_until = serializers.DateField()
     on_trial = serializers.BooleanField()
+    facial_recognition = serializers.BooleanField()
     type_news = serializers.PrimaryKeyRelatedField(
         queryset=TypeNews.objects.all(),
         many=True,
@@ -68,7 +69,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ('id', 'name', 'paid_until', 'on_trial', 'created_on', 'email', 'auto_create_schema', 'schema_name',
-                  'type_news',)
+                  'type_news', 'facial_recognition',)
 
 
 class DomainSerializer(DynamicFieldsMixin, serializers.Serializer):

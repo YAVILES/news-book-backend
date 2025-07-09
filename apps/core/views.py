@@ -6,7 +6,6 @@ from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.views import APIView
 from tablib import Dataset
 
 from .admin import TypeNewsResource
