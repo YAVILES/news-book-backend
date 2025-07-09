@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 
 import pytz
-from apps.api.models import FacialRecognitionEvent
+from apps.setting.models import FacialRecognitionEvent
 from django.utils.timezone import make_aware
 from drf_yasg2.utils import swagger_auto_schema
 from drf_yasg2 import openapi
@@ -1158,7 +1158,6 @@ class FacialRecognitionAPI(SecureAPIView):
             # Guardar en la base de datos
             with tenant_context(request.tenant):
                 FacialRecognitionEvent.objects.create(
-                    tenant_id=request.tenant.id,
                     user_id=user_id,
                     event_time=make_aware(utc_dt.replace(tzinfo=None)),  # Guardamos como naive datetime
                     raw_data=data
