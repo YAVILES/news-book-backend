@@ -85,3 +85,20 @@ class Notification(ModelBase):
 
     def __str__(self):
         return "{description}".format(description=self.description)
+
+
+class FacialRecognitionEvent(models.Model):
+    user_id = models.CharField(max_length=100)
+    event_time = models.DateTimeField()
+    raw_data = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user_id']),
+            models.Index(fields=['event_time']),
+        ]
+        ordering = ['-event_time']
+
+    def __str__(self):
+        return f"{self.user_id} - {self.event_time}"
