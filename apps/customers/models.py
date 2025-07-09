@@ -1,3 +1,4 @@
+from email.policy import default
 from django.db import models
 from django.dispatch.dispatcher import receiver
 from django_tenants.migration_executors.base import run_migrations
@@ -19,6 +20,7 @@ class Client(TenantTimezoneMixin, TenantMixin):
     created_on = models.DateField(auto_now_add=True)
     email = models.EmailField(null=True)
     type_news = models.ManyToManyField(TypeNews, related_name='clients', verbose_name=_('type news'))
+    facial_recognition = models.BooleanField(verbose_name=_('facial recognition'), default=False)
 
     # default true, schema will be automatically created and synced when it is saved
     auto_create_schema = True

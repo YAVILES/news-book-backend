@@ -1,9 +1,11 @@
 from datetime import datetime
 import json
+
+import pytz
+from apps.api.models import FacialRecognitionEvent
 from django.utils.timezone import make_aware
 from drf_yasg2.utils import swagger_auto_schema
 from drf_yasg2 import openapi
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from django_tenants.utils import tenant_context
 from django_tenants.utils import get_tenant_model, get_public_schema_name
@@ -16,7 +18,7 @@ from apps.main.models import News, TypePerson
 from rest_framework.exceptions import APIException
 from django.conf import settings
 from django.core.cache import cache
-
+from rest_framework import status
 
 def get_person_types_map():
     """Obtiene todos los tipos de persona con cache"""
@@ -1051,3 +1053,134 @@ class ClientsAPI(SecureAPIView):
         finally:
             # Restaurar schema original
             connection.set_schema(original_schema)
+
+
+class InvalidFacialRecognitionData(APIException):
+    status_code = 400
+    default_detail = 'Datos de reconocimiento facial inválidos'
+    default_code = 'invalid_facial_data'
+
+
+from datetime import datetime
+import pytz
+from django.utils.timezone import make_aware
+
+class FacialRecognitionAPI(SecureAPIView):
+    """
+    Endpoint para registrar eventos de reconocimiento facial desde dispositivos.
+    Formato esperado:
+    {
+        "Code": "AccessControl",
+        "Data": {
+            "UserID": "001875",
+            "CreateTime": "2025-07-09T09:35:00-04:30"
+        }
+    }
+    """
+    permission_classes = (AllowAny,)
+
+    @swagger_auto_schema(
+        operation_description="Registro de eventos de reconocimiento facial",
+        manual_parameters=[
+            openapi.Parameter(
+                'X-API-Token',
+                openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description="Token de autenticación",
+            ),
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['Code', 'Data'],
+            properties={
+                'Code': openapi.Schema(type=openapi.TYPE_STRING, description="Debe ser 'AccessControl'"),
+                'Data': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    required=['UserID', 'CreateTime'],
+                    properties={
+                        'UserID': openapi.Schema(type=openapi.TYPE_STRING, description="ID del usuario reconocido"),
+                        'CreateTime': openapi.Schema(
+                            type=openapi.TYPE_STRING, 
+                            format='date-time',
+                            description="Fecha y hora en formato ISO 8601 con timezone (ej: '2025-07-09T09:35:00-04:30')"
+                        ),
+                    }
+                )
+            }
+        ),
+        responses={
+            200: openapi.Response(
+                description="Evento registrado exitosamente",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                        'user_id': openapi.Schema(type=openapi.TYPE_STRING),
+                        'local_time': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
+                        'utc_time': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
+                    }
+                )
+            ),
+            400: "Datos inválidos",
+            500: "Error interno del servidor"
+        }
+    )
+    def post(self, request):
+        try:
+            data = request.data
+
+            # Validación básica de los datos
+            if not data or data.get("Code") != "AccessControl":
+                raise InvalidFacialRecognitionData("El campo 'Code' debe ser 'AccessControl'")
+
+            if not data.get("Data") or not all(k in data["Data"] for k in ["UserID", "CreateTime"]):
+                raise InvalidFacialRecognitionData("Faltan campos requeridos en Data")
+
+            # Procesamiento de los datos
+            user_id = data["Data"]["UserID"]
+            create_time_str = data["Data"]["CreateTime"]
+
+            # Parsear la fecha ISO 8601 con timezone
+            try:
+                naive_dt = datetime.strptime(create_time_str, "%Y-%m-%dT%H:%M:%S%z")
+                utc_dt = naive_dt.astimezone(pytz.UTC)
+            except ValueError as e:
+                raise InvalidFacialRecognitionData(f"Formato de fecha inválido. Use YYYY-MM-DDTHH:MM:SS±HH:MM. Error: {str(e)}")
+
+            # Convertir a zona horaria local (America/Caracas)
+            zona_local = pytz.timezone('America/Caracas')
+            local_dt = utc_dt.astimezone(zona_local)
+            fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
+            fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+            # Guardar en la base de datos
+            with tenant_context(request.tenant):
+                FacialRecognitionEvent.objects.create(
+                    tenant_id=request.tenant.id,
+                    user_id=user_id,
+                    event_time=make_aware(utc_dt.replace(tzinfo=None)),  # Guardamos como naive datetime
+                    raw_data=data
+                )
+
+            return Response({
+                "status": "success",
+                "message": "Evento de reconocimiento facial registrado",
+                "user_id": user_id,
+                "local_time": fecha_local,
+                "utc_time": fecha_utc
+            }, status=status.HTTP_200_OK)
+
+        except InvalidFacialRecognitionData as e:
+            return Response({
+                "status": "error",
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Error interno del servidor",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
