@@ -192,15 +192,17 @@ class PersonViewSet(ModelViewSet):
                                 break
                 elif access.access_type == AccessEntry.RECURRING:
                     if access.week_days and now.strftime('%A') in access.week_days:
-                        if access.start_time <= now.time() <= access.end_time:
-                            has_access = True
-                            access_details = AccessEntrySerializer(access).data
-                            break
+                        if access.date_start <= now.date() <= access.date_end:
+                            if access.start_time <= now.time() <= access.end_time:
+                                has_access = True
+                                access_details = AccessEntrySerializer(access).data
+                                break
                     if access.specific_days and now.day in access.specific_days:
-                        if access.start_time <= now.time() <= access.end_time:
-                            has_access = True
-                            access_details = AccessEntrySerializer(access).data
-                            break
+                        if access.date_start <= now.date() <= access.date_end:
+                            if access.start_time <= now.time() <= access.end_time:
+                                has_access = True
+                                access_details = AccessEntrySerializer(access).data
+                                break
             if has_access:
                 return Response({
                     "person": data,
@@ -219,7 +221,8 @@ class PersonViewSet(ModelViewSet):
                             future_accesses.append(access)
                 elif access.access_type == AccessEntry.RECURRING:
                     if access.week_days or access.specific_days:
-                        future_accesses.append(access)
+                        if access.date_start >= now.date() or (access.date_start <= now.date() <= access.date_end):
+                            future_accesses.append(access)
                         
             future_accesses = sorted(future_accesses, key=lambda a: (
                 a.date_start if a.access_type == AccessEntry.SINGLE else now.date(),
