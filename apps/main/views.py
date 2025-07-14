@@ -17,6 +17,7 @@ from django.db.models.fields import BooleanField
 from django.db.models.expressions import ExpressionWrapper
 from datetime import datetime
 
+from apps.setting.models import FacialRecognitionEvent
 # Create your views here.
 from apps.customers.models import Client
 from apps.main.admin import VehicleResource, NewsResource, MaterialResource, TypePersonResource, PersonResource, \
@@ -153,19 +154,54 @@ class PersonViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False, url_path='get-person')
     def get_person_by_identification(self, request):
         identification = request.query_params.get('identification', None)
+        data = None
+
         try:
             person = Person.objects.get(doc_ident=identification)
+            data = PersonDefaultSerializer(person).data
         except Person.DoesNotExist:
+            person = None
+        time_threshold = timezone.now() - timedelta(minutes=5)
+
+        if self.request.tenant.facial_recognition:
+            try:
+                # Verificar si hay eventos de reconocimiento facial recientes (últimos 5 minutos)
+                has_recent_facial_event = FacialRecognitionEvent.objects.filter(
+                    user_id=identification,
+                    event_time__gte=time_threshold
+                ).exists()
+
+                if not has_recent_facial_event:
+                    return Response({
+                        "person": person,
+                        "blacklist": False,
+                        "has_access": False,
+                        "message": "No se ha detectado un reconocimiento facial reciente"
+                    }, status=status.HTTP_200_OK)
+
+            except FacialRecognitionEvent.DoesNotExist:
+                return Response({
+                    "person": person,
+                    "blacklist": False,
+                    "has_access": False,
+                    "message": "La persona no ha sido registrada para reconocimiento facial"
+                }, status=status.HTTP_200_OK)
+
+        if not person:
             return Response({
                 "person": None,
                 "blacklist": False,
-                "has_access": False,
+                "recognition_event_data": FacialRecognitionEvent.objects.filter(
+                    user_id=identification,
+                    event_time__gte=time_threshold
+                ).last(),
+                "has_access": self.request.tenant.facial_recognition,
                 "message": "La persona no existe"
             }, status=status.HTTP_200_OK)
-        data = PersonDefaultSerializer(person).data
+
         # Verificar blacklist
         blacklist = person.blacklist
-    
+
         if blacklist:
             return Response({
                 "person": data,
@@ -173,7 +209,6 @@ class PersonViewSet(ModelViewSet):
                 "has_access": False,
                 "message": "Persona bloqueada"
             }, status=status.HTTP_200_OK)
-
 
         if person.type_person.requires_access_verification:
             # Buscar accesos registrados
@@ -223,7 +258,7 @@ class PersonViewSet(ModelViewSet):
                     if access.week_days or access.specific_days:
                         if access.date_start >= now.date() or (access.date_start <= now.date() <= access.date_end):
                             future_accesses.append(access)
-                        
+
             future_accesses = sorted(future_accesses, key=lambda a: (
                 a.date_start if a.access_type == AccessEntry.SINGLE else now.date(),
                 a.start_time
