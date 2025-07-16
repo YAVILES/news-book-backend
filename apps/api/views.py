@@ -19,6 +19,16 @@ from rest_framework.exceptions import APIException
 from django.conf import settings
 from django.core.cache import cache
 from rest_framework import status
+from datetime import datetime
+import pytz
+from django.utils.timezone import make_aware
+
+LOG_FILE = "facial_recognition.log"
+
+def write_to_log(data):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(LOG_FILE, "a") as log_file:
+        log_file.write(f"{timestamp} - {json.dumps(data)}\n")
 
 def get_person_types_map():
     """Obtiene todos los tipos de persona con cache"""
@@ -1061,10 +1071,6 @@ class InvalidFacialRecognitionData(APIException):
     default_code = 'invalid_facial_data'
 
 
-from datetime import datetime
-import pytz
-from django.utils.timezone import make_aware
-
 class FacialRecognitionAPI(SecureAPIView):
     """
     Endpoint para registrar eventos de reconocimiento facial desde dispositivos.
@@ -1130,6 +1136,7 @@ class FacialRecognitionAPI(SecureAPIView):
     def post(self, request):
         try:
             data = request.data
+            write_to_log(request.data)
 
             # Validación básica de los datos
             if not data or data.get("Code") != "AccessControl":

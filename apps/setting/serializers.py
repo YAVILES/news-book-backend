@@ -18,7 +18,7 @@ from apps.customers.models import Client
 from apps.main.models import Schedule
 from apps.main.serializers import ScheduleDefaultSerializer
 from apps.security.serializers import RoleDefaultSerializer
-from apps.setting.models import Notification
+from apps.setting.models import Notification, FacialRecognitionEvent
 
 
 class NotificationDefaultSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -377,4 +377,11 @@ class PeriodicTaskDefaultSerializer(DynamicFieldsMixin, serializers.ModelSeriali
 
     class Meta:
         model = PeriodicTask
+        fields = serializers.ALL_FIELDS
+
+
+class FacialRecognitionEventSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FacialRecognitionEvent
         fields = serializers.ALL_FIELDS
