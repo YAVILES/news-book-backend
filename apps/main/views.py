@@ -15,7 +15,7 @@ from django_filters import rest_framework as filters
 
 from django.db.models.fields import BooleanField
 from django.db.models.expressions import ExpressionWrapper
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from apps.setting.models import FacialRecognitionEvent
 # Create your views here.
@@ -161,7 +161,7 @@ class PersonViewSet(ModelViewSet):
             data = PersonDefaultSerializer(person).data
         except Person.DoesNotExist:
             person = None
-        time_threshold = timezone.now() - timedelta(minutes=5)
+        time_threshold = datetime.now() - timedelta(minutes=5)
 
         if self.request.tenant.facial_recognition:
             try:
