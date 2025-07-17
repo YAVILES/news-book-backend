@@ -26,10 +26,33 @@ from django.utils.timezone import make_aware
 
 LOG_FILE = "facial_recognition.log"
 
-def write_to_log(data):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(LOG_FILE, "a") as log_file:
-        log_file.write(f"{timestamp} - {json.dumps(data)}\n")
+
+def write_to_log(request_data, schema_name=None):
+    """
+    Guarda todos los datos recibidos en el log, incluyendo parámetros y cuerpo de la petición
+
+    Args:
+        request_data (dict): Datos del cuerpo de la petición (request.data)
+        cliente (str, optional): Parámetro de URL 'cliente'. Defaults to None.
+        ubicacion (str, optional): Parámetro de URL 'ubicacion'. Defaults to None.
+    """
+    log_data = {
+        'timestamp': datetime.now().isoformat(),
+        'request_data': request_data,
+        'url_params': {
+            'cliente': schema_name
+        },
+        'full_data': {
+            **request_data,
+            'cliente': schema_name
+        }
+    }
+
+    # Aquí implementa tu lógica para guardar el log (archivo, base de datos, etc.)
+    # Ejemplo básico guardando en un archivo JSON:
+    import json
+    with open('facial_recognition_logs.json', 'a') as f:
+        f.write(json.dumps(log_data) + '\n')
 
 def get_person_types_map():
     """Obtiene todos los tipos de persona con cache"""
@@ -1128,7 +1151,9 @@ class FacialRecognitionAPI(APIView):
     def post(self, request, schema_name=None):
         try:
             data = request.data
-            write_to_log(request.data)
+            # Guardar TODOS los datos en el log (request.data + parámetros URL)
+            write_to_log(request.data, schema_name)
+
             tenant = get_tenant_model()
 
             # Validación básica de los datos
