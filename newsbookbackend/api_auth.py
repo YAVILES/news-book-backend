@@ -15,7 +15,7 @@ class APIAuthMiddleware:
         # Obtiene token de headers O parámetros
         api_token = self._get_token_from_request(request)
         if not api_token:
-            return JsonResponse({'error': 'API token required'}, status=401)
+            return JsonResponse({'error': 'API token required', 'path': request.path}, status=401)
 
         # Obtiene schema de headers O parámetros
         schema_name = self._get_schema_from_request(request)
