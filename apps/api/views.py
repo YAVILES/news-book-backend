@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-
+import re
 import pytz
 from apps.setting.models import FacialRecognitionEvent
 from django.utils.timezone import make_aware
@@ -24,6 +24,7 @@ from rest_framework import status
 from datetime import datetime
 import pytz
 from django.utils.timezone import make_aware
+from django.core.exceptions import ValidationError
 
 LOG_FILE = "facial_recognition.log"
 
@@ -1096,58 +1097,162 @@ class InvalidFacialRecognitionData(APIException):
     default_code = 'invalid_facial_data'
 
 
+
 class FacialRecognitionAPI(APIView):
     permission_classes = (AllowAny,)
+    parser_classes = []
 
+    @swagger_auto_schema(
+        operation_description="Recibe eventos de reconocimiento facial desde dispositivos. "
+                              "Soporta JSON directo (Content-Type: application/json) o "
+                              "contenido embebido en multipart/x-mixed-replace.",
+        manual_parameters=[
+            openapi.Parameter(
+                name='schema_name',
+                in_=openapi.IN_PATH,
+                description='Nombre del tenant (esquema de base de datos)',
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["Events"],
+            properties={
+                "Events": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, properties={
+                        "Code": openapi.Schema(type=openapi.TYPE_STRING, example="AccessControl"),
+                        "Data": openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+                            "UserID": openapi.Schema(type=openapi.TYPE_STRING, example="001875"),
+                            "CreateTime": openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                format="date-time",
+                                example="2025-07-17T12:54:47-04:30"
+                            ),
+                        }),
+                    }),
+                ),
+            }
+        ),
+        responses={
+            200: openapi.Response(description="Evento registrado exitosamente"),
+            400: openapi.Response(description="Error de validación o datos inválidos"),
+            500: openapi.Response(description="Error interno del servidor"),
+        }
+    )
     def post(self, request, schema_name=None):
         try:
-            content_type = request.META.get("CONTENT_TYPE", "")
-            if "multipart/x-mixed-replace" in content_type:
-                boundary = content_type.split("boundary=")[-1]
-                body = request.body.decode(errors='ignore')  # decode binario a texto
-                parts = re.split(rf"--{re.escape(boundary)}", body)
+            content_type = request.META.get("CONTENT_TYPE", "").lower()
+            raw_bytes = getattr(request, 'body', b'')
+            raw_body = raw_bytes.decode('utf-8', errors='ignore')
 
-                json_part = None
+            if "multipart/x-mixed-replace" in content_type or "text/plain" in content_type:
+                parts = raw_body.split('--myboundary')
+                json_text = None
+
                 for part in parts:
-                    if "Content-Type: text/plain" in part or "Content-Type: application/json" in part:
-                        match = re.search(r'\{.*\}', part, re.DOTALL)
-                        if match:
-                            json_part = match.group()
+                    if 'Content-Type: text/plain' in part:
+                        payload = part.split('\n\n', 1)[-1].strip()
+                        if payload.startswith('{') and payload.endswith('}'):
+                            json_text = payload
                             break
 
-                if not json_part:
-                    raise InvalidFacialRecognitionData("No se encontró JSON válido en el cuerpo del mensaje.")
+                if not json_text:
+                    return Response({"status": "error", "message": "No se encontró JSON válido en multipart"}, status=400)
 
-                data = json.loads(json_part)
+                try:
+                    data = json.loads(json_text)
+                except Exception as parse_error:
+                    return Response({
+                        "status": "error",
+                        "message": "Error al parsear JSON",
+                        "error": str(parse_error)
+                    }, status=400)
+
+            elif "application/json" in content_type:
+                try:
+                    data = json.loads(raw_body)
+                except Exception as json_error:
+                    return Response({
+                        "status": "error",
+                        "message": "Error al parsear JSON",
+                        "error": str(json_error)
+                    }, status=400)
             else:
-                data = request.data  # asume que es JSON normal
+                return Response({
+                    "status": "error",
+                    "message": f"Tipo de contenido no soportado: {content_type}"
+                }, status=415)
 
-            write_to_log(data)
-            tenant = get_tenant_model().objects.get(schema_name=schema_name)
+            if data.get("Events") and isinstance(data["Events"], list):
+                event = data["Events"][0]
+                if event.get("Code") != "AccessControl":
+                    raise InvalidFacialRecognitionData("El campo 'Code' debe ser 'AccessControl'")
+                event_data = event.get("Data", {})
+            else:
+                raise InvalidFacialRecognitionData("Formato de evento inválido")
 
-            if data.get("Code") != "AccessControl":
-                raise InvalidFacialRecognitionData("El campo 'Code' debe ser 'AccessControl'")
+            if not isinstance(event_data, dict):
+                return Response({
+                    "status": "error",
+                    "message": "El campo 'Data' no es un objeto válido"
+                }, status=400)
 
-            user_id = data["Data"]["UserID"]
-            create_time_str = data["Data"]["CreateTime"]
+            user_id_raw = event_data.get("UserID")
+            create_time_str = event_data.get("CreateTime")
+
+            if not user_id_raw or not create_time_str:
+                raise InvalidFacialRecognitionData("Faltan 'UserID' o 'CreateTime' en los datos")
+
+            user_id = str(user_id_raw)
+
+            if not isinstance(create_time_str, str):
+                return Response({
+                    "status": "error",
+                    "message": f"'CreateTime' no es una cadena válida. Valor: {create_time_str}"
+                }, status=400)
 
             try:
                 naive_dt = datetime.strptime(create_time_str, "%Y-%m-%dT%H:%M:%S%z")
-                utc_dt = naive_dt.astimezone(pytz.UTC)
-            except ValueError as e:
-                raise InvalidFacialRecognitionData(f"Formato de fecha inválido: {str(e)}")
+            except Exception as e:
+                return Response({
+                    "status": "error",
+                    "message": "Error al interpretar 'CreateTime'",
+                    "error": str(e)
+                }, status=400)
 
+            utc_dt = naive_dt.astimezone(pytz.UTC)
             zona_local = pytz.timezone('America/Caracas')
             local_dt = utc_dt.astimezone(zona_local)
+
             fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
             fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
 
-            with tenant_context(tenant):
-                FacialRecognitionEvent.objects.create(
-                    user_id=user_id,
-                    event_time=make_aware(utc_dt.replace(tzinfo=None)),
-                    raw_data=data
-                )
+            try:
+                tenant = get_tenant_model().objects.get(schema_name=schema_name)
+                with tenant_context(tenant):
+                    clean_data = json.loads(json.dumps(data))
+
+                    evento = FacialRecognitionEvent(
+                        user_id=user_id,
+                        event_time=utc_dt,
+                        raw_data=clean_data
+                    )
+                    evento.full_clean()
+                    evento.save()
+            except ValidationError as ve:
+                return Response({
+                    "status": "error",
+                    "message": "Error de validación en modelo",
+                    "error": ve.message_dict
+                }, status=400)
+            except Exception as e:
+                return Response({
+                    "status": "error",
+                    "message": "Error guardando el evento",
+                    "error": str(e)
+                }, status=500)
 
             return Response({
                 "status": "success",
@@ -1155,17 +1260,17 @@ class FacialRecognitionAPI(APIView):
                 "user_id": user_id,
                 "local_time": fecha_local,
                 "utc_time": fecha_utc
-            })
+            }, status=200)
 
         except InvalidFacialRecognitionData as e:
             return Response({
                 "status": "error",
                 "message": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
         except Exception as e:
             return Response({
                 "status": "error",
                 "message": "Error interno del servidor",
                 "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            }, status=500)
