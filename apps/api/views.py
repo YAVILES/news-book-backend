@@ -7,6 +7,7 @@ from django.utils.timezone import make_aware
 from drf_yasg2.utils import swagger_auto_schema
 from drf_yasg2 import openapi
 from rest_framework.response import Response
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from django_tenants.utils import tenant_context
 from django_tenants.utils import get_tenant_model, get_public_schema_name
 from django.db import connection
@@ -1098,37 +1099,26 @@ class InvalidFacialRecognitionData(APIException):
 class FacialRecognitionAPI(APIView):
     """
     Endpoint para registrar eventos de reconocimiento facial desde dispositivos.
-    Formato esperado:
-    {
-        "Code": "AccessControl",
-        "Data": {
-            "UserID": "001875",
-            "CreateTime": "2025-07-09T09:35:00-04:30"
-        }
-    }
+    Soporta envío JSON puro o multipart/form con contenido JSON embebido.
     """
     permission_classes = (AllowAny,)
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     @swagger_auto_schema(
-        operation_description="Registro de eventos de reconocimiento facial",
+        operation_description="Registro de eventos de reconocimiento facial (JSON o multipart)",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['Code', 'Data'],
             properties={
                 'Code': openapi.Schema(type=openapi.TYPE_STRING, description="Debe ser 'AccessControl'"),
                 'Data': openapi.Schema(
                     type=openapi.TYPE_OBJECT,
-                    required=['UserID', 'CreateTime'],
                     properties={
-                        'UserID': openapi.Schema(type=openapi.TYPE_STRING, description="ID del usuario reconocido"),
-                        'CreateTime': openapi.Schema(
-                            type=openapi.TYPE_STRING, 
-                            format='date-time',
-                            description="Fecha y hora en formato ISO 8601 con timezone (ej: '2025-07-09T09:35:00-04:30')"
-                        ),
+                        'UserID': openapi.Schema(type=openapi.TYPE_STRING),
+                        'CreateTime': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
                     }
                 )
-            }
+            },
+            required=['Code', 'Data']
         ),
         responses={
             200: openapi.Response(
@@ -1139,8 +1129,8 @@ class FacialRecognitionAPI(APIView):
                         'status': openapi.Schema(type=openapi.TYPE_STRING),
                         'message': openapi.Schema(type=openapi.TYPE_STRING),
                         'user_id': openapi.Schema(type=openapi.TYPE_STRING),
-                        'local_time': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
-                        'utc_time': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
+                        'local_time': openapi.Schema(type=openapi.TYPE_STRING),
+                        'utc_time': openapi.Schema(type=openapi.TYPE_STRING),
                     }
                 )
             ),
@@ -1150,41 +1140,49 @@ class FacialRecognitionAPI(APIView):
     )
     def post(self, request, schema_name=None):
         try:
-            data = request.data
-            # Guardar TODOS los datos en el log (request.data + parámetros URL)
-            write_to_log(request.data, schema_name)
+            # Detectar si el cuerpo es JSON o Multipart
+            content_type = request.content_type.lower()
+            if "multipart" in content_type:
+                # Extraer el primer campo tipo string que parezca JSON
+                json_str = None
+                for key, value in request.data.items():
+                    if isinstance(value, str) and value.strip().startswith('{'):
+                        json_str = value
+                        break
+                if not json_str:
+                    raise InvalidFacialRecognitionData("No se encontró JSON válido en multipart.")
+                data = json.loads(json_str)
+            else:
+                data = request.data
 
-            tenant = get_tenant_model()
+            write_to_log(data)
+            tenant = get_tenant_model().objects.get(schema_name=schema_name)
 
-            # Validación básica de los datos
-            if not data or data.get("Code") != "AccessControl":
+            if data.get("Code") != "AccessControl":
                 raise InvalidFacialRecognitionData("El campo 'Code' debe ser 'AccessControl'")
 
-            if not data.get("Data") or not all(k in data["Data"] for k in ["UserID", "CreateTime"]):
-                raise InvalidFacialRecognitionData("Faltan campos requeridos en Data")
+            data_fields = data.get("Data", {})
+            if not all(k in data_fields for k in ["UserID", "CreateTime"]):
+                raise InvalidFacialRecognitionData("Faltan campos requeridos en 'Data'")
 
-            # Procesamiento de los datos
-            user_id = data["Data"]["UserID"]
-            create_time_str = data["Data"]["CreateTime"]
+            user_id = data_fields["UserID"]
+            create_time_str = data_fields["CreateTime"]
 
-            # Parsear la fecha ISO 8601 con timezone
             try:
                 naive_dt = datetime.strptime(create_time_str, "%Y-%m-%dT%H:%M:%S%z")
                 utc_dt = naive_dt.astimezone(pytz.UTC)
             except ValueError as e:
-                raise InvalidFacialRecognitionData(f"Formato de fecha inválido. Use YYYY-MM-DDTHH:MM:SS±HH:MM. Error: {str(e)}")
+                raise InvalidFacialRecognitionData(f"Formato de fecha inválido: {str(e)}")
 
-            # Convertir a zona horaria local (America/Caracas)
             zona_local = pytz.timezone('America/Caracas')
             local_dt = utc_dt.astimezone(zona_local)
             fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
             fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
 
-            # Guardar en la base de datos
             with tenant_context(tenant):
                 FacialRecognitionEvent.objects.create(
                     user_id=user_id,
-                    event_time=make_aware(utc_dt.replace(tzinfo=None)),  # Guardamos como naive datetime
+                    event_time=make_aware(utc_dt.replace(tzinfo=None)),
                     raw_data=data
                 )
 
