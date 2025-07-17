@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404
 from apps.core.models import TypeNews
 from apps.main.models import News, TypePerson
 from rest_framework.exceptions import APIException
+from rest_framework.views import APIView
 from django.conf import settings
 from django.core.cache import cache
 from rest_framework import status
@@ -1128,7 +1129,7 @@ class FacialRecognitionAPI(APIView):
         try:
             data = request.data
             write_to_log(request.data)
-            tenant = Tenant.objects.get(schema_name=schema_name)
+            tenant = get_tenant_model()
 
             # Validación básica de los datos
             if not data or data.get("Code") != "AccessControl":
