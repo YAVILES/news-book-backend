@@ -1071,7 +1071,7 @@ class InvalidFacialRecognitionData(APIException):
     default_code = 'invalid_facial_data'
 
 
-class FacialRecognitionAPI(SecureAPIView):
+class FacialRecognitionAPI(APIView):
     """
     Endpoint para registrar eventos de reconocimiento facial desde dispositivos.
     Formato esperado:
@@ -1087,15 +1087,6 @@ class FacialRecognitionAPI(SecureAPIView):
 
     @swagger_auto_schema(
         operation_description="Registro de eventos de reconocimiento facial",
-        manual_parameters=[
-            openapi.Parameter(
-                'X-API-Token',
-                openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                required=True,
-                description="Token de autenticación",
-            ),
-        ],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['Code', 'Data'],
@@ -1133,10 +1124,11 @@ class FacialRecognitionAPI(SecureAPIView):
             500: "Error interno del servidor"
         }
     )
-    def post(self, request):
+    def post(self, request, schema_name=None):
         try:
             data = request.data
             write_to_log(request.data)
+            tenant = Tenant.objects.get(schema_name=schema_name)
 
             # Validación básica de los datos
             if not data or data.get("Code") != "AccessControl":
@@ -1163,7 +1155,7 @@ class FacialRecognitionAPI(SecureAPIView):
             fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
 
             # Guardar en la base de datos
-            with tenant_context(request.tenant):
+            with tenant_context(tenant):
                 FacialRecognitionEvent.objects.create(
                     user_id=user_id,
                     event_time=make_aware(utc_dt.replace(tzinfo=None)),  # Guardamos como naive datetime
