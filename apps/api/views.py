@@ -1097,64 +1097,30 @@ class InvalidFacialRecognitionData(APIException):
 
 
 class FacialRecognitionAPI(APIView):
-    """
-    Endpoint para registrar eventos de reconocimiento facial desde dispositivos.
-    Soporta envío JSON puro o multipart/form con contenido JSON embebido.
-    """
     permission_classes = (AllowAny,)
-    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
-    @swagger_auto_schema(
-        operation_description="Registro de eventos de reconocimiento facial (JSON o multipart)",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'Code': openapi.Schema(type=openapi.TYPE_STRING, description="Debe ser 'AccessControl'"),
-                'Data': openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'UserID': openapi.Schema(type=openapi.TYPE_STRING),
-                        'CreateTime': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
-                    }
-                )
-            },
-            required=['Code', 'Data']
-        ),
-        responses={
-            200: openapi.Response(
-                description="Evento registrado exitosamente",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'status': openapi.Schema(type=openapi.TYPE_STRING),
-                        'message': openapi.Schema(type=openapi.TYPE_STRING),
-                        'user_id': openapi.Schema(type=openapi.TYPE_STRING),
-                        'local_time': openapi.Schema(type=openapi.TYPE_STRING),
-                        'utc_time': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
-                )
-            ),
-            400: "Datos inválidos",
-            500: "Error interno del servidor"
-        }
-    )
     def post(self, request, schema_name=None):
         try:
-            # Detectar si el cuerpo es JSON o Multipart
-            content_type = request.content_type.lower()
-            write_to_log({"content_type": content_type})
-            if "multipart" in content_type:
-                # Extraer el primer campo tipo string que parezca JSON
-                json_str = None
-                for key, value in request.data.items():
-                    if isinstance(value, str) and value.strip().startswith('{'):
-                        json_str = value
-                        break
-                if not json_str:
-                    raise InvalidFacialRecognitionData("No se encontró JSON válido en multipart.")
-                data = json.loads(json_str)
+            content_type = request.META.get("CONTENT_TYPE", "")
+            if "multipart/x-mixed-replace" in content_type:
+                boundary = content_type.split("boundary=")[-1]
+                body = request.body.decode(errors='ignore')  # decode binario a texto
+                parts = re.split(rf"--{re.escape(boundary)}", body)
+
+                json_part = None
+                for part in parts:
+                    if "Content-Type: text/plain" in part or "Content-Type: application/json" in part:
+                        match = re.search(r'\{.*\}', part, re.DOTALL)
+                        if match:
+                            json_part = match.group()
+                            break
+
+                if not json_part:
+                    raise InvalidFacialRecognitionData("No se encontró JSON válido en el cuerpo del mensaje.")
+
+                data = json.loads(json_part)
             else:
-                data = request.data
+                data = request.data  # asume que es JSON normal
 
             write_to_log(data)
             tenant = get_tenant_model().objects.get(schema_name=schema_name)
@@ -1162,12 +1128,8 @@ class FacialRecognitionAPI(APIView):
             if data.get("Code") != "AccessControl":
                 raise InvalidFacialRecognitionData("El campo 'Code' debe ser 'AccessControl'")
 
-            data_fields = data.get("Data", {})
-            if not all(k in data_fields for k in ["UserID", "CreateTime"]):
-                raise InvalidFacialRecognitionData("Faltan campos requeridos en 'Data'")
-
-            user_id = data_fields["UserID"]
-            create_time_str = data_fields["CreateTime"]
+            user_id = data["Data"]["UserID"]
+            create_time_str = data["Data"]["CreateTime"]
 
             try:
                 naive_dt = datetime.strptime(create_time_str, "%Y-%m-%dT%H:%M:%S%z")
@@ -1193,7 +1155,7 @@ class FacialRecognitionAPI(APIView):
                 "user_id": user_id,
                 "local_time": fecha_local,
                 "utc_time": fecha_utc
-            }, status=status.HTTP_200_OK)
+            })
 
         except InvalidFacialRecognitionData as e:
             return Response({
