@@ -9,5 +9,6 @@ urlpatterns = [
     path('types/', TypeNewsAPI.as_view(), name='zoho-types'),
     path('clients/', ClientsAPI.as_view(), name='zoho-clients'),
     path('type_persons/', TypePersonAPI.as_view(), name='type-persons'),
-    path('facial-recognition/', FacialRecognitionAPI.as_view(), name='facial-recognition'),
+    # path('facial-recognition/', FacialRecognitionAPI.as_view(), name='facial-recognition'),
+    path('facial-recognition/<str:schema_name>/', FacialRecognitionAPI.as_view(), name='facial-recognition-with-params')
 ]
