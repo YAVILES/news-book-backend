@@ -9,7 +9,7 @@ class APIAuthMiddleware:
 
     def __call__(self, request):
         # Solo aplica a rutas de API
-        if not request.path.startswith('/api/api/'):
+        if not request.path.startswith('/api/api/') and not request.path.startswith('/api/api/facial-recognition/'):
             return self.get_response(request)
 
         # Obtiene token de headers O parámetros
