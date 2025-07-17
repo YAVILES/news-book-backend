@@ -1142,6 +1142,7 @@ class FacialRecognitionAPI(APIView):
         try:
             # Detectar si el cuerpo es JSON o Multipart
             content_type = request.content_type.lower()
+            write_to_log({"content_type": content_type})
             if "multipart" in content_type:
                 # Extraer el primer campo tipo string que parezca JSON
                 json_str = None
