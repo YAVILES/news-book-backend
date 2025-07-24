@@ -3,7 +3,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from apps.core.models import ModelBase, TypeNews
-from apps.main.models import Schedule
+from apps.main.models import Schedule, Location
 from django.contrib.postgres.fields import ArrayField
 
 MONDAY = 0
@@ -88,9 +88,18 @@ class Notification(ModelBase):
 
 
 class FacialRecognitionEvent(models.Model):
+    IN = "IN"
+    OUT = "OUT"
+
     user_id = models.CharField(max_length=100)
     event_time = models.DateTimeField()
     raw_data = models.JSONField()
+    movement_type = models.CharField(default=IN, max_length=3, verbose_name="movement_type", choices=(
+        (IN, _('Entrada')),
+        (OUT, _('Salida'))
+    ))
+    location = models.ForeignKey(Location, verbose_name=_('location'), on_delete=models.PROTECT,
+                                 help_text="Ubicación o Libro donde se generó el reconocimiento", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
