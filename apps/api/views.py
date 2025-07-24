@@ -1113,6 +1113,20 @@ class FacialRecognitionAPI(APIView):
                 description='Nombre del tenant (esquema de base de datos)',
                 type=openapi.TYPE_STRING,
                 required=True
+            ),
+            openapi.Parameter(
+                name='location',
+                in_=openapi.IN_PATH,
+                description='Nombre del libro (ubicaicon del cliente)',
+                type=openapi.TYPE_STRING,
+                required=True
+            ),
+            openapi.Parameter(
+                name='movement_type',
+                in_=openapi.IN_PATH,
+                description='Nombre del tipo de movimiento (IN=Entrada, OUT=Salida)',
+                type=openapi.TYPE_STRING,
+                required=True
             )
         ],
         request_body=openapi.Schema(
@@ -1141,7 +1155,7 @@ class FacialRecognitionAPI(APIView):
             500: openapi.Response(description="Error interno del servidor"),
         }
     )
-    def post(self, request, schema_name=None):
+    def post(self, request, schema_name=None, location=None, movement_type=None):
         try:
             content_type = request.META.get("CONTENT_TYPE", "").lower()
             raw_bytes = getattr(request, 'body', b'')
@@ -1237,7 +1251,9 @@ class FacialRecognitionAPI(APIView):
                     evento = FacialRecognitionEvent(
                         user_id=user_id,
                         event_time=utc_dt,
-                        raw_data=clean_data
+                        raw_data=clean_data,
+                        location=location,
+                        movement_type=movement_type
                     )
                     evento.full_clean()
                     evento.save()

@@ -106,6 +106,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "is_oesvica": self.user.is_oesvica
         }
         security_data = f.encrypt(bytes(str(json_security), encoding='utf8'))
+
+        from django.db import connection
+        tenant = connection.tenant
+
         return {
             'token': str(refresh.access_token),
             'refresh': str(refresh),
@@ -118,7 +122,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "security_data": security_data,
             "id": self.user.id,
             "type_user": self.user.type_user,
-            "locations": self.user.locations.all().values_list("id", flat=True)
+            "locations": self.user.locations.all().values_list("id", flat=True),
+            "facial_recognition": tenant.facial_recognition
         }
 
 

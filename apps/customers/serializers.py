@@ -37,6 +37,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                 email = validated_data.pop('email', None)
                 paid_until = validated_data.pop('paid_until', None)
                 on_trial = validated_data.pop('on_trial', None)
+                facial_recognition = validated_data.pop('facial_recognition', None)
                 type_news = validated_data.pop('type_news', None)
                 schema_name = validated_data.pop('schema_name', None)
 
@@ -50,7 +51,10 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                     instance.paid_until = paid_until
                 if on_trial:
                     instance.on_trial = on_trial
-                instance.save(update_fields=['name', 'email', 'paid_until', 'on_trial'])
+                if facial_recognition:
+                    instance.facial_recognition = facial_recognition
+
+                instance.save(update_fields=['name', 'email', 'paid_until', 'on_trial', 'facial_recognition'])
 
                 if email:
                     try:

@@ -19,9 +19,9 @@ from django_filters import rest_framework as filters
 from apps.main.models import News, Location, Material
 from apps.main.serializers import NewsDefaultSerializer, MaterialScopeSerializer
 from apps.setting.admin import NotificationResource
-from apps.setting.models import Notification
+from apps.setting.models import Notification, FacialRecognitionEvent
 from apps.setting.serializers import NotificationDefaultSerializer, TaskResultDefaultSerializer, \
-    PeriodicTaskDefaultSerializer
+    PeriodicTaskDefaultSerializer, FacialRecognitionEventSerializer
 
 from apps.setting.tasks import generate_notification_async, generate_notification_not_fulfilled
 
@@ -402,3 +402,19 @@ class TaskResultViewSet(ModelViewSet):
 class PeriodicTaskViewSet(ModelViewSet):
     queryset = PeriodicTask.objects.all()
     serializer_class = PeriodicTaskDefaultSerializer
+
+
+
+class FacialRecognitionEventViewSet(ModelViewSet):
+    queryset = FacialRecognitionEvent.objects.all()
+    serializer_class = FacialRecognitionEventSerializer
+    permission_classes = (AllowAny,)
+
+    def paginate_queryset(self, queryset):
+        """
+        Return a single page of results, or `None` if pagination is disabled.
+        """
+        not_paginator = self.request.query_params.get('not_paginator', None)
+        if self.paginator is None or not_paginator:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
