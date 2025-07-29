@@ -173,7 +173,7 @@ class PersonViewSet(ModelViewSet):
 
                 if not has_recent_facial_event:
                     return Response({
-                        "person": person,
+                        "person": data,
                         "blacklist": False,
                         "has_access": False,
                         "message": "No se ha detectado un reconocimiento facial reciente"
