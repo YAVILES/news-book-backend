@@ -63,36 +63,36 @@ class ValidUser(GenericViewSet):
             chars = string.ascii_uppercase + string.digits
             code = ''.join(random.choice(chars) for _ in range(8))
 
-            # if (user.security_user and user.security_user.phone) or user.phone:
-            #     try:
-            #         requests.post(
-            #             url=settings.API_WHATSAPP,
-            #             data={
-            #                 "phoneNumber": user.security_user.phone
-            #                 if user.security_user and user.security_user.phone else user.phone,
-            #                 "message": f'Código de Seguridad: {code}'
-            #             }
-            #         )
-            #     except Exception:
-            #         pass
+            if (user.security_user and user.security_user.phone) or user.phone:
+                try:
+                    requests.post(
+                        url=settings.API_WHATSAPP,
+                        data={
+                            "phoneNumber": user.security_user.phone
+                            if user.security_user and user.security_user.phone else user.phone,
+                            "message": f'Código de Seguridad: {code}'
+                        }
+                    )
+                except Exception:
+                    pass
 
-            # try:
-            #     if user.security_user and user.security_user.email:
-            #         destine_email = user.security_user.email
-            #     else:
-            #         destine_email = user.email
-            #
-            #     if destine_email:
-            #         email = EmailMultiAlternatives(
-            #             'Código de Seguridad',
-            #             code,
-            #             settings.EMAIL_HOST_USER,
-            #             [destine_email]
-            #         )
-            #         #email.attach_alternative(content, 'text/html')
-            #         email.send()
-            # except Exception as e:
-            #     serializers.ValidationError(detail={"error": "No fue posible enviar el código de seguridad", "msg": e})
+            try:
+                if user.security_user and user.security_user.email:
+                    destine_email = user.security_user.email
+                else:
+                    destine_email = user.email
+
+                if destine_email:
+                    email = EmailMultiAlternatives(
+                        'Código de Seguridad',
+                        code,
+                        settings.EMAIL_HOST_USER,
+                        [destine_email]
+                    )
+                    #email.attach_alternative(content, 'text/html')
+                    email.send()
+            except Exception as e:
+                serializers.ValidationError(detail={"error": "No fue posible enviar el código de seguridad", "msg": e})
 
             user.is_verified_security_code = False
             user.security_code = code
