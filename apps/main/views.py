@@ -181,7 +181,7 @@ class PersonViewSet(ModelViewSet):
 
             except FacialRecognitionEvent.DoesNotExist:
                 return Response({
-                    "person": person,
+                    "person": data,
                     "blacklist": False,
                     "has_access": False,
                     "message": "La persona no ha sido registrada para reconocimiento facial"

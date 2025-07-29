@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from tablib import Dataset
 from django_filters import rest_framework as filters
-
+from datetime import datetime, timedelta, timezone
 from apps.main.models import News, Location, Material
 from apps.main.serializers import NewsDefaultSerializer, MaterialScopeSerializer
 from apps.setting.admin import NotificationResource
@@ -409,6 +409,15 @@ class FacialRecognitionEventViewSet(ModelViewSet):
     queryset = FacialRecognitionEvent.objects.all()
     serializer_class = FacialRecognitionEventSerializer
     permission_classes = (AllowAny,)
+
+    def get_queryset(self):
+        queryset = super(FacialRecognitionEventViewSet, self).get_queryset()
+        recent = self.request.query_params.get('recent', None)
+        if recent:
+            time_threshold = datetime.now() - timedelta(minutes=5)
+            return queryset.filter(event_time__gte=time_threshold)
+        else:
+            return queryset
 
     def paginate_queryset(self, queryset):
         """
