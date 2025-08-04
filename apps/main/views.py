@@ -26,6 +26,8 @@ from apps.main.models import AccessEntry, Vehicle, TypePerson, Person, Material,
 from apps.main.serializers import AccessEntrySerializer, VehicleDefaultSerializer, TypePersonDefaultSerializer, PersonDefaultSerializer, \
     MaterialDefaultSerializer, NewsDefaultSerializer, ScheduleDefaultSerializer, LocationDefaultSerializer, \
     PointDefaultSerializer, EquipmentToolsDefaultSerializer, AccessGroupSerializer
+from apps.setting.serializers import FacialRecognitionEventSerializer
+
 
 class TypePersonFilter(filters.FilterSet):
     class Meta:
@@ -191,10 +193,10 @@ class PersonViewSet(ModelViewSet):
             return Response({
                 "person": None,
                 "blacklist": False,
-                "recognition_event_data": FacialRecognitionEvent.objects.filter(
+                "recognition_event_data": FacialRecognitionEventSerializer(FacialRecognitionEvent.objects.filter(
                     user_id=identification,
                     event_time__gte=time_threshold
-                ).last(),
+                ).last()).data,
                 "has_access": self.request.tenant.facial_recognition,
                 "message": "La persona no existe"
             }, status=status.HTTP_200_OK)
