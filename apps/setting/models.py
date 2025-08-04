@@ -92,6 +92,7 @@ class FacialRecognitionEvent(models.Model):
     OUT = "OUT"
 
     user_id = models.CharField(max_length=100)
+    user_name = models.CharField(max_length=255, verbose_name=_('user name'), null=True)
     event_time = models.DateTimeField()
     raw_data = models.JSONField()
     movement_type = models.CharField(default=IN, max_length=3, verbose_name="movement_type", choices=(
