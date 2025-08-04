@@ -1160,7 +1160,7 @@ class FacialRecognitionAPI(APIView):
             content_type = request.META.get("CONTENT_TYPE", "").lower()
             raw_bytes = getattr(request, 'body', b'')
             raw_body = raw_bytes.decode('utf-8', errors='ignore')
-
+            write_to_log(raw_body, schema_name)
             if "multipart/x-mixed-replace" in content_type or "text/plain" in content_type:
                 parts = raw_body.split('--myboundary')
                 json_text = None
@@ -1281,6 +1281,7 @@ class FacialRecognitionAPI(APIView):
             }, status=200)
 
         except InvalidFacialRecognitionData as e:
+            write_to_log(str(e), schema_name)
             return Response({
                 "status": "error",
                 "message": str(e)
