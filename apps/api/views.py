@@ -1161,7 +1161,7 @@ class FacialRecognitionAPI(APIView):
             raw_bytes = getattr(request, 'body', b'')
             raw_body = raw_bytes.decode('utf-8', errors='ignore')
 
-            write_to_log(request_data, schema_name)
+            write_to_log(raw_body, schema_name)
             if "multipart/x-mixed-replace" in content_type or "text/plain" in content_type:
                 parts = raw_body.split('--myboundary')
                 json_text = None
