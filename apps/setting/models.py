@@ -98,8 +98,7 @@ class FacialRecognitionEvent(models.Model):
         (IN, _('Entrada')),
         (OUT, _('Salida'))
     ))
-    location = models.ForeignKey(Location, verbose_name=_('location'), on_delete=models.PROTECT,
-                                 help_text="Ubicación o Libro donde se generó el reconocimiento", null=True)
+    location = models.CharField(max_length=100, default=None, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

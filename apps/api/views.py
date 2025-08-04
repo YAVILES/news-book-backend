@@ -15,7 +15,7 @@ from rest_framework.permissions import AllowAny
 from apps.api.base_views import SecureAPIView
 from django.shortcuts import get_object_or_404
 from apps.core.models import TypeNews
-from apps.main.models import News, TypePerson
+from apps.main.models import News, TypePerson, Location
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from django.conf import settings
@@ -1117,7 +1117,7 @@ class FacialRecognitionAPI(APIView):
             openapi.Parameter(
                 name='location',
                 in_=openapi.IN_PATH,
-                description='Nombre del libro (ubicaicon del cliente)',
+                description='Nombre del libro (ubicacion del cliente)',
                 type=openapi.TYPE_STRING,
                 required=True
             ),
