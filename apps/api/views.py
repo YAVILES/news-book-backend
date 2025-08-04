@@ -1100,7 +1100,7 @@ class InvalidFacialRecognitionData(APIException):
 
 class FacialRecognitionAPI(APIView):
     permission_classes = (AllowAny,)
-    parser_classes = []
+    parser_classes = [MultiPartParser, JSONParser, FormParser]
 
     @swagger_auto_schema(
         operation_description="Recibe eventos de reconocimiento facial desde dispositivos. "
