@@ -1215,6 +1215,7 @@ class FacialRecognitionAPI(APIView):
 
             user_id_raw = event_data.get("UserID")
             create_time_str = event_data.get("CreateTime")
+            user_name = event_data.get("CardName")
 
             if not user_id_raw or not create_time_str:
                 raise InvalidFacialRecognitionData("Faltan 'UserID' o 'CreateTime' en los datos")
@@ -1250,6 +1251,7 @@ class FacialRecognitionAPI(APIView):
 
                     evento = FacialRecognitionEvent(
                         user_id=user_id,
+                        user_name=user_name,
                         event_time=utc_dt,
                         raw_data=clean_data,
                         location=location,
