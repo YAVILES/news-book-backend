@@ -44,10 +44,10 @@ def write_to_log(request_data, schema_name=None):
         'url_params': {
             'cliente': schema_name
         },
-        'full_data': {
-            **request_data,
-            'cliente': schema_name
-        }
+        # 'full_data': {
+        #     **request_data,
+        #     'cliente': schema_name
+        # }
     }
 
     # Aquí implementa tu lógica para guardar el log (archivo, base de datos, etc.)
@@ -1177,6 +1177,7 @@ class FacialRecognitionAPI(APIView):
 
                 try:
                     data = json.loads(json_text)
+                    write_to_log(data, schema_name)
                 except Exception as parse_error:
                     return Response({
                         "status": "error",
