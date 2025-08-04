@@ -1100,7 +1100,7 @@ class InvalidFacialRecognitionData(APIException):
 
 class FacialRecognitionAPI(APIView):
     permission_classes = (AllowAny,)
-    parser_classes = [MultiPartParser, JSONParser, FormParser]
+    parser_classes = []
 
     @swagger_auto_schema(
         operation_description="Recibe eventos de reconocimiento facial desde dispositivos. "
@@ -1161,7 +1161,6 @@ class FacialRecognitionAPI(APIView):
             raw_bytes = getattr(request, 'body', b'')
             raw_body = raw_bytes.decode('utf-8', errors='ignore')
 
-            write_to_log(request.data, schema_name)
             if "multipart/x-mixed-replace" in content_type or "text/plain" in content_type:
                 parts = raw_body.split('--myboundary')
                 json_text = None
