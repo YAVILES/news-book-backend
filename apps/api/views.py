@@ -1222,27 +1222,26 @@ class FacialRecognitionAPI(APIView):
 
             user_id = str(user_id_raw)
 
-            if not isinstance(create_time_str, str):
-                return Response({
-                    "status": "error",
-                    "message": f"'CreateTime' no es una cadena válida. Valor: {create_time_str}"
-                }, status=400)
-
             try:
-                naive_dt = datetime.strptime(create_time_str, "%Y-%m-%dT%H:%M:%S%z")
-            except Exception as e:
+                # Convertir el timestamp string a entero
+                timestamp = int(create_time_str)
+
+                # Crear datetime a partir del timestamp (asumiendo que está en UTC)
+                utc_dt = datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.UTC)
+
+                # Convertir a la zona horaria local deseada
+                zona_local = pytz.timezone('America/Caracas')
+                local_dt = utc_dt.astimezone(zona_local)
+
+                fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
+                fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+            except ValueError as e:
                 return Response({
                     "status": "error",
-                    "message": "Error al interpretar 'CreateTime'",
+                    "message": "'CreateTime' debe ser un timestamp Unix válido",
                     "error": str(e)
                 }, status=400)
-
-            utc_dt = naive_dt.astimezone(pytz.UTC)
-            zona_local = pytz.timezone('America/Caracas')
-            local_dt = utc_dt.astimezone(zona_local)
-
-            fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
-            fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
 
             try:
                 tenant = get_tenant_model().objects.get(schema_name=schema_name)
