@@ -1166,12 +1166,16 @@ class FacialRecognitionAPI(APIView):
                 parts = raw_body.split('--myboundary')
                 json_text = None
 
-            # Debug: mostrar datos recibidos
-            print("Datos recibidos:", data)
+                for part in parts:
+                    if 'Content-Type: text/plain' in part:
+                        payload = part.split('\n\n', 1)[-1].strip()
+                        if payload.startswith('{') and payload.endswith('}'):
+                            json_text = payload
+                            break
 
-            # Buscar el evento AccessControl
-            if not isinstance(data, dict):
-                raise InvalidFacialRecognitionData("Los datos recibidos no son un objeto válido")
+                if not json_text:
+                    return Response({"status": "error", "message": "No se encontró JSON válido en multipart"},
+                                    status=400)
 
                 try:
                     data = json.loads(json_text)
@@ -1264,20 +1268,16 @@ class FacialRecognitionAPI(APIView):
 
             return Response({
                 "status": "success",
-                "message": "Evento registrado",
+                "message": "Evento de reconocimiento facial registrado",
                 "user_id": user_id,
                 "local_time": fecha_local,
                 "utc_time": fecha_utc
-            })
-
+            }, status=200)
 
         except InvalidFacialRecognitionData as e:
-            # Usar request.body en lugar de raw_body
-            received_data = request.body.decode('utf-8', errors='ignore')[:200] + "..."
             return Response({
                 "status": "error",
-                "message": str(e),
-                "received_data": received_data
+                "message": str(e)
             }, status=400)
 
         except Exception as e:
