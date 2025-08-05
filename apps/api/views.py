@@ -1193,7 +1193,7 @@ class FacialRecognitionAPI(APIView):
 
             user_id = str(event_data.get("UserID", "")).strip()
             create_time_str = event_data.get("CreateTime")
-            user_name = event_data.get("CardName", "")
+            user_name = event_data.get("CardName", "N/A")
 
             if not user_id or not create_time_str:
                 raise InvalidFacialRecognitionData("Faltan campos requeridos: 'UserID' o 'CreateTime'")
