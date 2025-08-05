@@ -1264,13 +1264,13 @@ class FacialRecognitionAPI(APIView):
                         "error": str(e)
                     }, status=500)
 
-            return Response({
-                "status": "success",
-                "message": "Evento de reconocimiento facial registrado",
-                "user_id": user_id,
-                "local_time": fecha_local,
-                "utc_time": fecha_utc
-            }, status=200)
+                return Response({
+                    "status": "success",
+                    "message": "Evento de reconocimiento facial registrado",
+                    "user_id": user_id,
+                    "local_time": fecha_local,
+                    "utc_time": fecha_utc
+                }, status=200)
 
         except InvalidFacialRecognitionData as e:
             return Response({
