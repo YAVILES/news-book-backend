@@ -1161,7 +1161,6 @@ class FacialRecognitionAPI(APIView):
             raw_bytes = getattr(request, 'body', b'')
             raw_body = raw_bytes.decode('utf-8', errors='ignore')
 
-            write_to_log(request_data, schema_name)
             if "multipart/x-mixed-replace" in content_type or "text/plain" in content_type:
                 parts = raw_body.split('--myboundary')
                 json_text = None
@@ -1200,77 +1199,70 @@ class FacialRecognitionAPI(APIView):
                     "message": f"Tipo de contenido no soportado: {content_type}"
                 }, status=415)
 
-            if data.get("Events") and isinstance(data["Events"], list):
-                event = data["Events"][0]
-                if event.get("Code") != "AccessControl":
-                    raise InvalidFacialRecognitionData("El campo 'Code' debe ser 'AccessControl'")
-                event_data = event.get("Data", {})
-            else:
-                raise InvalidFacialRecognitionData("Formato de evento inválido")
+            if "UserID" in data and "CreateTime" in data:  # Si los campos están en el nivel raíz
+                user_id_raw = data.get("UserID")
+                create_time_str = data.get("CreateTime")
+                user_name = data.get("CardName")
 
-            if not isinstance(event_data, dict):
+                if not user_id_raw or not create_time_str:
+                    raise InvalidFacialRecognitionData("Faltan 'UserID' o 'CreateTime' en los datos")
+
+                user_id = str(user_id_raw)
+
+                try:
+                    # Convertir el timestamp string a entero
+                    timestamp = int(create_time_str)
+
+                    # Crear datetime a partir del timestamp (asumiendo que está en UTC)
+                    utc_dt = datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.UTC)
+
+                    # Convertir a la zona horaria local deseada
+                    zona_local = pytz.timezone('America/Caracas')
+                    local_dt = utc_dt.astimezone(zona_local)
+
+                    fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
+                    fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+                except ValueError as e:
+                    return Response({
+                        "status": "error",
+                        "message": "'CreateTime' debe ser un timestamp Unix válido",
+                        "error": str(e)
+                    }, status=400)
+
+                try:
+                    tenant = get_tenant_model().objects.get(schema_name=schema_name)
+                    with tenant_context(tenant):
+                        clean_data = json.loads(json.dumps(data))
+
+                        evento = FacialRecognitionEvent(
+                            user_id=user_id,
+                            user_name=user_name,
+                            event_time=utc_dt,
+                            raw_data=clean_data,
+                            location=location,
+                            movement_type=movement_type
+                        )
+                        evento.full_clean()
+                        evento.save()
+                except ValidationError as ve:
+                    return Response({
+                        "status": "error",
+                        "message": "Error de validación en modelo",
+                        "error": ve.message_dict
+                    }, status=400)
+                except Exception as e:
+                    return Response({
+                        "status": "error",
+                        "message": "Error guardando el evento",
+                        "error": str(e)
+                    }, status=500)
+
+            else:
                 return Response({
                     "status": "error",
                     "message": "El campo 'Data' no es un objeto válido"
                 }, status=400)
-
-            user_id_raw = event_data.get("UserID")
-            create_time_str = event_data.get("CreateTime")
-            user_name = event_data.get("CardName")
-
-            if not user_id_raw or not create_time_str:
-                raise InvalidFacialRecognitionData("Faltan 'UserID' o 'CreateTime' en los datos")
-
-            user_id = str(user_id_raw)
-
-            try:
-                # Convertir el timestamp string a entero
-                timestamp = int(create_time_str)
-
-                # Crear datetime a partir del timestamp (asumiendo que está en UTC)
-                utc_dt = datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.UTC)
-
-                # Convertir a la zona horaria local deseada
-                zona_local = pytz.timezone('America/Caracas')
-                local_dt = utc_dt.astimezone(zona_local)
-
-                fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
-                fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
-
-            except ValueError as e:
-                return Response({
-                    "status": "error",
-                    "message": "'CreateTime' debe ser un timestamp Unix válido",
-                    "error": str(e)
-                }, status=400)
-
-            try:
-                tenant = get_tenant_model().objects.get(schema_name=schema_name)
-                with tenant_context(tenant):
-                    clean_data = json.loads(json.dumps(data))
-
-                    evento = FacialRecognitionEvent(
-                        user_id=user_id,
-                        user_name=user_name,
-                        event_time=utc_dt,
-                        raw_data=clean_data,
-                        location=location,
-                        movement_type=movement_type
-                    )
-                    evento.full_clean()
-                    evento.save()
-            except ValidationError as ve:
-                return Response({
-                    "status": "error",
-                    "message": "Error de validación en modelo",
-                    "error": ve.message_dict
-                }, status=400)
-            except Exception as e:
-                return Response({
-                    "status": "error",
-                    "message": "Error guardando el evento",
-                    "error": str(e)
-                }, status=500)
 
             return Response({
                 "status": "success",
