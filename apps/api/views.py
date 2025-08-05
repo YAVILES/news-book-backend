@@ -1201,6 +1201,7 @@ class FacialRecognitionAPI(APIView):
                     "message": f"Tipo de contenido no soportado: {content_type}"
                 }, status=415)
 
+            write_to_log(data, schema_name)
             if data.get("Events") and isinstance(data["Events"], list):
                 event = data["Events"][0]
                 data = event.get("Data", {})
