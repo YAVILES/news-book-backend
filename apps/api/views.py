@@ -27,6 +27,7 @@ from django.utils.timezone import make_aware
 from django.core.exceptions import ValidationError
 from .parsers import MixedReplaceParser
 
+
 LOG_FILE = "facial_recognition.log"
 
 
@@ -1157,56 +1158,96 @@ class FacialRecognitionAPI(APIView):
         }
     )
     def post(self, request, schema_name=None, location=None, movement_type=None):
+        data = None  # Inicializa data como None por defecto
         try:
             content_type = request.META.get("CONTENT_TYPE", "").lower()
             raw_bytes = getattr(request, 'body', b'')
             raw_body = raw_bytes.decode('utf-8', errors='ignore')
 
             if "multipart/x-mixed-replace" in content_type or "text/plain" in content_type:
-                parts = raw_body.split('--myboundary')
-                json_text = None
-
-                for part in parts:
-                    if 'Content-Type: text/plain' in part:
-                        payload = part.split('\n\n', 1)[-1].strip()
-                        if payload.startswith('{') and payload.endswith('}'):
-                            json_text = payload
-                            break
-
-                if not json_text:
-                    return Response({"status": "error", "message": "No se encontró JSON válido en multipart"},
-                                    status=400)
-
                 try:
-                    data = json.loads(json_text)
-                except Exception as parse_error:
+                    # 1. Encontrar la parte que contiene el JSON
+                    json_part = None
+                    parts = raw_body.split('--myboundary')
+
+                    for part in parts:
+                        if 'Content-Type: text/plain' in part:
+                            # 2. Extraer el contenido después de los headers
+                            payload = part.split('\n\n', 1)[-1].strip()
+
+                            # 3. Buscar el JSON completo entre el primer { y último }
+                            json_start = payload.find('{')
+                            json_end = payload.rfind('}') + 1
+
+                            if json_start != -1 and json_end > json_start:
+                                json_part = payload[json_start:json_end]
+                                break
+
+                    if not json_part:
+                        return Response({
+                            "status": "error",
+                            "message": "No se encontró JSON válido en el cuerpo"
+                        }, status=400)
+
+                    # 4. Limpiar posibles caracteres extraños al final
+                    json_text = json_part.split('--myboundary')[0].strip()
+
+                    # 5. Validar balance de llaves
+                    open_braces = json_text.count('{')
+                    close_braces = json_text.count('}')
+
+                    if open_braces != close_braces:
+                        return Response({
+                            "status": "error",
+                            "message": "El JSON está desbalanceado",
+                            "detail": f"Se encontraron {open_braces} {{ y {close_braces} }}"
+                        }, status=400)
+
+                    # 6. Parsear el JSON
+                    try:
+                        data = json.loads(json_text)
+                    except json.JSONDecodeError as e:
+                        return Response({
+                            "status": "error",
+                            "message": "El JSON está malformado",
+                            "error": str(e)
+                        }, status=400)
+
+                except Exception as e:
                     return Response({
                         "status": "error",
-                        "message": "Error al parsear JSON",
-                        "error": str(parse_error)
-                    }, status=400)
+                        "message": "Error interno al procesar la solicitud",
+                        "error": str(e)
+                    }, status=500)
 
             elif "application/json" in content_type:
                 try:
                     data = json.loads(raw_body)
-                except Exception as json_error:
+                except json.JSONDecodeError as e:
                     return Response({
                         "status": "error",
-                        "message": "Error al parsear JSON",
-                        "error": str(json_error)
+                        "message": "JSON malformado",
+                        "error": str(e)
                     }, status=400)
             else:
                 return Response({
                     "status": "error",
-                    "message": f"Tipo de contenido no soportado: {content_type}"
+                    "message": f"Content-Type no soportado: {content_type}. Use 'multipart/x-mixed-replace' o 'application/json'"
                 }, status=415)
 
-            write_to_log(data, schema_name)
+            # Si data sigue siendo None (no debería ocurrir si los pasos anteriores son correctos)
+            if data is None:
+                return Response({
+                    "status": "error",
+                    "message": "Error interno: no se pudo parsear el cuerpo de la solicitud"
+                }, status=500)
+
+            # Resto de tu lógica...
             if data.get("Events") and isinstance(data["Events"], list):
                 event = data["Events"][0]
                 data = event.get("Data", {})
 
-            if "UserID" in data and "CreateTime" in data:  # Si los campos están en el nivel raíz
+            if "UserID" in data and "CreateTime" in data:
                 user_id_raw = data.get("UserID")
                 create_time_str = data.get("CreateTime")
                 user_name = data.get("CardName")
@@ -1217,19 +1258,10 @@ class FacialRecognitionAPI(APIView):
                 user_id = str(user_id_raw)
 
                 try:
-                    # Convertir el timestamp string a entero
                     timestamp = int(create_time_str)
-
-                    # Crear datetime a partir del timestamp (asumiendo que está en UTC)
                     utc_dt = datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.UTC)
-
-                    # Convertir a la zona horaria local deseada
                     zona_local = pytz.timezone('America/Caracas')
                     local_dt = utc_dt.astimezone(zona_local)
-
-                    fecha_local = local_dt.strftime("%Y-%m-%d %H:%M:%S")
-                    fecha_utc = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
-
                 except ValueError as e:
                     return Response({
                         "status": "error",
@@ -1269,8 +1301,8 @@ class FacialRecognitionAPI(APIView):
                     "status": "success",
                     "message": "Evento de reconocimiento facial registrado",
                     "user_id": user_id,
-                    "local_time": fecha_local,
-                    "utc_time": fecha_utc
+                    "local_time": local_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    "utc_time": utc_dt.strftime("%Y-%m-%d %H:%M:%S")
                 }, status=200)
 
         except InvalidFacialRecognitionData as e:
