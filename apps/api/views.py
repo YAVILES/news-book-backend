@@ -1201,6 +1201,10 @@ class FacialRecognitionAPI(APIView):
                     "message": f"Tipo de contenido no soportado: {content_type}"
                 }, status=415)
 
+            if data.get("Events") and isinstance(data["Events"], list):
+                event = data["Events"][0]
+                data = event.get("Data", {})
+
             if "UserID" in data and "CreateTime" in data:  # Si los campos están en el nivel raíz
                 user_id_raw = data.get("UserID")
                 create_time_str = data.get("CreateTime")
@@ -1259,12 +1263,6 @@ class FacialRecognitionAPI(APIView):
                         "message": "Error guardando el evento",
                         "error": str(e)
                     }, status=500)
-
-            else:
-                return Response({
-                    "status": "error",
-                    "message": "El campo 'Data' no es un objeto válido"
-                }, status=400)
 
             return Response({
                 "status": "success",
