@@ -1157,32 +1157,55 @@ class FacialRecognitionAPI(APIView):
     )
     def post(self, request, schema_name=None, location=None, movement_type=None):
         try:
-            # Debug: Log headers y contenido crudo
             print("Headers recibidos:", request.headers)
             print("Content-Type:", request.content_type)
 
-            # Verifica si es multipart
-            if 'multipart/x-mixed-replace' in request.content_type:
-                # Decodifica el body manualmente
-                body = request.body.decode('utf-8', errors='ignore')
+            # Obtener los datos según el content-type
+            if 'multipart' in request.content_type:
+                # Para contenido multipart, buscar el JSON en las partes
+                if 'data' in request.data:  # Si el parser multipart ya extrajo los datos
+                    data = request.data.get('data')
+                    if isinstance(data, str):
+                        try:
+                            data = json.loads(data)
+                        except json.JSONDecodeError:
+                            # Intentar extraer el JSON manualmente del body
+                            body = request.body.decode('utf-8', errors='ignore')
+                            json_match = re.search(r'\{.*\}', body, re.DOTALL)
+                            if json_match:
+                                data = json.loads(json_match.group())
+                            else:
+                                return Response({"error": "No se encontró JSON válido en el cuerpo multipart"},
+                                                status=400)
+                else:
+                    # Intentar extraer el JSON manualmente
+                    body = request.body.decode('utf-8', errors='ignore')
+                    json_match = re.search(r'\{.*\}', body, re.DOTALL)
+                    if json_match:
+                        data = json.loads(json_match.group())
+                    else:
+                        return Response({"error": "No se encontró JSON en el cuerpo multipart"}, status=400)
+            else:
+                # Para JSON directo
+                data = request.data
 
-                # Busca el JSON usando una expresión regular mejorada
-                json_match = re.search(r'\{.*\}', body, re.DOTALL)
-
-                if not json_match:
-                    return Response({"error": "No se encontró JSON en el cuerpo"}, status=400)
-
-                try:
-                    data = json.loads(json_match.group())
-                    print("JSON parseado:", data)  # Debug
-                except json.JSONDecodeError as e:
-                    return Response({"error": f"Error al parsear JSON: {str(e)}"}, status=400)
+            # Debug: mostrar datos recibidos
+            print("Datos recibidos:", data)
 
             # Buscar el evento AccessControl
-            access_control_event = next(
-                (e for e in data.get("Events", []) if isinstance(e, dict) and e.get("Code") == "AccessControl"),
-                None
-            )
+            if not isinstance(data, dict):
+                raise InvalidFacialRecognitionData("Los datos recibidos no son un objeto válido")
+
+            # Manejar tanto el formato con "Events" como el formato directo
+            if 'Events' in data:
+                access_control_event = next(
+                    (e for e in data.get("Events", [])
+                     if isinstance(e, dict) and e.get("Code") == "AccessControl"),
+                    None
+                )
+            else:
+                # Si no hay "Events", asumir que el objeto completo es el evento
+                access_control_event = data if data.get("Code") == "AccessControl" else None
 
             if not access_control_event:
                 raise InvalidFacialRecognitionData("No se encontró evento 'AccessControl' en los datos")
@@ -1191,9 +1214,10 @@ class FacialRecognitionAPI(APIView):
             if not isinstance(event_data, dict):
                 raise InvalidFacialRecognitionData("El campo 'Data' no es un objeto válido")
 
+            # Resto del procesamiento...
             user_id = str(event_data.get("UserID", "")).strip()
             create_time_str = event_data.get("CreateTime")
-            user_name = event_data.get("CardName", "N/A")
+            user_name = event_data.get("CardName", "")
 
             if not user_id or not create_time_str:
                 raise InvalidFacialRecognitionData("Faltan campos requeridos: 'UserID' o 'CreateTime'")
@@ -1239,7 +1263,8 @@ class FacialRecognitionAPI(APIView):
                 return Response({
                     "status": "error",
                     "message": "Error al guardar el evento",
-                    "error": str(e)
+                    "error": str(e),
+                    "traceback": traceback.format_exc()
                 }, status=500)
 
             return Response({
@@ -1250,13 +1275,16 @@ class FacialRecognitionAPI(APIView):
                 "utc_time": fecha_utc
             })
 
+
         except InvalidFacialRecognitionData as e:
-            write_to_log(str(e), schema_name)
+            # Usar request.body en lugar de raw_body
+            received_data = request.body.decode('utf-8', errors='ignore')[:200] + "..."
             return Response({
                 "status": "error",
                 "message": str(e),
-                "received_data": raw_body[:200] + "..." if len(raw_body) > 200 else raw_body
+                "received_data": received_data
             }, status=400)
+
         except Exception as e:
             return Response({
                 "status": "error",
