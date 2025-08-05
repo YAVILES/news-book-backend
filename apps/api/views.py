@@ -25,6 +25,7 @@ from datetime import datetime
 import pytz
 from django.utils.timezone import make_aware
 from django.core.exceptions import ValidationError
+from .parsers import MixedReplaceParser
 
 LOG_FILE = "facial_recognition.log"
 
@@ -1100,7 +1101,7 @@ class InvalidFacialRecognitionData(APIException):
 
 class FacialRecognitionAPI(APIView):
     permission_classes = (AllowAny,)
-    parser_classes = []
+    parser_classes = [MixedReplaceParser, JSONParser]
 
     @swagger_auto_schema(
         operation_description="Recibe eventos de reconocimiento facial desde dispositivos. "
