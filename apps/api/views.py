@@ -1239,8 +1239,7 @@ class FacialRecognitionAPI(APIView):
                 return Response({
                     "status": "error",
                     "message": "Error al guardar el evento",
-                    "error": str(e),
-                    "traceback": traceback.format_exc()
+                    "error": str(e)
                 }, status=500)
 
             return Response({
@@ -1262,6 +1261,5 @@ class FacialRecognitionAPI(APIView):
             return Response({
                 "status": "error",
                 "message": "Error interno del servidor",
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                "error": str(e)
             }, status=500)
