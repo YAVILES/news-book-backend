@@ -413,11 +413,11 @@ class FacialRecognitionEventViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = super(FacialRecognitionEventViewSet, self).get_queryset()
         recent = self.request.query_params.get('recent', None)
-        # if recent:
-        #     time_threshold = datetime.now() - timedelta(minutes=5)
-        #     return queryset.filter(event_time__gte=time_threshold)
-        # else:
-        return queryset
+        if recent:
+            time_threshold = datetime.now() - timedelta(minutes=5)
+            return queryset.filter(event_time__gte=time_threshold)
+        else:
+            return queryset
 
     def paginate_queryset(self, queryset):
         """
