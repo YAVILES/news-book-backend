@@ -1140,6 +1140,7 @@ class FacialRecognitionAPI(APIView):
                         "Code": openapi.Schema(type=openapi.TYPE_STRING, example="AccessControl"),
                         "Data": openapi.Schema(type=openapi.TYPE_OBJECT, properties={
                             "UserID": openapi.Schema(type=openapi.TYPE_STRING, example="001875"),
+                            "CardName": openapi.Schema(type=openapi.TYPE_STRING, example="Carlos Blanco"),
                             "CreateTime": openapi.Schema(
                                 type=openapi.TYPE_STRING,
                                 format="date-time",
