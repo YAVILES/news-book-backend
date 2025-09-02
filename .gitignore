@@ -226,3 +226,6 @@ cython_debug/
 data.csv
 /test_panamaDivision.json
 /media
+
+facial_recognition_logs.json
+
