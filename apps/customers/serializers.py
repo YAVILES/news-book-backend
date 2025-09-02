@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from apps.core.models import TypeNews
 from apps.customers.models import Client, Domain
+from apps.security.models import User
 
 
 class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -23,9 +24,14 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
+            type_news_data = validated_data.pop('type_news', None)
             with transaction.atomic():
-                tenant = Client(**validated_data)
+                tenant = Client.objects.create(**validated_data)
                 tenant.save()
+
+                if type_news_data is not None:
+                    tenant.type_news.set(type_news_data)
+
                 return tenant
         except ValidationError as error:
             raise serializers.ValidationError(detail={"error": error.detail})
@@ -42,6 +48,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
                 schema_name = validated_data.pop('schema_name', None)
 
                 if type_news:
+                    print(type_news)
                     instance.type_news.set(type_news)
                 if name:
                     instance.name = name
