@@ -96,6 +96,15 @@ def get_auto_code_person():
 
 
 class Person(ModelBase):
+
+    MALE = "M"
+    FEMALE = "F"
+
+    SEX = (
+        (MALE, 'Masculino'),
+        (FEMALE, 'Femenino'),
+    )
+
     code = models.CharField(max_length=255, verbose_name="code", unique=True, help_text="Código de la persona")
     name = models.CharField(max_length=255, verbose_name="name", help_text="Nombre de la persona")
     last_name = models.CharField(max_length=255, verbose_name="lastname", help_text="Apellido de la persona")
@@ -114,6 +123,7 @@ class Person(ModelBase):
     is_active = models.BooleanField(default=True)
     default_visit_reason = models.CharField(max_length=255, verbose_name="Motivo de visita por defecto", null=True, blank=True)
     default_visit_location = models.CharField(max_length=500, verbose_name="Lugar de visita por defecto", null=True, blank=True)
+    sex = models.CharField(max_length=2, verbose_name="Sexo", choices=SEX, default=MALE)
 
     def get_full_name(self):
         return "{name} {last_name}".format(name=self.name, last_name=self.last_name)

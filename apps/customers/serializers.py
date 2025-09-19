@@ -19,7 +19,7 @@ class ClientSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         queryset=TypeNews.objects.all(),
         many=True,
         required=False,
-        help_text="Tupos de novedades"
+        help_text="Tipos de novedades"
     )
 
     def create(self, validated_data):
